@@ -1,0 +1,92 @@
+{
+ "db": {
+  "rules": [
+   {
+    "path": "review",
+    "read": "view",
+    "write": "admin"
+   },
+   {
+    "path": "history",
+    "read": "view",
+    "write": "admin"
+   },
+   {
+    "path": "hub_jobs",
+    "read": "view",
+    "write": "admin"
+   },
+   {
+    "path": "sitesched",
+    "read": "view",
+    "write": "admin"
+   }
+  ]
+ },
+ "mcp": {
+  "servers": [
+   {
+    "server": "@@SRV:gmail@@",
+    "tools": [
+     "get_thread",
+     "create_draft",
+     "get_message",
+     "search_threads",
+     "reply",
+     "forward",
+     "send_message",
+     "trash_thread",
+     "untrash_thread",
+     "label_thread",
+     "unlabel_thread"
+    ]
+   },
+   {
+    "server": "@@SRV:granola@@",
+    "tools": [
+     "get_meeting_transcript",
+     "search_meetings"
+    ]
+   },
+   {
+    "server": "@@SRV:calendar@@",
+    "tools": [
+     "create_event"
+    ]
+   },
+   {
+    "server": "@@SRV:jobtread@@",
+    "tools": [
+     "query"
+    ]
+   },
+   {
+    "server": "@@SRV:ccr@@",
+    "tools": [
+     "fire_trigger"
+    ]
+   },
+   {
+    "server": "@@SRV:drive@@",
+    "tools": [
+     "create_file",
+     "copy_file"
+    ]
+   },
+   {
+    "server": "@@SRV:sheets@@",
+    "tools": [
+     "get_values",
+     "append_values"
+    ]
+   }
+  ]
+ },
+ "sample": {},
+ "user": {
+  "scopes": [
+   "profile",
+   "email"
+  ]
+ }
+}
