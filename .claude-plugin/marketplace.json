@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "The Design Pro Workspace plugin for Design Pro franchise teams.",
-    "version": "2026.11.1303"
+    "version": "2026.11.1304"
   },
   "plugins": [
     {
       "name": "design-pro-workspace",
       "source": "./plugins/design-pro-workspace",
       "description": "Sets up and looks after a personal Design Pro Workspace: one private page with your day, jobs, lists and money from Gmail, Calendar, JobTread, meetings and texts, kept current by scheduled updates.",
-      "version": "2026.11.1303"
+      "version": "2026.11.1304"
     }
   ]
 }
