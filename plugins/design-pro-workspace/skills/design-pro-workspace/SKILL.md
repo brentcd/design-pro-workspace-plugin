@@ -5,7 +5,7 @@ description: Sets up, checks, updates or removes a personal Design Pro Workspace
 
 # Design Pro Workspace
 
-Skill version: 2026-11-11b
+Skill version: 2026-11-13c
 
 One private page per person (title exactly "Design Pro Workspace") plus the scheduled tasks that keep it current. Everything lives in the person's own Claude account. The core runs in the cloud, so it keeps working with their computer off. Texts are an optional extra that runs on their Mac and never holds up anything else.
 

@@ -70,7 +70,8 @@
     "server": "@@SRV:drive@@",
     "tools": [
      "create_file",
-     "copy_file"
+     "copy_file",
+     "share_file"
     ]
    },
    {
@@ -82,11 +83,15 @@
    }
   ]
  },
- "sample": {},
+ "sample": {
+  "images": true
+ },
  "user": {
   "scopes": [
    "profile",
    "email"
   ]
- }
+ },
+ "assets": {},
+ "downloads": true
 }
