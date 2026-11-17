@@ -19,21 +19,31 @@ Writes the page body to publish and the capabilities JSON to declare on publish,
 import hashlib, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)  # dpw_config.py sits next to this script (python3 -I leaves the script's folder off the path)
+import dpw_config  # noqa: E402
+
 ASSETS = os.path.join(HERE, '..', 'assets')
 if '--assets' in sys.argv:
-    i = sys.argv.index('--assets'); ASSETS = sys.argv[i + 1]; del sys.argv[i:i + 2]
-DEFAULT_SERVERS = {'gmail': 'Gmail', 'granola': 'Granola', 'calendar': 'Google Calendar',
-                   'jobtread': 'JobTread', 'ccr': 'Claude Code Remote', 'drive': 'Google Drive',
-                   'sheets': 'Google Sheets'}
+    i = sys.argv.index('--assets')
+    if i + 1 >= len(sys.argv):
+        sys.exit('build_page: --assets needs a folder')
+    ASSETS = sys.argv[i + 1]; del sys.argv[i:i + 2]
+
+
+def caps_id(caps_text):
+    """The capabilities id: a hash of the FILLED capabilities (connector names included), so renaming a connector
+    counts as a permissions change too. The updater compares the id build_page.py prints with config.capsId."""
+    return hashlib.sha256(json.dumps(json.loads(caps_text), sort_keys=True, separators=(',', ':')).encode()).hexdigest()[:12]
+
 
 def main(cfg_path, page_out, caps_out):
-    cfg = json.load(open(cfg_path))
-    for k in ('name', 'first', 'role', 'jtOrg', 'driveFolder'):
-        if not cfg.get(k):
-            sys.exit('config is missing "%s"' % k)
-    if cfg['role'] not in ('pm', 'owner', 'ops'):
-        sys.exit('role must be "pm", "owner" or "ops"')
-    servers = dict(DEFAULT_SERVERS, **(cfg.get('servers') or {}))
+    try:
+        cfg = json.load(open(cfg_path, encoding='utf-8'))
+    except (OSError, ValueError) as e:
+        sys.exit('build_page: can\'t read %s as JSON (%s)' % (cfg_path, str(e)[:120]))
+    # every input is checked before anything is written, so a bad value never leaves a half-built page behind
+    v = dpw_config.run(lambda: dpw_config.check(cfg), 'build_page')
+    servers = v['servers']
     page_cfg = {'name': cfg['name'], 'first': cfg['first'], 'role': cfg['role'],
                 'middayTask': cfg.get('middayTask', ''), 'hubSyncTask': cfg.get('hubSyncTask', ''),
                 'budgetTask': cfg.get('budgetTask', ''), 'driveFolder': cfg['driveFolder'],
@@ -45,7 +55,7 @@ def main(cfg_path, page_out, caps_out):
 
     # the prompts version these tasks should run; the page shows a notice when review/today was written by older ones
     try:
-        page_cfg['promptsVersion'] = 0 if cfg.get('tasksCheck') is False else int(json.load(open(os.path.join(ASSETS, 'prompts.json'))).get('version') or 0)
+        page_cfg['promptsVersion'] = 0 if cfg.get('tasksCheck') is False else int(json.load(open(os.path.join(ASSETS, 'prompts.json'), encoding='utf-8')).get('version') or 0)
     except Exception:
         page_cfg['promptsVersion'] = 0
     if cfg.get('kitVersion'):  # only when set, so pages built without it stay byte-identical (tools/build.mjs mirrors this)
@@ -54,20 +64,28 @@ def main(cfg_path, page_out, caps_out):
         page_cfg['channel'] = 'beta'
     if cfg.get('holdVersion'):
         page_cfg['holdVersion'] = str(cfg['holdVersion'])
-    page = open(os.path.join(ASSETS, 'workspace-template.html')).read()
+    try:
+        page = open(os.path.join(ASSETS, 'workspace-template.html'), encoding='utf-8').read()
+        caps = open(os.path.join(ASSETS, 'capabilities-template.json'), 'rb').read().decode('utf-8')
+    except (OSError, UnicodeDecodeError) as e:
+        sys.exit('build_page: can\'t read the template files in %s (%s)' % (ASSETS, str(e)[:120]))
     page, n = re.subn(r'/\*DP_CONFIG_START\*/.*?/\*DP_CONFIG_END\*/',
                       lambda m: json.dumps(page_cfg, ensure_ascii=False).replace('</', '<\\/'), page, count=1, flags=re.S)
-    assert n == 1, 'config marker not found'
-    caps_raw = open(os.path.join(ASSETS, 'capabilities-template.json'), 'rb').read()
-    caps = caps_raw.decode('utf-8')
+    if n != 1:
+        sys.exit('build_page: the page template has no config marker')
     for key, val in servers.items():
-        page = page.replace('@@SRV:%s@@' % key, val.replace('"', '\\"'))
-        caps = caps.replace('@@SRV:%s@@' % key, val.replace('"', '\\"'))
-    assert '@@SRV:' not in page and '@@SRV:' not in caps
-    open(page_out, 'w').write(page)
-    json.loads(caps)
-    open(caps_out, 'w').write(caps)
-    print('page: %s (%d KB)\ncapabilities: %s\ncapabilities id: %s' % (page_out, len(page) // 1024, caps_out, hashlib.sha256(caps_raw).hexdigest()[:12]))
+        # server names are plain words (checked above); escaped as a JSON string body all the same
+        page = page.replace('@@SRV:%s@@' % key, json.dumps(val)[1:-1])
+        caps = caps.replace('@@SRV:%s@@' % key, json.dumps(val)[1:-1])
+    if '@@SRV:' in page or '@@SRV:' in caps:
+        sys.exit('build_page: the templates name a connector this script doesn\'t know (an @@SRV: placeholder is left)')
+    try:
+        cid = caps_id(caps)
+    except ValueError as e:
+        sys.exit('build_page: the filled capabilities aren\'t valid JSON (%s)' % str(e)[:120])
+    open(page_out, 'w', encoding='utf-8').write(page)
+    open(caps_out, 'w', encoding='utf-8').write(caps)
+    print('page: %s (%d KB)\ncapabilities: %s\ncapabilities id: %s' % (page_out, len(page) // 1024, caps_out, cid))
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:

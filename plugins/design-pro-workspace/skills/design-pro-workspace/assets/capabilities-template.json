@@ -20,6 +20,66 @@
     "path": "sitesched",
     "read": "view",
     "write": "admin"
+   },
+   {
+    "path": "texts",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "ask_sessions",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "status",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "notes",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "settings",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "actions",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "rollup",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "setup",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "system",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "usage",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "feed",
+    "read": "owner",
+    "write": "owner"
+   },
+   {
+    "path": "light",
+    "read": "owner",
+    "write": "owner"
    }
   ]
  },
@@ -51,7 +111,8 @@
    {
     "server": "@@SRV:calendar@@",
     "tools": [
-     "create_event"
+     "create_event",
+     "list_calendars"
     ]
    },
    {
@@ -71,14 +132,17 @@
     "tools": [
      "create_file",
      "copy_file",
-     "share_file"
+     "share_file",
+     "search_files",
+     "get_file_permissions"
     ]
    },
    {
     "server": "@@SRV:sheets@@",
     "tools": [
      "get_values",
-     "append_values"
+     "append_values",
+     "update_values"
     ]
    }
   ]
