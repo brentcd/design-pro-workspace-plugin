@@ -5,7 +5,7 @@ description: Sets up, checks, updates or removes a personal Design Pro Workspace
 
 # Design Pro Workspace
 
-Skill version: 2026-11-17d
+Skill version: 2026-11-18a
 
 One private page per person (title exactly "Design Pro Workspace") plus the scheduled tasks that keep it current. The core runs in the cloud, so it keeps working with their computer off. Texts are an optional Mac extra that never holds up anything else.
 
@@ -88,7 +88,7 @@ One file per franchise so teammates aren't asked the same things: `dp-workspace-
    - Each default that exists: keep it. `pcFieldId` = the id of the `pm` field.
    - `pm` missing: pick the job field whose values are team members' names; if none is clear, show the job fields and ask which one says who runs a job (this is the only field worth a question).
    - `flow`, `newBuild` or permit fields missing: don't ask. Leave the default, continue, and say once which part will be empty: `flow` → "Operations boards and active-job lists use approved jobs instead of your job stages"; `newBuild` → "the Utilities board's Ready to kick off list"; permit fields → "the Permits & inspections board".
-4. Refresh (each update and health check, like the Updater): find the file as in 1, trusted only when its owner's email domain is in `config.org.emailDomains` and its `teamId` equals `jtOrg`. Copy missing keys only (absent, "" or null in `config.org`, e.g. `feedbackSheet`, `statusSheet`), never overwriting one; save `setup/config`. Drive fails → change nothing, go on.
+4. Refresh (each update and health check): find it as in 1, trusted if its owner's email domain is in `config.org.emailDomains` and its `teamId` equals `jtOrg`. Copy missing keys only (absent, "", null, e.g. `feedbackSheet`, `statusSheet`), never overwriting one; save `setup/config`. But `modules` (team add-ons): if the file's differs, use it, rebuild. Drive fails → change nothing, go on.
 
 ## E. Texts (its own step; never blocks the core)
 Needs the Mac tools (section A) and an iPhone. Stop at the first problem, say the one thing to fix, leave `texts` "disabled", and carry on with everything else.
