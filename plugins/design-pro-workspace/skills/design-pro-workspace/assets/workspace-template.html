@@ -107,8 +107,10 @@ header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;-webkit-b
 .vmode{font:500 var(--fs-caption)/1 var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 6px;max-width:150px}
 body.mode-dr #appsw,body.mode-hub #appsw{display:none}
 .appsw>[aria-current],.appsw>[aria-current]:hover{background:var(--brand);color:var(--brand-ink)}
-body.app-hub #view,body.app-lists #view,body.app-hub #banner,body.app-lists #banner,body:not(.app-hub) #hubhost,body:not(.app-lists) #listhost{display:none!important}
+body.app-hub #view,body.app-lists:not(.app-todo) #view,body.app-hub #banner,body.app-lists #banner,body:not(.app-hub) #hubhost,body:not(.app-lists) #listhost{display:none!important}
 #hubhost[hidden],#listhost[hidden]{display:none!important}
+body.injob #subtabs{display:none!important}
+@media (max-width:599px){body.injob main .wrap{padding-top:12px}body.injob #view{gap:16px}}
 .swrow{padding-block:0 10px}
 .swrow>.appsw{margin:0}
 body.mode-dr .swrow,body.mode-hub .swrow{display:none}
@@ -732,45 +734,53 @@ header.site .logo{min-height:44px;min-width:44px;align-items:center}
 .jsh-back svg{width:18px;height:18px;flex:none}
 .jsh h1{font:var(--ph-title);letter-spacing:var(--ph-track);text-transform:none;color:var(--fg);margin:0;overflow-wrap:anywhere;text-wrap:balance}
 .jsh h1::after{content:"";display:block;width:40px;height:3px;border-radius:2px;background:var(--ph-rule);margin-top:10px}
-.jsh-meta{margin:8px 0 0;color:var(--muted);font:var(--ph-sub);display:flex;flex-wrap:wrap;column-gap:0;row-gap:2px}
-.jsh-meta span{white-space:nowrap}
+.jsh-meta,.jsh-facts{margin:8px 0 0;color:var(--muted);font:var(--ph-sub);display:flex;flex-wrap:wrap;column-gap:0;row-gap:2px}
+.jsh-facts{margin-top:10px;font-size:var(--fs-footnote);row-gap:6px}
+.jsh-facts span{white-space:normal;overflow-wrap:normal;word-break:normal}
+.jsh-meta span,.jsh-facts span{white-space:nowrap}
 .jsh-meta span:first-child{white-space:normal}
-.jsh-meta span+span::before{content:"·";padding:0 7px;color:var(--text-faint)}
-.jsh-row{display:flex;align-items:center;gap:8px;margin:18px 0 0;min-width:0}
+.jsh-meta span+span::before,.jsh-facts span+span::before{content:"·";padding:0 7px;color:var(--text-faint)}
+.jsh-facts a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.jsh-row{display:flex;align-items:center;gap:8px;margin:16px 0 0;min-width:0}
 .jsh-tabs{position:relative;flex:0 1 auto;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-inline:24px;margin:0;padding:2px 0;-webkit-overflow-scrolling:touch}
-.jsh-tabs::-webkit-scrollbar,.jsh-sub::-webkit-scrollbar{display:none}
+.jsh-tabs::-webkit-scrollbar{display:none}
 .jsh-tabs.fr{-webkit-mask-image:linear-gradient(90deg,var(--black) calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,var(--black) calc(100% - 28px),transparent)}
 .jsh-tabs.fl{-webkit-mask-image:linear-gradient(90deg,transparent,var(--black) 28px);mask-image:linear-gradient(90deg,transparent,var(--black) 28px)}
 .jsh-tabs.fl.fr{-webkit-mask-image:linear-gradient(90deg,transparent,var(--black) 28px,var(--black) calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,var(--black) 28px,var(--black) calc(100% - 28px),transparent)}
-.jsh-tabs a,.jsh-mb{flex:none;scroll-snap-align:center;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 var(--fs-footnote)/1.2 var(--body);letter-spacing:0;text-transform:none;text-decoration:none;white-space:nowrap;cursor:pointer}
-.jsh-tabs a:hover,.jsh-mb:hover{border-color:var(--muted)}
+.jsh-tabs a{flex:none;scroll-snap-align:center;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 var(--fs-footnote)/1.2 var(--body);letter-spacing:0;text-transform:none;text-decoration:none;white-space:nowrap;cursor:pointer}
+.jsh-tabs a:hover{border-color:var(--muted)}
 .jsh-tabs a.on{background:var(--navy);border-color:var(--navy);color:var(--white)}
 .jsh .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.jsh-tabs .n,.jsh-sub .n,.jsh-menu .n{font:500 var(--fs-caption)/1 var(--body);color:var(--muted);font-variant-numeric:tabular-nums}
+.jsh-tabs .n{font:500 var(--fs-caption)/1 var(--body);color:var(--muted);font-variant-numeric:tabular-nums}
 .jsh-tabs a.on .n{color:inherit}
-.jsh-tabs a:focus-visible,.jsh-mb:focus-visible,.jsh-sub a:focus-visible,.jsh-menu a:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
-.jsh-tabs a[hidden],.jsh-menu a[hidden],.jsh-more[hidden],.jsh-menu[hidden]{display:none}
-.jsh-more{position:relative;flex:none;display:flex;align-items:center;padding:2px 0}
-.jsh-mb{padding-right:9px}
-.jsh-mb svg{width:16px;height:16px;flex:none;transition:transform .15s ease}
-.jsh-mb[aria-expanded="true"]{border-color:var(--fg)}
-.jsh-mb[aria-expanded="true"] svg{transform:rotate(180deg)}
-.jsh-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:210px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(15,30,60,.18);display:flex;flex-direction:column;gap:2px}
-.jsh-menu a{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:8px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font:500 var(--fs-subhead)/1.2 var(--body);letter-spacing:0;text-transform:none}
-.jsh-menu a:hover{background:var(--surface-2)}
-.jsh .jsh-sub{display:inline-flex;align-self:flex-start;max-width:100%;margin:12px 0 0;padding:3px;gap:2px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
-.jsh .jsh-sub a{background:transparent;flex:none;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:6px 14px;border-radius:8px;color:var(--muted);text-decoration:none;font:500 var(--fs-footnote)/1.2 var(--body);letter-spacing:0;text-transform:none;white-space:nowrap}
-.jsh .jsh-sub a:hover{color:var(--fg)}
-.jsh .jsh-sub a[aria-current="page"]{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgba(15,30,60,.12),0 0 0 1px var(--line)}
-#main.lmain>.jsh:first-child{margin-top:-18px}
-@media (pointer:coarse){.jsh-tabs a,.jsh-mb{min-height:44px}.jsh-sub a{min-height:40px}}
-@media (max-width:599px){.jsh-row{margin-top:14px}.jsh .jsh-sub{margin-top:8px}.jsh h1::after{margin-top:8px}}
-@media (prefers-reduced-motion:reduce){.jsh-mb svg{transition:none}}
+.jsh-tabs a:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+@media (pointer:coarse){.jsh-tabs a{min-height:44px}header.jsh .jsh-back{min-height:44px}
+  .jsh-facts a{display:inline-flex;align-items:center;min-height:44px;margin-block:-12px}}
 @media (max-width:560px){header.jsh h1{font-size:var(--fs-large)}}
 @media (pointer:coarse) and (min-width:600px) and (max-width:1000px) and (max-height:1200px){header.jsh h1{font-size:var(--fs-large)}}
-@media (pointer:coarse){header.jsh .jsh-back{min-height:44px}}
-@media (max-width:520px) and (max-height:760px){header.jsh .jsh-meta{flex-wrap:nowrap;min-width:0}header.jsh .jsh-meta span{flex:none}header.jsh .jsh-meta span:first-child{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-tr.hl-row{outline:2px solid var(--mint);outline-offset:-2px}tr.hl-row>td{background:color-mix(in srgb,var(--mint) 18%,var(--surface))}
+@media (max-width:599px){
+  header.jsh{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:2px}
+  header.jsh a.jsh-back{grid-column:1;grid-row:1;margin:0 0 0 -12px;padding:0;width:44px;min-height:44px;justify-content:center}
+  header.jsh .jsh-back .jsh-bl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  header.jsh h1{grid-column:2;grid-row:1}
+  header.jsh h1::after{display:none}
+  header.jsh .jsh-meta,header.jsh .jsh-facts,header.jsh .jsh-row{grid-column:1/-1}
+  header.jsh .jsh-meta{margin-top:2px;flex-wrap:wrap;min-width:0}
+  header.jsh .jsh-meta span:first-child{flex:1 0 100%;white-space:normal}
+  header.jsh .jsh-meta span:nth-child(2)::before{content:none;padding:0}
+  header.jsh .jsh-row{margin-top:10px}
+  header.jsh .jsh-tabs{flex:1 1 auto;gap:4px}
+  header.jsh .jsh-tabs a{flex:1 0 auto;justify-content:center;padding:6px 10px}
+}
+tr.hl-row,.hl-row{outline:2px solid var(--mint);outline-offset:-2px}tr.hl-row>td{background:color-mix(in srgb,var(--mint) 18%,var(--surface))}
+.todobar{display:flex;justify-content:flex-end;margin:12px 0 0}
+.todosec{margin:14px 0 0}
+.todohrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px}
+.todohrow>.todoh{margin:0}
+.todosec .todoh{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;font:700 var(--fs-headline)/1.25 var(--display);color:var(--fg)}
+.todosec>.todoh .cnt{font:500 var(--fs-footnote)/1 var(--body);color:var(--muted)}
+body.app-todo #view{padding-bottom:4px}
+body.app-todo #view>.box{margin-top:14px}
 </style>
 <style id="dpfind-css">#gs .gsh{font:600 var(--fs-footnote)/1.4 var(--body);letter-spacing:0;text-transform:none}
 #gs .gsr mark{background:color-mix(in srgb,var(--accent) 25%,transparent);color:inherit;padding:0 2px;border-radius:3px;vertical-align:baseline;line-height:inherit}
@@ -1362,7 +1372,7 @@ button.kpi[aria-pressed="true"]{border-color:var(--mint);box-shadow:inset 0 0 0 
 .jcard:has(.jlink:focus-visible){outline:2px solid var(--fg);outline-offset:2px}
 .jcard>.src{margin-top:-4px}
 .jact{display:flex;flex-direction:column;gap:10px}
-.jact-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:600px}
+.jact-row{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:8px;max-width:calc(var(--n,4) * 150px)}
 .jbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:60px;padding:8px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 var(--fs-footnote)/1.2 var(--body);letter-spacing:0;text-decoration:none;cursor:pointer;transition:border-color .15s ease,background-color .15s ease}
 .jbtn svg{width:20px;height:20px;flex:none}
 .jbtn:hover{border-color:var(--fg);background:var(--surface-2)}
@@ -1376,6 +1386,33 @@ button.kpi[aria-pressed="true"]{border-color:var(--mint);box-shadow:inset 0 0 0 
 .jtp .pad .dpc-err{margin:0}
 h2.srch{margin:4px 0 -12px}
 @media (prefers-reduced-motion:reduce){.jbtn,.act,.chip,.kpi,.jcard{transition:none}}
+.jsec{display:flex;flex-direction:column;gap:12px;min-width:0;scroll-margin-top:calc(var(--chrome-top,0px) + 12px)}
+.jsec+.jsec{margin-top:12px}
+.jsech{margin:0;font:700 var(--fs-title3)/1.25 var(--display);color:var(--fg)}
+.jsecp{margin:-4px 0 0}
+.jcol{display:flex;flex-direction:column;gap:20px;min-width:0}
+.jjump{margin:0}.jjump .linkb{min-height:44px}
+@media (max-width:599px){#view{gap:16px}.jsum>.sc:last-child:nth-child(odd){grid-column:1/-1}}
+.jhist{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:4px 0 0}
+.jhist a{display:inline-flex;align-items:center;min-height:44px;font:600 var(--fs-body)/1.2 var(--body);color:var(--fg)}
+.ph-acts{display:flex;gap:8px;align-items:center;flex:none}
+.ph:has(>.ph-acts){flex-wrap:nowrap;align-items:flex-start}.ph:has(>.ph-acts)>div:first-child{flex:1 1 auto;min-width:0}
+.ph-acts .act{min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+.sellist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.selr+.selr{border-top:1px solid var(--line)}
+.selr.dim{opacity:.7}
+.selhd{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:8px 14px;cursor:pointer}
+.selhd:hover{background:var(--surface-2)}
+.selhd:focus-visible{outline:2px solid var(--fg);outline-offset:-2px}
+.seln{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+.seln b{font:600 var(--fs-subhead)/1.3 var(--body);color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.selc{font-size:var(--fs-footnote);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.selchev{flex:none;color:var(--text-faint);transition:transform .15s ease}
+.selr.open .selchev{transform:rotate(90deg)}
+.seldet{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}
+.selfacts{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.selnote{margin:0}
+@media (prefers-reduced-motion:reduce){.selchev{transition:none}}
 </style><div class="hubroot"><header class="site"><div class="wrap">
   <div class="brandrow">
     <div class="hdr-r"><span class="meta" id="meta">Loading…</span><button class="theme-btn" id="refresh" type="button" aria-label="Refresh">↻<span class="lbl"> Refresh</span></button></div>
@@ -1450,7 +1487,6 @@ function renderTabs(){
   const ht=(window.__hubTabCounts&&window.__hubTabCounts())||{};
   const ops=window.DPOPS?DPOPS.tabs():[];
   const pipeN=(state.review&&state.review.pipeline)?pipeStats(state.review.pipeline,window.DPR&&DPR.role==="ops"?"All":ME).openCount:0;
-  const listsN=window.__listItems?window.__listItems().filter(i=>!i.done).length:0;
   const OPS_ORDER=["team","officeq","closeout"];
   const opsKids=ops.slice().sort((a,b)=>{const ia=OPS_ORDER.indexOf(a[0]),ib=OPS_ORDER.indexOf(b[0]);return (ia<0?99:ia)-(ib<0?99:ib)});
   const opsOver=opsOverdue();const S0=startState();
@@ -1459,7 +1495,7 @@ function renderTabs(){
   const SECS=[
    {k:"today",l:"Today",ic:"sun",kids:[["today","Today",todo.length,urgentN?"hot":""]]},
    {k:"inbox",l:"Inbox",ic:"mail",kids:[["inbox","Inbox",open.length]]},
-   {k:"jobs",l:"Jobs",ic:"hammer",kids:[["hub/jobs","All jobs",ht.jobs||0]].concat(ht.investment?[["hub/investment","Investment properties",ht.investment]]:[]).concat([["sites","Site schedule",0],["lists","Lists",listsN],["hub/inbox","To sort",ht.inbox||0],["hub/orders","Open orders",ht.orders||0]])},
+   {k:"jobs",l:"Jobs",ic:"hammer",kids:[["hub/jobs","All jobs",ht.jobs||0],["sites","Site schedule",0]]},
     {k:"pipeline",l:"Pipeline",ic:"trending-up",kids:[["pipeline","Pipeline",pipeN]]},
     {k:"money",l:"Money",ic:"dollar-sign",kids:[["hub/costing","Job costing",0]].concat(modKids("money"))},
     ...MODS.filter(m=>!m.sec).map(m=>({k:m.k,l:m.l,ic:m.ic,kids:m.kids()})),
@@ -1468,10 +1504,11 @@ function renderTabs(){
   const secOf=h=>{const mo=MODS.find(m=>m.owns(h));if(mo)return mo.sec||mo.k;if(/^(today|people|calendar|later|assigned)$/.test(h))return"today";if(h==="email"||h==="inbox"||KINDS.some(x=>x[2]===h))return"inbox";
     if(h==="jobs"||h.startsWith("job-")||h.startsWith("lists")||/^sites(\/|$)/.test(h)||/^hub\/(jobs|job-|investment|inbox|orders)/.test(h))return"jobs";
     if(h==="pipeline")return"pipeline";if(h==="hub/costing")return"money";if(ops.some(x=>x[0]===h))return"ops";if(/^(history|feedback|setup|start|system)$/.test(h)||/^hub\/(log|howto)/.test(h))return"more";return"today"};
-  const kidOf=h=>{if(h.startsWith("lists"))return"lists";if(/^sites(\/|$)/.test(h))return"sites";if(h==="jobs"||h.startsWith("job-"))return"hub/jobs";if(h==="later")return"today";if(h==="hub/howto")return"start";if(KINDS.some(x=>x[2]===h&&x[0]!=="email"))return"inbox";
-    if(h.startsWith("hub/job-")){const jj=window.__hubJobIsInv&&window.__hubJobIsInv(h.slice(8).split("--")[0]);return jj?"hub/investment":"hub/jobs"}return h};
+  const kidOf=h=>{if(h.startsWith("lists"))return"hub/jobs";if(/^sites(\/|$)/.test(h))return"sites";if(h==="jobs"||h.startsWith("job-"))return"hub/jobs";if(h==="later")return"today";if(h==="hub/howto")return"start";if(KINDS.some(x=>x[2]===h&&x[0]!=="email"))return"inbox";
+    if(/^hub\/(job-|investment|inbox|orders)/.test(h))return"hub/jobs";return h};
   const cs=secOf(H),ck=kidOf(H);window.__dpSec=cs;
-  document.body.dataset.sec=cs;document.body.dataset.kt=(KINDS.find(x=>x[2]===H)||[])[0]||"";
+  document.body.dataset.sec=cs;
+  document.body.classList.toggle("injob",/^(job-|lists\/.|hub\/job-)/.test(H));document.body.dataset.kt=(KINDS.find(x=>x[2]===H)||[])[0]||"";
   const SIC={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
     mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
     hammer:'<path d="m15 12-8.37 8.37a1 1 0 1 1-3-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.91-1.91A2 2 0 0 1 19 8.17V7l-2.26-2.26a6 6 0 0 0-4.2-1.76L9 2.96l.92.82A6.18 6.18 0 0 1 12 8.4V10l2 2h1.17a2 2 0 0 1 1.42.59L18.5 14.5"/>',
@@ -1484,7 +1521,8 @@ function renderTabs(){
   const badge=(n,cls)=>n?`<span class="n${cls?" "+cls:""}" aria-hidden="true">${n}</span><span class="vh">, ${n} open</span>`:"";
   const setup=h=>h==="setup"?" data-setup":"";
   const kidA=([h,l,n,cls])=>`<a href="#${h}"${setup(h)}${ck===h?' aria-current="page"':""}>${esc(l)}${badge(n,ck===h?"":cls)}</a>`;
-  const secN=s=>{const k=s.kids[0];return s.k==="today"?badge(k[2],urgentN&&cs!=="today"?"hot":""):s.k==="inbox"?badge(open.length):s.k==="ops"&&s.n?`<span class="n hot" aria-hidden="true">${s.n}</span><span class="vh">, ${s.n} overdue</span>`:""};
+  const secN=s=>{const k=s.kids[0];return s.k==="today"?badge(k[2],urgentN&&cs!=="today"?"hot":""):s.k==="inbox"?badge(open.length):s.k==="ops"&&s.n?`<span class="n hot" aria-hidden="true">${s.n}</span><span class="vh">, ${s.n} overdue</span>`
+    :s.k==="jobs"&&ht.inbox?`<span class="n" aria-hidden="true">${ht.inbox}</span><span class="vh">, ${ht.inbox} to sort</span>`:""};
   const secA=(s,extra)=>`<a href="#${s.kids[0][0]}"${setup(s.kids[0][0])}${cs===s.k?' aria-current="page"':""}${extra||""}>${sic(s.ic)}<span class="tl">${s.l}</span>${secN(s)}</a>`;
   const T=$("#tabs");T.style.gridTemplateColumns=`repeat(${SECS.length},minmax(0,1fr))`;T.innerHTML=SECS.map(s=>secA(s)).join("");
   const B=$("#btabs");if(B){B.style.setProperty("--cols",SECS.length);B.innerHTML=SECS.map(s=>secA(s)).join("");
@@ -1565,6 +1603,11 @@ const VMODE="both";
 function isHub(){return (location.hash||"").startsWith("#hub/")}
 function isLists(){return (location.hash||"").startsWith("#lists")}
 window.__dpApply=()=>render();
+function todoCtx(){if(!isLists())return null;let k=(location.hash||"").slice(7);try{k=decodeURIComponent(k)}catch(e){}
+  if(!k||/^own-/.test(k)||k==="new"||!window.DPJob)return null;const cx=DPJob.ctx(k);return cx&&cx.list&&!cx.list.own?cx:null}
+function todoPaint(){const cx=todoCtx();document.body.classList.toggle("app-todo",!!cx);if(!cx)return;if(editing()){pendingRender=true;return}
+  keepOpenForms();$("#view").innerHTML=state.review?withStale(route(),todoTop(cx)):todoTop(cx);icons()}
+window.__dpTodoPaint=()=>{try{todoPaint()}catch(e){}};
 function applyApp(){
   if(VMODE==="dr"&&isHub()){location.replace("#today");return true}
   if(VMODE==="hub"&&!isHub()){location.replace("#hub/jobs");return true}
@@ -1591,8 +1634,8 @@ function renderPage(){
   window.__hideDone=state.hideDone;paintHd();
   if(isHub()&&window.__hubRender)window.__hubRender();
   if(isLists()&&window.__listsRender)window.__listsRender();
-  if(isHub()||isLists()){renderTabs();const rv=state.review;if(rv)paintMeta(rv);return}
   document.body.classList.toggle("hide-done",state.hideDone);
+  if(isHub()||isLists()){renderTabs();const rv=state.review;if(rv)paintMeta(rv);todoPaint();return}
   renderTabs();
   if(editing()){pendingRender=true;return}
   keepOpenForms();
@@ -1620,12 +1663,15 @@ function renderPage(){
   else if(v==="start")html=viewStart();
   else{const k=KINDS.find(x=>x[2]===v);html=k?viewInbox(k[0]):viewToday()}
   }catch(err){try{console.error("[DP] page couldn't be drawn",err)}catch(x){}html=DRAW_FAIL}
-  if(FRESH_ROUTES(v)){const F=freshness();if(F.stale){const running=refreshRunning();const banner=`<div class="tstale slim" role="status">${ic("clock")}<div><b>From the review of ${esc(F.dayLong)} (${esc(F.ago)}).</b><span>${running?"Refreshing now. New items show up here in about 5–10 minutes.":"This list may be out of date."}</span></div>${running?"":`<button type="button" class="act" data-trefresh>Refresh now</button>`}</div>`;
-    const k=v.startsWith("job-")?html.indexOf("</header>"):-1;html=k>=0?html.slice(0,k+9)+banner+html.slice(k+9):banner+html}}
+  html=withStale(v,html);
   $("#view").innerHTML=html;
   icons();
 }
-const FRESH_ROUTES=v=>v==="inbox"||v==="people"||v==="assigned"||v.startsWith("job-")||(v==="email"&&typeof EM!=="undefined"&&EM.tab==="need")||KINDS.some(k=>k[2]===v);
+function withStale(v,html){
+  if(FRESH_ROUTES(v)){const F=freshness();if(F.stale){const running=refreshRunning();const banner=`<div class="tstale slim" role="status">${ic("clock")}<div><b>From the review of ${esc(F.dayLong)} (${esc(F.ago)}).</b><span>${running?"Refreshing now. New items show up here in about 5–10 minutes.":"This list may be out of date."}</span></div>${running?"":`<button type="button" class="act" data-trefresh>Refresh now</button>`}</div>`;
+    const k=v.startsWith("job-")||v.startsWith("lists/")?html.indexOf("</header>"):-1;html=k>=0?html.slice(0,k+9)+banner+html.slice(k+9):banner+html}}
+  return html}
+const FRESH_ROUTES=v=>v.startsWith("lists/")||v==="inbox"||v==="people"||v==="assigned"||v.startsWith("job-")||(v==="email"&&typeof EM!=="undefined"&&EM.tab==="need")||KINDS.some(k=>k[2]===v);
 function paintMeta(r){const F=freshness();const m=$("#meta");if(!m)return;m.textContent=F.has?"Updated "+(F.days>=2?F.dayLong:F.when):(r.dateLabel||r.date||"");m.title=F.has?"Updated "+F.when:"";m.classList.toggle("old",!!F.stale)}
 function pageHead(title,sub,crumb){return `<div class="ph"><div>${crumb||""}<h1>${esc(title)}</h1>${sub?`<p>${sub}</p>`:""}</div></div>`}
 const MON="janfebmaraprmayjunjulaugsepoctnovdec";
@@ -1926,24 +1972,38 @@ async function doRefresh(){if(isHub()){if(window.__hubDoRefresh)window.__hubDoRe
     if(window.DPAnnounce)DPAnnounce("Refresh started. New items show up in about 5–10 minutes.");
   }catch(e){state.refresh=null;paintRefresh();showBanner("Couldn't start the refresh. "+(window.DPCore?DPCore.errMsg(e,"The update task"):"Try again in a minute."));render()}}
 function viewJobs(){location.replace("#hub/jobs");return ""}
+state.todoChecked=false;
+window.DPTodo={checked:()=>!!state.todoChecked,set(on){state.todoChecked=!!on;render();if(window.__listsRender)window.__listsRender()},
+  doneN:sl=>{try{const cx=window.DPJob&&DPJob.ctx(sl);return cx?doneFor(cx.slug,cx.cards.map(c=>c.id)).length:0}catch(e){return 0}}};
+function listDoneN(cx){if(!cx||!cx.list)return 0;try{return ((window.__listItems&&window.__listItems())||[]).filter(i=>i.job===cx.list.slug&&i.done).length}catch(e){return 0}}
+function todoTop(cx){const J=window.DPJob;const head=J.shell(document,cx,"todo");
+  const list=cx.cards;const done=doneFor(cx.slug,list.map(c=>c.id));const nChecked=done.length+listDoneN(cx);const on=!!state.todoChecked;
+  const tog=nChecked?`<button type="button" class="chip tgl" data-todochecked aria-pressed="${on}" aria-label="Show checked items, ${nChecked}">Show checked<span class="n" aria-hidden="true">${nChecked}</span></button>`:"";
+  const c0=list[0];const legacy=c0?String((state.notes[safeId(c0.id)]||{}).text||"").trim():"";
+  const notes=!c0?"":!(cx.hub)?noteBox(c0.id,"Job notes","Notes for this job. Saved as you type, and read by tomorrow's review.")
+    :legacy?`<div class="notes"><h2>Older job notes</h2><p class="small">Job notes now live in Project notes on this job's Overview.</p><p class="oldnote" style="white-space:pre-wrap;margin:8px 0">${esc(legacy)}</p><button type="button" class="act" data-mvnote="${esc(c0.id)}" data-slug="${esc(cx.slug)}">Move to Project notes</button><div class="status" id="mvn-${esc(safeId(c0.id))}" role="status" aria-live="polite"></div></div>`:"";
+  const openN=list.reduce((n,cd)=>n+(cd.items||[]).filter(i=>!isDone(i)).length,0);
+  const shown=list.filter(cd=>(cd.items||[]).some(i=>!isDone(i)||!state.hideDone));
+  const boxes=shown.map(cd=>{const items=(cd.items||[]).filter(i=>!isDone(i)||!state.hideDone);return `<section class="box${items.some(i=>!isDone(i)&&(i.urgent||i.aging))?" hot":""}" data-card="${esc(cd.id)}" data-nodpd>${shown.length>1?`<div class="box-h"><h3 class="bh"><b>${esc(cd.customer)}</b></h3>${cd.job?`<span class="jobno">${esc(cd.job)}</span>`:""}</div>`:""}<ul class="items">${items.map(i=>itemHtml(i,cd,false)).join("")}</ul></section>`}).join("");
+  const openSec=shown.length?`<section class="todosec" aria-labelledby="todo-open-h" data-nodpd><div class="todohrow"><h2 class="todoh" id="todo-open-h">Open items<span class="cnt">${openN}</span></h2>${tog}</div>${shown.length>1?`<div class="stack jobopen">${boxes}</div>`:boxes}</section>`
+    :!cx.list?`<section class="box" data-nodpd><p class="small" style="padding:14px 18px;margin:0">Nothing open on this job.</p></section>`:"";
+  const doneSec=on&&done.length?`<section class="todosec" aria-labelledby="todo-done-h" data-nodpd><h2 class="todoh" id="todo-done-h">Checked off<span class="cnt">${done.length}</span></h2>${doneList(done)}</section>`:"";
+  const bar=tog&&!shown.length?`<div class="todobar">${tog}</div>`:"";
+  return head+bar+openSec+doneSec+(notes?`<section class="box" data-nodpd>${notes}</section>`:"")}
 function viewJob(s){
-  const dm=String(s).match(/^(.*)--done$/);if(dm)s=dm[1];
+  const dm=String(s).match(/^(.*)--done$/);if(dm){s=dm[1];state.todoChecked=true}
   const J=window.DPJob;const cx=J?J.ctx(s):null;
   const back=`<a class="crumb" href="#hub/jobs">‹ All jobs</a>`;
   if(J&&!cx)return J.notFound(document,"It may have dropped off today's review, or the link is out of date. Find it under All jobs.");
-  if(dm&&cx){if(cx.id!==s&&location.hash==="#job-"+s+"--done"){history.replaceState(null,"","#job-"+cx.id+"--done");if(window.__dpSyncHash)window.__dpSyncHash()}return viewDone(cx)}
-  const list=cx?cx.cards:cards().filter(x=>slug(x.id)===s);
-  if(!list.length){
-    if(cx){const to=J.href(cx,"overview")||J.href(cx,"lists");if(to){location.replace(to);return ""}}
-    return pageHead("Job not found","It may have dropped off today's review.",back)}
-  if(cx&&cx.id!==s&&location.hash==="#job-"+s){history.replaceState(null,"","#job-"+cx.id);if(window.__dpSyncHash)window.__dpSyncHash()}
+  if(cx){const to=J.href(cx,"todo");if(to&&to!==location.hash&&to!=="#job-"+s){location.replace(to);return ""}
+    if(!to){const ov=J.href(cx,"overview");if(ov){location.replace(ov);return ""}}
+    if(cx.id!==s&&(location.hash==="#job-"+s||location.hash==="#job-"+s+"--done")){history.replaceState(null,"","#job-"+cx.id);if(window.__dpSyncHash)window.__dpSyncHash()}
+    else if(dm){history.replaceState(null,"","#job-"+cx.id);if(window.__dpSyncHash)window.__dpSyncHash()}
+    return todoTop(cx)}
+  const list=cards().filter(x=>slug(x.id)===s);
+  if(!list.length)return pageHead("Job not found","It may have dropped off today's review.",back);
   const c=list[0];
-  const head=cx?J.shell(document,cx,"open"):pageHead(c.customer,[c.address,c.job].filter(Boolean).map(esc).join(" · "),back);
-  const legacy=String((state.notes[safeId(c.id)]||{}).text||"").trim();
-  const notes=!(cx&&cx.hub)?noteBox(c.id,"Job notes","Notes for this job. Saved as you type, and read by tomorrow's review.")
-    :legacy?`<div class="notes"><h2>Older job notes</h2><p class="small">Job notes now live in Project notes on this job's Overview.</p><p class="oldnote" style="white-space:pre-wrap;margin:8px 0">${esc(legacy)}</p><button type="button" class="act" data-mvnote="${esc(c.id)}" data-slug="${esc(cx.slug)}">Move to Project notes</button><div class="status" id="mvn-${esc(safeId(c.id))}" role="status" aria-live="polite"></div></div>`:"";
-  const boxes=list.map((cd,ix)=>{const items=cd.items||[];return `<section class="box${items.some(i=>!isDone(i)&&(i.urgent||i.aging))?" hot":""}" data-card="${esc(cd.id)}">${list.length>1?`<div class="box-h"><h2 class="bh"><b>${esc(cd.customer)}</b></h2>${cd.job?`<span class="jobno">${esc(cd.job)}</span>`:""}</div>`:""}${items.length?`<ul class="items">${items.map(i=>itemHtml(i,cd,false)).join("")}</ul>`:`<p class="small" style="padding:14px 18px;margin:0">Nothing open on this job.</p>`}${ix===list.length-1?notes:""}</section>`}).join("");
-  return head+(list.length>1?`<div class="stack jobopen">${boxes}</div>`:boxes);
+  return pageHead(c.customer,[c.address,c.job].filter(Boolean).map(esc).join(" · "),back)+`<section class="box"><ul class="items">${(c.items||[]).map(i=>itemHtml(i,c,false)).join("")}</ul></section>`;
 }
 function noteBox(id,label,ph){const nid=safeId(id);const nv=(state.notes[nid]||{}).text||"";
   return `<div class="notes"><h2><label for="jnote-${esc(nid)}">${esc(label)}</label></h2><textarea id="jnote-${esc(nid)}" data-jobnote="${esc(id)}" placeholder="${esc(ph)}"${state.db?"":" disabled"}>${esc(nv)}</textarea><div class="status" id="jns-${esc(nid)}" role="status" aria-live="polite"></div></div>`}
@@ -2029,10 +2089,7 @@ function doneFor(sl,cardIds){const out={};const ids=new Set(cardIds||[]);
   return Object.values(out).sort((a,b)=>(b.at||0)-(a.at||0))}
 window.__drDoneFor=doneFor;
 const dday=t=>t>1e11?new Date(t).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}):"";
-function viewDone(cx){const head=window.DPJob.shell(document,cx,"done");
-  const list=doneFor(cx.slug,cx.cards.map(c=>c.id));
-  if(!list.length)return head+`<section class="box"><p class="small" style="padding:14px 18px;margin:0">Nothing checked off on this job yet. When you check off an item, it shows up here with any note you add.</p></section>`;
-
+function doneList(list){
   const rows=list.map(v=>{const live=!!findRaw(v.item||"").i;const about=esc(cut48(v.text));
     return `<li class="ditem" data-done="${esc(v.id)}"><span class="dck" aria-hidden="true">✓</span><div class="dbody">
     <div class="tags">${v.kind?`<span class="pill ${esc(v.kind)}">${esc(labelFor(v.kind))}</span>`:""}${v.at>1e11?`<span class="d">Done ${esc(dday(v.at))}</span>`:""}${v.auto?`<span class="badge auto">Auto-cleared${v.reason?" · "+esc(v.reason):""}</span>`:""}</div>
@@ -2040,7 +2097,10 @@ function viewDone(cx){const head=window.DPJob.shell(document,cx,"done");
     ${v.note?noteBlock(v.id,about):""}
     <div class="acts">${v.note?"":`<button type="button" class="act" data-dn-edit="${esc(v.id)}" aria-label="Add note: ${about}">Add note</button>`}${live?`<button type="button" class="act ghost" data-dn-reopen="${esc(v.id)}" aria-label="Reopen: ${about}">Reopen</button>`:""}</div>
     </div></li>`}).join("");
-  return head+`<section class="box donebox"><ul class="items dlist">${rows}</ul></section>`}
+  return `<section class="box donebox" data-nodpd><ul class="items dlist">${rows}</ul></section>`}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-todochecked]");if(!b)return;
+  window.DPTodo.set(!state.todoChecked);if(window.DPAnnounce)DPAnnounce(state.todoChecked?"Showing checked items":"Checked items hidden");
+  requestAnimationFrame(()=>{const n=document.querySelector("[data-todochecked]");if(n)n.focus({preventScroll:true})})});
 const SG_KINDS=[["selection","Selection"],["punch","Punch list"],["order","To order"],["todo","To do"],["wait","Waiting on"],["jt","JobTread to-do"]];
 const SGL=Object.fromEntries(SG_KINDS);
 const SG_DEST={selection:"Selections",punch:"the Punch list",order:"To order",todo:"To do",wait:"Waiting on",jt:"JobTread"};
@@ -3775,7 +3835,7 @@ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest
   const s=document.querySelector("#view [data-lstrip] summary")||document.querySelector("#view [data-lslink]");if(s)s.focus({preventScroll:true})});
 (function(){const go=()=>window.DPCore&&DPCore.poll?DPCore.poll(lsFetch,{every:5*60e3,first:window.__DP_DEMO?500:4000,when:()=>route()==="today"&&!!lsSince()}):null;
   if(window.DPCore)go();else addEventListener("load",go)})();
-window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]},{"version":"2026-11-17a","highlights":["If your texts stop because the Messages folder on your Mac isn't connected to the texts task, System status now tells you to say \"Move texts to this Mac\" from a new task on your Mac, instead of only pointing to Full Disk Access.","Other texts problems, such as Full Disk Access being off or your Mac being asleep, keep their usual fix.","No new permissions: installs on its own."]}];
+window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22c","highlights":["Each job has four tabs: Overview, To do, Money and Files. To do holds the job's open items and its lists together, with one Show checked switch; Money puts job costing, orders and purchases on one page.","Fewer taps on a phone: adding a punch item and sending a punch list each take 3 taps, and a job's money or orders 1.","One Send sheet for punch lists: the whole list or one trade, who gets each trade, email or text, then a confirm. A suggested sub is only filled in when their trade matches, and is marked to check before sending.","Lists, To sort, Open orders and Investment properties now live on All jobs as a button, a filter and chips. To sort shows every job with items to sort, and the Jobs menu shows how many.","On phones the job header keeps the street on its own line, and the job details wrap instead of scrolling sideways.","No new permissions: installs on its own."]},{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]}];
 const updTask=()=>(DPC.tasks&&DPC.tasks.updater)||(window.__DP_DEMO?"demo-updater":"");
 const UPD={open:false,confirm:false,busy:false,msg:""};
 const updTxt=(v,n)=>String(v==null?"":v).replace(/[\u0000-\u001f<>]/g," ").trim().slice(0,n||200);
@@ -3917,7 +3977,7 @@ document.addEventListener("change",e=>{
 function savePunch(id,ix,on){const a=state.actions[safeId(id)];if(!a||!a.items||!a.items[ix])return;a.items[ix].done=on;if(!state.db)return;
   state.db.doc("actions/"+safeId(id)).set(a).catch(()=>{const cur=state.actions[safeId(id)];if(cur&&cur.items&&cur.items[ix])cur.items[ix].done=!on;rerenderItem(id);
     tToast(on?"Couldn't save that check mark, so it's unchecked again.":"Couldn't save that change, so it's back as it was.","Try again",()=>{savePunch(id,ix,on);rerenderItem(id)},-9000)})}
-addEventListener("dp:hubjobs",()=>{const r=route();if(r.startsWith("job-"))render()});
+addEventListener("dp:hubjobs",()=>{const r=route();if(r.startsWith("job-")||r.startsWith("lists/"))render()});
 function showBanner(m){const b=$("#banner");b.textContent=m;b.hidden=false}
 
 render();
@@ -4122,6 +4182,13 @@ h3.sec{font:700 var(--fs-caption)/1 var(--body);color:var(--muted);margin:6px 0 
 .th{display:flex;align-items:center;}
 .th .c{font-weight:500;}
 li.addline{display:grid;gap:10px;padding:6px 14px;align-items:center}
+.addrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px 10px;align-items:center;padding:12px 14px;margin:0 0 12px;border:1px solid var(--mint);border-radius:12px;background:var(--surface)}
+.addrow select{border:1px solid var(--field-border);background:var(--surface-2);border-radius:8px;padding:9px 8px;font:500 var(--fs-subhead) var(--body);color:var(--fg);min-height:44px}
+.addrow input{border:1px solid var(--field-border);background:var(--surface);border-radius:8px;padding:9px 10px;font-size:var(--fs-body);min-width:0;width:100%;min-height:44px}
+.addrow .addb{display:flex;gap:6px}
+.addrow .lnk{grid-column:1/-1;justify-self:start;min-height:44px}
+@media (max-width:599px){.addrow{grid-template-columns:minmax(0,1fr) auto}.addrow select{grid-column:1/-1}}
+.jtop .back{display:inline-flex;align-items:center;min-height:44px;color:var(--muted);text-decoration:none;font:500 var(--fs-subhead)/1.2 var(--body)}
 li.addline .ph{width:22px;height:22px;border:2px dashed var(--line);border-radius:5px}
 li.addline input{border:1px solid var(--mint);background:var(--surface);border-radius:8px;padding:9px 10px;font-size:var(--fs-body);min-width:0;width:100%}
 a.btn{text-decoration:none;display:inline-flex;align-items:center}
@@ -4389,6 +4456,8 @@ section.job>.grp+.emptyls{border-top:1px solid var(--line)}
 .snote.warn{background:var(--warn-soft);color:var(--warn)}
 .pmsg{margin:0;font-size:var(--fs-footnote);color:var(--fg);min-height:1em}
 .row.acts{display:flex;gap:8px;flex-wrap:wrap}
+#pxp .pxfoot{position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;gap:10px;background:var(--surface);margin:0 -4px;padding:10px 4px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 12px -10px rgba(19,38,74,.25)}
+#pxp .pxfoot .pmsg:empty{display:none}
 .txts ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .txts li{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .txts li>div{display:flex;flex-direction:column;flex:1 1 160px;min-width:0}.txts li span{font-size:var(--fs-caption);color:var(--muted)}
@@ -4397,9 +4466,8 @@ li.it{touch-action:pan-y;transition:transform .2s ease,background .2s}li.it.sw{t
 </style>
 <div class="wrap"><div id="main" class="lmain"></div></div>
 <div class="dock" id="dock" hidden><div class="wrap dockrow">
-  <button class="addbtn" type="button" data-addmenu aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add items</button>
+  <button class="addbtn" type="button" data-addnew aria-label="Add an item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
   <button class="talkbtn photob" type="button" id="dockPhotos" aria-label="Take photos for the punch list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Photos</button>
-  <button class="talkbtn" type="button" id="talkOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Talk it in</button>
 </div></div>
 <div class="sheet" id="share" hidden><div class="panel" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
   <div class="top"><h2 id="shareTitle">Send this list</h2><button class="btn ghost" type="button" id="shareClose">Close</button></div>
@@ -4438,9 +4506,9 @@ li.it{touch-action:pan-y;transition:transform .2s ease,background .2s}li.it.sw{t
   <div class="row"><button class="btn pri" type="submit" id="chatSend">Send</button><button class="btn ghost" type="button" id="chatStop" hidden>Stop</button><button class="btn ghost" type="button" id="chatNew">New chat</button></div></form>
 </div></div>
 <div class="sheet" id="addm" hidden><div class="panel" role="dialog" aria-modal="true" aria-labelledby="addmTitle">
-  <div class="top"><h2 id="addmTitle">Add items</h2><button class="btn ghost" type="button" id="addmClose">Close</button></div>
+  <div class="top"><h2 id="addmTitle">More ways to add</h2><button class="btn ghost" type="button" id="addmClose">Close</button></div>
   <div class="menu">
-    <button type="button" class="mi" data-am="type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><path d="M18 14v6M15 17h6"/></svg><span><b>Type items</b><small>Add to the punch list, one line at a time. Tap + on any list to add there.</small></span></button>
+    <button type="button" class="mi" data-am="talk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span><b>Talk it in</b><small>Say the items out loud; Claude writes each one on the right list.</small></span></button>
     <button type="button" class="mi" data-am="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span><b>Paste notes</b><small>Copy a list from Notes, Keep, a spreadsheet or a text. Claude sorts each line.</small></span></button>
     <button type="button" class="mi" data-am="gran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span><b>Get walkthrough items</b><small>Look for site walks recorded in Granola in the last 7 days. Items go to Needs review.</small></span></button>
     <button type="button" class="mi" data-am="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span><b>Ask Claude</b><small>Find a walkthrough that didn't come through, or fix your lists.</small></span></button>
@@ -4558,7 +4626,8 @@ const S={jt:[],own:{},fading:new Set(),exp:new Set(),tg:new Map(),sent:{},subs:{
 const G={busy:false,msg:"",kind:""};
 const JK="lists:jobs";let jobsSub=null,jobsSnap=false,jobsErr=null,jobsWait=null;
 const late=i=>i.due&&!i.done&&i.due<todayIso();
-const hidden=i=>i.done&&!S.showDone&&!S.fading.has(i.id);
+const showDoneNow=()=>S.embNow?!!(window.DPTodo&&DPTodo.checked()):S.showDone;
+const hidden=i=>i.done&&!showDoneNow()&&!S.fading.has(i.id);
 const fmtAt=s=>{const d=new Date(s);return isNaN(d)?"":d.toLocaleDateString("en-US",{month:"short",day:"numeric"})};
 let toastUndo=null;
 function toast(t,undo,label){const e=$("#toast");$("#toastMsg").textContent=t;toastUndo=typeof undo==="function"?undo:null;$("#toastUndo").hidden=!toastUndo;$("#toastUndo").textContent=label||"Undo";
@@ -4580,25 +4649,7 @@ const jobOf=sl=>S.jobs.find(j=>j.slug===sl);window.__listJobs=()=>S.jobs;window.
 function stats(sl){const mine=jobItems(sl);const open=mine.filter(i=>!i.done);
   return {mine,open:open.length,done:mine.length-open.length,late:open.filter(late).length,rev:Object.values(S.review).filter(r=>r.job===sl).length,
    by:k=>open.filter(i=>i.list===k).length}}
-function cnts(st,full){const c=[];if(st.rev)c.push(`<span class="cnt rev"><b>${st.rev}</b> to review</span>`);if(st.late)c.push(`<span class="cnt late"><b>${st.late}</b> past due</span>`);
-  if(full)Object.keys(LISTS).forEach(k=>{const n=st.by(k);if(n)c.push(`<span class="cnt"><b>${n}</b> ${LISTS[k].toLowerCase()}</span>`)});
-  else if(st.open)c.push(`<span class="cnt"><b>${st.open}</b> open</span>`);
-  return c.join("")}
-function prog(st){const t=st.mine.length;const pct=t?Math.round(st.done/t*100):0;return `<div class="prog"><div class="track" role="progressbar" aria-label="Items done" aria-valuemin="0" aria-valuemax="${t}" aria-valuenow="${st.done}"><div class="fill" style="width:${pct}%"></div></div><span class="pl">${st.done} of ${t} done</span></div>`}
-const ADD_ICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-const addBtn=()=>`<button class="gbtn" type="button" data-addmenu aria-haspopup="dialog">${ADD_ICON}Add items</button>`;
 const helpBtn=()=>`<button class="help" type="button" data-help aria-haspopup="dialog" aria-label="How Job lists work">?</button>`;
-function home(){const cards=[],quiet=[];
-  S.jobs.filter(j=>!j.own).forEach(j=>{const st=stats(j.slug);const c={j,st,score:st.rev*100+st.late*10+st.open};(st.mine.length||st.rev?cards:quiet).push(c)});
-  cards.sort((a,b)=>b.score-a.score);
-  const card=({j,st})=>`<a class="jc" href="${esc(listHref(j.slug))}"><div><h3>${esc(j.customer||j.street)}</h3><div class="addr">${esc(j.street||j.address||"")}${(j.jobNumbers||[]).length?" · Job "+esc(j.jobNumbers.join(", ")):""}</div></div>
-   ${st.mine.length?prog(st):""}<div class="cnts">${cnts(st,false)||`<span class="cnt">Nothing open</span>`}</div></a>`;
-  return `<section class="htop"><div><h1>Job lists</h1><p class="sub">Punch, order, to-do and waiting-on lists for each job. Tap a job to open its lists.</p></div><div class="jtopb">${px("newBtn")}${addBtn()}${helpBtn()}</div></section>${granStatus()}
-   ${TIPCARD("walk",`Recording a site walk in Granola? Start by saying the job name and address, for example "Miller, 24 Oak Street, punch walk." That's how Claude puts each item on the right job. <button type="button" class="lnk" data-help>More ways to add items</button>`)}
-   ${px("homeSection",stats)}
-   ${S.jobs.some(j=>!j.own)?"":jobsBox("Loading your jobs…")}
-   ${cards.length?`<h2 class="sec">Jobs with lists</h2><div class="jgrid">${cards.map(card).join("")}</div>`:""}
-   ${quiet.length?`<h2 class="sec">No lists yet</h2><div class="jgrid">${quiet.map(card).join("")}</div>`:""}`}
 function jobsBox(loading){if(!S.db)return S.loaded?`<div class="empty">Your jobs appear here after the first Project Hub sync.</div>`:CORE.box(JK,{loading,rows:3});
   loadJobs();return CORE.box(JK,{label:"your job list",loading,rows:3,empty:"Your jobs appear here after the first Project Hub sync."})||`<div class="empty">Your jobs appear here after the first Project Hub sync.</div>`}
 function rev(sl){const rs=Object.values(S.review).filter(r=>r.job===sl).sort((a,b)=>String(a.createdAt||"").localeCompare(String(b.createdAt||"")));
@@ -4636,65 +4687,64 @@ function item(i,hideSent){const meta=SRC[i.src]&&i.src!=="you"?[`<span class="sr
 const CHIP={punch:"Punch",order:"To order",todo:"To do",wait:"Waiting on"};
 const CHEV=`<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
 const tgId=t=>"tg-"+String(t).replace(/[^a-z0-9-]/gi,"_");
+const emb=sl=>{const j=jobOf(sl);if(!j||j.own||!window.DPJob)return false;try{return !!DPJob.ctx(sl)}catch(e){return false}};
 function jobView(sl){const j=jobOf(sl);
   if(!j){if(!S.loaded||(S.db&&CORE.get(JK).status==="error"&&!S.jobs.length))return jobsBox("Loading this job…");
     return window.DPJob?DPJob.notFound(R,"This job isn't on your lists any more. Find it under All jobs."):`<div class="empty">This job isn't on your list any more.</div>`}
-  const st=stats(sl);
+  const st=stats(sl);const inJob=emb(sl);
   if(S.onlyLate&&!st.late)S.onlyLate=false;
   const vis=st.mine.filter(i=>!hidden(i)&&(S.filter==="all"||i.list===S.filter)&&(!S.onlyLate||late(i)));
   const srt=(a,b)=>a.done-b.done||(late(b)-late(a))||String(a.createdAt).localeCompare(String(b.createdAt));
   const one=S.filter!=="all"||S.onlyLate;
-  const addLine=key=>S.adding===key?`<li class="addline"><span class="ph" aria-hidden="true"></span><input data-addin="${key}" placeholder="Type an item, then Add" aria-label="New item" enterkeyhint="enter" value="${S.addDraft&&S.addDraft.key===key?esc(S.addDraft.v):""}"><span class="addb"><button class="btn pri" data-addgo="${key}">Add</button><button class="btn ghost" data-addclose>Close</button></span></li>`:"";
   const sendBtn=(key,what)=>`<button class="ib" data-share="${esc(key)}" title="Email, text or copy this list" aria-label="Send ${esc(what)}">Send</button>`;
   const LIM=3;
-  const clip=(key,arr,what)=>{const open=arr.filter(i=>!i.done),done=arr.filter(i=>i.done);if(one||S.adding===key||open.length<=LIM+1)return [arr,""];
+  const clip=(key,arr,what)=>{const open=arr.filter(i=>!i.done),done=arr.filter(i=>i.done);if(one||open.length<=LIM+1)return [arr,""];
     if(S.exp.has(key))return [arr,`<li class="morel"><button type="button" class="morebtn" data-exp="${esc(key)}" aria-expanded="true" aria-label="Show less of ${esc(what)}">Show less</button></li>`];
     const n=open.length-LIM;return [open.slice(0,LIM).concat(done),`<li class="morel"><button type="button" class="morebtn" data-exp="${esc(key)}" aria-expanded="false" aria-label="Show ${n} more in ${esc(what)}">${n} more</button></li>`]};
-  const list=(key,arr,cls,hs,what)=>{const [show,more]=clip(key,arr,what);return `<ul class="items${cls?" "+cls:""}" aria-label="${esc(what)}">${addLine(key)}${show.map(i=>item(i,hs)).join("")}${more}</ul>`};
-  const emptyMsg=`<div class="empty">Nothing here yet. Tap + to add.</div>`;
+  const list=(key,arr,cls,hs,what)=>{const [show,more]=clip(key,arr,what);return `<ul class="items${cls?" "+cls:""}" aria-label="${esc(what)}">${show.map(i=>item(i,hs)).join("")}${more}</ul>`};
   const groups=Object.keys(LISTS).filter(k=>S.filter==="all"||S.filter===k).map(k=>{const g=vis.filter(i=>i.list===k).sort(srt);const openN=g.filter(i=>!i.done).length;
+    if(!g.length)return "";
     const smart=k==="punch"&&smartOn(sl);const gs=groupSent(g);
     let body;
-    if(!smart)body=list(k,g,"",!!gs,LISTS[k])+(g.length||S.adding===k?"":emptyMsg);
+    if(!smart)body=list(k,g,"",!!gs,LISTS[k]);
     else{const keys=[...Object.keys(TRADES)];g.forEach(i=>{const t=tradeOf(i);if(!keys.includes(t))keys.splice(keys.length-1,0,t)});
       const used=keys.filter(t=>g.some(i=>tradeOf(i)===t));let nth=0;
-      const tr=keys.map(t=>{const gg=g.filter(i=>tradeOf(i)===t);const key="punch:"+t;const openT=gg.filter(i=>!i.done).length;
-        if(!gg.length&&S.adding!==key)return "";const lab=tradeLabel(t,gg[0]);const ts=gs?null:groupSent(gg);
-        const def=one||used.length<=3||nth===0;nth++;const isOpen=S.adding===key||(S.tg.has(t)?S.tg.get(t):def);
-        const on=S.sel.has(t);
-        return `<div class="th${isOpen?" open":""}"><h3 class="tl"><button type="button" class="tgb" data-tg="${esc(t)}" aria-expanded="${isOpen}" aria-controls="${tgId(t)}" title="${esc(lab)}"><span class="tn">${esc(lab)}</span><span class="c">${openT} open${px("tradeCrew",sl,t)}</span>${CHEV}</button></h3><span class="sp"></span>${openT?`<button type="button" class="tsel" data-tsel="${esc(t)}" aria-pressed="${on}" aria-label="Select ${esc(lab)} to send together"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg>${on?"Selected":"Select"}</button>`+sendBtn(key,lab+" punch items"):""}<button class="ib plus" data-add="${esc(key)}" aria-label="Add a ${esc(lab)} punch item">+</button>${ts?`<i class="br"></i><span class="sent">${sentLbl(ts)}</span>`:""}</div><div class="tgbody" id="${tgId(t)}"${isOpen?"":" hidden"}>${list(key,gg,"tg",!!(ts||gs),lab+" punch items")}</div>`}).join("");
-      const selN=[...S.sel].filter(t=>g.some(i=>!i.done&&tradeOf(i)===t)).length;
-      const bar=selN?`<div class="selbar" role="status"><span><b>${selN}</b> group${selN>1?"s":""} selected</span><span class="sp" style="flex:1"></span><button class="btn pri" data-share="punch:sel">Send together</button><button class="btn ghost" data-selclear>Clear</button></div>`:"";
-      body=(S.adding==="punch"?`<ul class="items" aria-label="Punch list">${addLine("punch")}</ul>`:"")+(tr?tr+bar:(S.adding==="punch"?"":emptyMsg))}
-    if(S.filter==="all"&&!S.onlyLate&&!g.length&&S.adding!==k&&!(S.adding||"").startsWith(k+":")&&k!=="punch")return `<button class="emptyl" data-add="${k}" aria-label="Add to ${LISTS[k]}"><span class="dot ${k}" aria-hidden="true"></span>+ ${LISTS[k]}</button>`;
-    if(S.onlyLate&&!g.length)return "";
+      body=keys.map(t=>{const gg=g.filter(i=>tradeOf(i)===t);const key="punch:"+t;const openT=gg.filter(i=>!i.done).length;
+        if(!gg.length)return "";const lab=tradeLabel(t,gg[0]);const ts=gs?null:groupSent(gg);
+        const def=one||used.length<=3||nth===0;nth++;const isOpen=S.tg.has(t)?S.tg.get(t):def;
+        return `<div class="th${isOpen?" open":""}"><h3 class="tl"><button type="button" class="tgb" data-tg="${esc(t)}" aria-expanded="${isOpen}" aria-controls="${tgId(t)}" title="${esc(lab)}"><span class="tn">${esc(lab)}</span><span class="c">${openT} open${px("tradeCrew",sl,t)}</span>${CHEV}</button></h3><span class="sp"></span>${openT?sendBtn(key,lab+" punch items"):""}${ts?`<i class="br"></i><span class="sent">${sentLbl(ts)}</span>`:""}</div><div class="tgbody" id="${tgId(t)}"${isOpen?"":" hidden"}>${list(key,gg,"tg",!!(ts||gs),lab+" punch items")}</div>`}).join("")}
     const tog=k==="punch"&&smartShown(sl)?`<label class="smart"><input type="checkbox" role="switch" data-smart ${smart?"checked":""}><span class="sw" aria-hidden="true"></span>Sort by trade</label>`:"";
-    return `<div class="grp"><div class="gh"><span class="dot ${k}" aria-hidden="true"></span><h2 class="gl">${LISTS[k]}</h2><span class="c">${openN} open</span><span class="sp"></span>${tog}${k==="punch"?px("punchBtns",sl,openN):""}${openN?(k==="punch"?sendBtn("punch:all","the whole punch list"):sendBtn(k,LISTS[k])):""}<button class="ib plus" data-add="${k}" aria-label="Add to ${LISTS[k]}">+</button>${gs?`<i class="br"></i><span class="sent">${sentLbl(gs)}</span>`:""}</div>${body}</div>`}).join("");
+    return `<div class="grp"><div class="gh"><span class="dot ${k}" aria-hidden="true"></span><h2 class="gl">${LISTS[k]}</h2><span class="c">${openN} open</span><span class="sp"></span>${tog}${openN?(k==="punch"?sendBtn("punch:all","the whole punch list"):sendBtn(k,LISTS[k])):""}${gs?`<i class="br"></i><span class="sent">${sentLbl(gs)}</span>`:""}</div>${body}</div>`}).join("");
+  const addRow=S.adding?`<div class="addrow" role="group" aria-label="Add an item"><label class="vh" for="addlist">Which list</label><select id="addlist" data-addlist aria-label="Which list">${Object.entries(LISTS).map(([k,v])=>`<option value="${k}"${S.adding===k?" selected":""}>${v}</option>`).join("")}</select><input data-addin="${esc(S.adding)}" placeholder="Type an item, then Add" aria-label="New item" enterkeyhint="enter" value="${S.addDraft?esc(S.addDraft.v):""}"><span class="addb"><button class="btn pri" data-addgo="${esc(S.adding)}">Add</button><button class="btn ghost" data-addclose>Close</button></span><button type="button" class="lnk" data-addmenu aria-haspopup="dialog">More ways to add</button></div>`:"";
   const chip=(k,v,n,lab)=>`<button class="chip" data-f="${k}" aria-pressed="${S.filter===k&&!S.onlyLate}" aria-label="${esc(lab)}, ${n} open">${v}<span class="n" aria-hidden="true">${n}</span></button>`;
-  const chips=[chip("all","All",st.open,"All lists"),...Object.keys(LISTS).filter(k=>st.by(k)||S.filter===k).map(k=>chip(k,CHIP[k],st.by(k),LISTS[k]))].join("")
+  const used=Object.keys(LISTS).filter(k=>st.by(k)||S.filter===k);
+  const chips=(!inJob&&(used.length>1||S.filter!=="all")?[chip("all","All",st.open,"All lists"),...used.map(k=>chip(k,CHIP[k],st.by(k),LISTS[k]))].join(""):"")
     +(st.late?`<button class="chip late" data-late aria-pressed="${S.onlyLate}" aria-label="Past due only, ${st.late} item${st.late===1?"":"s"}">Past due<span class="n" aria-hidden="true">${st.late}</span></button>`:"")
-    +(st.done?`<button class="chip tgl" data-showdone aria-pressed="${S.showDone}" aria-label="Show checked items, ${st.done}">Show checked<span class="n" aria-hidden="true">${st.done}</span></button>`:"");
-  const t=st.mine.length,pct=t?Math.round(st.done/t*100):0;
-  const done=t?`<span class="dn" role="img" aria-label="${st.done} of ${t} items done"><span class="mini" aria-hidden="true"><i style="width:${pct}%"></i></span><span aria-hidden="true">${st.done}/${t} done</span></span>`:"";
-  const cx=window.DPJob&&!j.own?DPJob.ctx(sl):null;
-  let head=cx?DPJob.shell(R,cx,"lists"):j.own&&PX()?px("ownHead",j):`<header class="jtop"><div style="min-width:0"><h1>${esc(j.customer||j.street)}</h1><p class="sub">${esc(j.address||j.street||"")}${(j.jobNumbers||[]).length?" · Job "+esc(j.jobNumbers.join(", ")):""}</p></div></header>`;
-  let doneT=done;if(cx&&done&&/<nav class="jsh-sub[\s\S]*<\/nav><\/header>$/.test(head)){head=head.replace(/<nav class="jsh-sub([\s\S]*)<\/nav><\/header>$/,`<div class="jsh-subrow"><nav class="jsh-sub$1</nav>${done}</div></header>`);doneT=""}
-  const bar=`<div class="jbar" aria-hidden="true"><div class="in"><b>${esc(j.customer||j.street)}</b><span class="ad">${esc(j.street||j.address||"")}</span>${t?`<span class="dn2">${st.done} of ${t} done</span>`:""}</div></div>`;
-  return `${head}${bar}${granStatus()}
-   <section class="ftools" aria-label="List tools"><div class="chips" role="group" aria-label="Show">${chips}</div><div class="fr">${doneT}${helpBtn()}</div></section>
+    +(!inJob&&st.done?`<button class="chip tgl" data-showdone aria-pressed="${S.showDone}" aria-label="Show checked items, ${st.done}">Show checked<span class="n" aria-hidden="true">${st.done}</span></button>`:"");
+  const cx=inJob?DPJob.ctx(sl):null;
+  const head=cx?"":j.own&&PX()?px("ownHead",j):`<header class="jtop"><div style="min-width:0"><h1>${esc(j.customer||j.street)}</h1><p class="sub">${esc(j.address||j.street||"")}${(j.jobNumbers||[]).length?" · Job "+esc(j.jobNumbers.join(", ")):""}</p></div></header>`;
+  const empty=!st.mine.length?`<div class="empty">Nothing on this job's lists yet. Tap Add to start one, or Photos to add punch items from pictures.</div>`:"";
+  return `${head}${granStatus()}
+   ${cx&&!chips?"":`<section class="ftools" aria-label="List tools"><div class="chips" role="group" aria-label="Show">${chips}</div><div class="fr">${helpBtn()}</div></section>`}
    ${rev(sl)}
-   <section class="job" aria-label="Lists">${groups.replace(/<button class="emptyl"[\s\S]*?<\/button>/g,"")||`<div class="empty">Nothing past due.</div>`}${(groups.match(/<button class="emptyl"[\s\S]*?<\/button>/g)||[]).length?`<div class="emptyls"><span>Empty lists:</span>${groups.match(/<button class="emptyl"[\s\S]*?<\/button>/g).join("")}</div>`:""}</section>`}
+   <section class="job" aria-label="Lists">${addRow}${groups||(S.onlyLate?`<div class="empty">Nothing past due.</div>`:empty)}</section>`}
 function editingHere(){const a=R.activeElement;return a&&(a.tagName==="TEXTAREA"||a.tagName==="SELECT"||(a.tagName==="INPUT"&&a.type!=="checkbox"))}
 let pending=false,lastView=null;
 addEventListener("dp:hubjobs",()=>{if(!host.hidden)render()});
 function render(force){if(host.hidden)return;if(!force&&editingHere()){pending=true;return}
-  const sl=curJob();if(sl!==lastView){S.filter="all";S.onlyLate=false;S.open=null;S.adding=null;S.sel=new Set();S.exp=new Set();S.tg=new Map();lastView=sl}
+  const sl=curJob();if(sl!==lastView){S.filter="all";S.onlyLate=false;S.open=null;S.adding=null;S.sel=new Set();S.exp=new Set();S.tg=new Map();S.newOpened=false;lastView=sl}
+  if(!sl){location.replace("#hub/jobs");return}
+  if(sl==="new"){$("#main").innerHTML=`<header class="jtop"><div style="min-width:0"><a class="back" href="#hub/jobs">‹ All jobs</a><h1>New list</h1><p class="sub">A list with just a name and address: a warranty visit, an inspection walk, or a house that isn't a JobTread job yet.</p></div></header>`;
+    $("#dock").hidden=true;host.classList.remove("withdock");
+    if(!S.newOpened&&PX()&&PX().openNewList){S.newOpened=true;setTimeout(()=>{if(curJob()==="new")PX().openNewList(false)},0)}return}
+  S.embNow=emb(sl);
   const fk=focusKey(R.activeElement);const oc=R.querySelector(".ftools .chips"),cx0=oc&&sl===lastChips?oc.scrollLeft:0;lastChips=sl;
-  IDX=indexItems();try{$("#main").innerHTML=sl?jobView(sl):home()}finally{IDX=null}$("#dock").hidden=!sl||!jobOf(sl);host.classList.toggle("withdock",!!sl);
+  IDX=indexItems();try{$("#main").innerHTML=jobView(sl)}finally{IDX=null}$("#dock").hidden=!sl||!jobOf(sl);host.classList.toggle("withdock",!!sl);
   const nc=R.querySelector(".ftools .chips");if(nc){nc.scrollLeft=cx0;chipFades(nc);requestAnimationFrame(()=>chipFades(nc));if(window.ResizeObserver){if(!render.__ro)render.__ro=new ResizeObserver(es=>es.forEach(x=>chipFades(x.target)));render.__ro.observe(nc)}}
   if(fk){const el=R.querySelector(fk);if(el)try{el.focus({preventScroll:true})}catch(e){}}
   const ai=R.querySelector("[data-addin]");if(ai)ai.focus();
   jbarSync();officePoll(sl&&jobOf(sl)?sl:"");
+  if(S.embNow){const dn=jobItems(sl).filter(i=>i.done).length;if(dn!==S.lastDn){S.lastDn=dn;if(window.__dpTodoPaint)window.__dpTodoPaint()}}
   if(sl&&smartOn(sl))classify(sl)}
 let lastChips=null;
 function chipFades(el){const m=el.scrollWidth-el.clientWidth;el.classList.toggle("fl",el.scrollLeft>2);el.classList.toggle("fr",m>2&&el.scrollLeft<m-2)}
@@ -4734,9 +4784,10 @@ async function newItem(o,force){return put(mkItem(o),force)}
 const sheetOpen=id=>{$("#"+id).hidden=false;const b=$("#"+id+" .panel button");setTimeout(()=>b&&b.focus(),30)};
 R.addEventListener("click",async e=>{
   if(PX()&&PX().click&&PX().click(e))return;
-  if(e.target.closest("[data-addmenu]")){$("#addm [data-am=type]").hidden=!jobOf(curJob());sheetOpen("addm");return}
+  if(e.target.closest("[data-addnew]")){if(!jobOf(curJob()))return;S.filter="all";S.onlyLate=false;S.adding=S.adding||"punch";render(true);const i=R.querySelector("[data-addin]");if(i){i.focus({preventScroll:true});i.scrollIntoView({block:"center"})}return}
+  if(e.target.closest("[data-addmenu]")){sheetOpen("addm");return}
   const am=e.target.closest("[data-am]");if(am){$("#addm").hidden=true;const a=am.dataset.am;
-    if(a==="type"){S.filter="all";S.adding="punch";render(true);const i=R.querySelector("[data-addin]");if(i)i.scrollIntoView({block:"center"})}
+    if(a==="talk")openSheet();
     else if(a==="import")openSheet("import");else if(a==="gran")checkGranola();else if(a==="chat")openChat();return}
   if(e.target.closest("#addmClose")||e.target.id==="addm"){$("#addm").hidden=true;return}
   if(e.target.closest("[data-help]")){sheetOpen("help");return}
@@ -4749,12 +4800,9 @@ R.addEventListener("click",async e=>{
   if(e.target.closest("[data-late]")){S.onlyLate=!S.onlyLate;if(S.onlyLate)S.filter="all";render(true);return}
   if(e.target.closest("[data-import]")){openSheet("import");return}
   const f=e.target.closest("[data-f]");if(f){S.filter=f.dataset.f;S.onlyLate=false;render(true);return}
-  const ad=e.target.closest("[data-add]");if(ad){S.adding=S.adding===ad.dataset.add?null:ad.dataset.add;render(true);return}
   const ag=e.target.closest("[data-addgo]");if(ag){const inp=R.querySelector(`[data-addin="${ag.dataset.addgo}"]`);const v=inp?inp.value:(S.addDraft&&S.addDraft.key===ag.dataset.addgo?S.addDraft.v:"");addFrom(ag.dataset.addgo,v,true);return}
   if(e.target.closest("[data-addclose]")){const key=S.adding;const inp=key&&R.querySelector(`[data-addin="${key}"]`);const v=inp?inp.value:(S.addDraft&&S.addDraft.key===key?S.addDraft.v:"");S.adding=null;if(key&&String(v||"").trim())addFrom(key,v,false);else{S.addDraft=null;render(true)}return}
   const sh=e.target.closest("[data-share]");if(sh){openShare(sh.dataset.share);return}
-  const ts=e.target.closest("[data-tsel]");if(ts){const t=ts.dataset.tsel;if(S.sel.has(t))S.sel.delete(t);else S.sel.add(t);render(true);return}
-  if(e.target.closest("[data-selclear]")){S.sel=new Set();render(true);return}
   if(e.target.closest("[data-gran]")){checkGranola();return}
   if(e.target.closest("[data-chat]")){openChat();return}
   if(e.target.closest("[data-granx]")){G.msg="";render(true);return}
@@ -4780,7 +4828,7 @@ R.addEventListener("click",async e=>{
     return}
 });
 R.addEventListener("keydown",async e=>{const inp=e.target.closest&&e.target.closest("[data-addin]");if(!inp)return;
-  if(e.key==="Escape"){S.adding=null;render(true);return}
+  if(e.key==="Escape"){S.adding=null;S.addDraft=null;render(true);const b=$("#dock [data-addnew]");if(b)b.focus({preventScroll:true});return}
   if(e.key!=="Enter"||e.isComposing)return;e.preventDefault();const v=inp.value;inp.value="";await addFrom(inp.dataset.addin,v,true)});
 R.addEventListener("input",e=>{const inp=e.target.closest&&e.target.closest("[data-addin]");if(inp)S.addDraft={key:inp.dataset.addin,v:inp.value}});
 async function addFrom(key,v,keepOpen){const t=String(v||"").trim();S.addDraft=null;if(!t){if(keepOpen){const i=R.querySelector(`[data-addin="${key}"]`);if(i)i.focus()}return}
@@ -4790,6 +4838,7 @@ async function addFrom(key,v,keepOpen){const t=String(v||"").trim();S.addDraft=n
   if(!keepOpen)S.adding=null;
   if(await newItem(o,true))toast("Added to "+(trade?tradeLabel(trade)+" punch":LISTS[list]));if(keepOpen){const i=R.querySelector(`[data-addin="${key}"]`);if(i){i.value="";i.focus()}}}
 R.addEventListener("change",e=>{
+  if(e.target.matches&&e.target.matches("[data-addlist]")){const k=e.target.value;if(!LISTS[k])return;S.adding=k;const inp=R.querySelector("[data-addin]"),go=R.querySelector("[data-addgo]");if(inp){inp.dataset.addin=k;S.addDraft={key:k,v:inp.value}}if(go)go.dataset.addgo=k;return}
   if(e.target.dataset.smart!==undefined){const sl=curJob();const on=e.target.checked;S.settings[sl]=Object.assign({},S.settings[sl],{smart:on});render(true);
     toast(on?"Punch items sorted by trade":"One punch list for this job");if(S.db)col("lists_settings").doc(sl).set(Object.assign({},S.settings[sl],{smart:on,at:new Date().toISOString()})).catch(()=>{});return}
   const li=e.target.closest("li.it");
@@ -4801,10 +4850,10 @@ function nextItemId(el){const all=[...R.querySelectorAll("li.it")].filter(x=>x!=
   const after=all.find(x=>el.compareDocumentPosition(x)&Node.DOCUMENT_POSITION_FOLLOWING);const before=all.filter(x=>el.compareDocumentPosition(x)&Node.DOCUMENT_POSITION_PRECEDING).pop();const t=after||before;return t?t.dataset.i:null}
 function focusItem(id){const li=id&&liOf(id);const cb=li&&li.querySelector(".cb");if(cb){cb.focus({preventScroll:false});return true}return false}
 function setDone(it,done){const f=Object.assign({done,doneAt:done?new Date().toISOString():null},done?{}:{doneBy:null});const was={done:!!it.done,doneAt:it.doneAt||null,doneBy:it.doneBy||null};
-  if(done){S.fading.add(it.id);clearTimeout(fadeT[it.id]);fadeT[it.id]=setTimeout(()=>{const el=liOf(it.id);if(el&&!S.showDone)el.classList.add("leaving");
+  if(done){S.fading.add(it.id);clearTimeout(fadeT[it.id]);fadeT[it.id]=setTimeout(()=>{const el=liOf(it.id);if(el&&!showDoneNow())el.classList.add("leaving");
     setTimeout(()=>{const el2=liOf(it.id);const had=el2&&el2.contains(R.activeElement);const nx=had?nextItemId(el2):null;
       if(S.fading.delete(it.id))render(true);
-      if(had&&!S.showDone&&!(liOf(it.id)&&liOf(it.id).offsetParent!==null)){if(!focusItem(nx)){const u=$("#toastUndo");if(u&&!u.hidden&&$("#toast").classList.contains("on"))u.focus();else{const h=R.querySelector("h1");if(h){h.setAttribute("tabindex","-1");h.focus()}}}}},260)},1400)}
+      if(had&&!showDoneNow()&&!(liOf(it.id)&&liOf(it.id).offsetParent!==null)){if(!focusItem(nx)){const u=$("#toastUndo");if(u&&!u.hidden&&$("#toast").classList.contains("on"))u.focus();else{const h=R.querySelector("h1");if(h){h.setAttribute("tabindex","-1");h.focus()}}}}},260)},1400)}
   else{S.fading.delete(it.id);clearTimeout(fadeT[it.id])}
   upd(it.id,f,false,true).then(ok=>{if(ok)return;S.fading.delete(it.id);clearTimeout(fadeT[it.id]);if(S.items[it.id])S.items[it.id]=Object.assign({},S.items[it.id],was);render(true);focusItem(it.id);
     toast(done?"Couldn't save that check mark, so it's unchecked again.":"Couldn't reopen that item, so it's still checked off.",()=>setDone(S.items[it.id]||it,done),"Try again")});
@@ -4942,7 +4991,8 @@ function shareUnconfirm(){SH.confirm=false;shareLock(false);$("#shareSend").text
 function shareReset(){$("#shareMailBox").hidden=true;$("#shareTextBox").hidden=true;$("#shareBtns").hidden=false;SH.confirm=false;SH.busy=false;SH.texted=false;shareLock(false);$("#shareTextDone").hidden=true;$("#shareSend").textContent="Send…";$("#shareSend").disabled=false;$("#shareMsg").textContent=""}
 function sentHistory(key,ids){const sl=SH.sl||curJob();return Object.values(S.sent).filter(x=>x&&x.job===sl&&(x.key===key||(x.ids||[]).some(id=>ids.includes(id)))).sort((a,b)=>String(b.at).localeCompare(String(a.at)))}
 const viaWord=x=>x.via==="text"?"Texted":"Emailed";
-function openShare(key){const sl=curJob();if(!jobOf(sl))return;SH.sl=sl;$("#shareText").value=shareText(key,sl);SH.key=key;const [l,tr]=String(key).split(":");SH.trade=l==="punch"&&tr&&tr!=="all"&&tr!=="sel"?tr:"";shareReset();
+function openShare(key){const sl=curJob();if(!jobOf(sl))return;
+  {const [l0,t0]=String(key).split(":");if(l0==="punch"&&PX()&&PX().openPdf){PX().openPdf(sl,null,t0&&t0!=="all"?[t0]:null);return}}SH.sl=sl;$("#shareText").value=shareText(key,sl);SH.key=key;const [l,tr]=String(key).split(":");SH.trade=l==="punch"&&tr&&tr!=="all"&&tr!=="sel"?tr:"";shareReset();
   const x=shareSel(key,sl);SH.ids=x?x.its.map(i=>i.id):[];SH.trades=x&&x.groups?x.groups.map(g=>g[0]):(SH.trade?[SH.trade]:[]);SH.names={};
   const last=lastSub(key),lastT=lastSub(key,"phone");const gs=x?groupSent(x.its):null;
   $("#shareTo").value=last?last.email:"";$("#shareCc").value="";$("#shareSubj").value=$("#shareText").value.split("\n")[0];$("#shareTel").value=lastT?fmtTel(lastT.phone):"";
@@ -4991,7 +5041,7 @@ $("#shareSmsGo").addEventListener("click",()=>{setShareLinks();const v=$("#share
   $("#shareMarkText").textContent=`Mark ${n} item${n===1?"":"s"} as texted`;$("#shareTextQ").textContent=t?`Sent it to ${fmtTel(t)} in Messages?`:"Sent it in Messages? Add the number above to keep a record of who it went to.";
   $("#shareMarkText").disabled=!t||!n;$("#shareTextDone").hidden=false});
 $("#shareMarkText").addEventListener("click",()=>{const t=telDigits($("#shareTel").value);if(!t||!SH.texted)return;const name=nameForTel(t);
-  const r=recordSend("text",t,name);$("#share").hidden=true;shareReset();render(true);
+  const r=recordSend("text",t,name);tapGuard();$("#share").hidden=true;shareReset();render(true);
   toast(`Marked ${r.n} item${r.n===1?"":"s"} as texted to ${name||fmtTel(t)}.`,()=>{undoRecord(r);toast("Unmarked.")});
   r.saved.catch(e=>toast("Couldn't save who it went to. "+em(e,"your lists")))});
 $("#shareTo").addEventListener("input",()=>{clearTimeout(SH.t);const q=$("#shareTo").value.split(/[,;]/).pop().trim();if(q.length<2||/@/.test(q)||!S.mcp)return;
@@ -5008,7 +5058,7 @@ $("#shareSend").addEventListener("click",async()=>{const to=emailsIn($("#shareTo
   try{const inp={to,subject:$("#shareSubj").value||$("#shareText").value.split("\n")[0],body:$("#shareText").value,includeSignature:true};if(cc.length)inp.cc=cc;
     await call(window.__dpGMAIL||"@@SRV:gmail@@","send_message",inp,{write:true,label:"Gmail"});
     const name=nameFor(to[0]);const r=recordSend("email",to[0],name);
-    $("#share").hidden=true;shareReset();render(true);toast(`Sent to ${name||to[0]}. ${r.n} item${r.n===1?"":"s"} marked as sent.`);
+    tapGuard();$("#share").hidden=true;shareReset();render(true);toast(`Sent to ${name||to[0]}. ${r.n} item${r.n===1?"":"s"} marked as sent.`);
     r.saved.catch(e=>toast("Sent. Couldn't save who it went to. "+em(e,"your lists")))}
   catch(e){SH.busy=false;shareUnconfirm();$("#shareSend").disabled=false;msg.textContent="Couldn't send. "+em(e,"Gmail")}});
 $("#shareClose").addEventListener("click",()=>{$("#share").hidden=true});
@@ -5104,7 +5154,7 @@ $("#chatForm").addEventListener("submit",e=>{e.preventDefault();chatSend($("#cha
 $("#chatText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&window.matchMedia("(min-width:720px)").matches){e.preventDefault();chatSend($("#chatText").value)}});
 $("#chatStop").addEventListener("click",()=>{C.ctl&&C.ctl.abort()});
 $("#chatNew").addEventListener("click",()=>{if(C.busy)return;C.turns=[];C.log=[];chatPaint()});
-$("#talkOpen").addEventListener("click",openSheet);$("#talkClose").addEventListener("click",closeSheet);
+$("#talkClose").addEventListener("click",closeSheet);
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet()});
 const SHEETS={share:{close:()=>{$("#share").hidden=true}},sheet:{close:closeSheet},chat:{close:closeChat}};
 const sheetReg=(id,o)=>{SHEETS[id]=Object.assign(SHEETS[id]||{},o)};
@@ -5120,6 +5170,15 @@ new MutationObserver(ms=>{ms.forEach(m=>{const s=m.target;if(!s.classList||!s.cl
     else{const nav=s.dataset.noret;delete s.dataset.noret;sheetInert();
       const a=R.activeElement;if(nav)openers.delete(s.id);else if(!a||s.contains(a)||a.closest(".sheet[hidden]"))backTo(s.id);else openers.delete(s.id)}});
   sheetInert()}).observe(R,{subtree:true,attributes:true,attributeFilter:["hidden"]});
+let lastSheetTap=null;
+function tapGuard(){window.__dpTapGuard={until:Date.now()+450,at:lastSheetTap}}window.__dpTapGuardSet=tapGuard;
+if(!window.__dpTapGuardOn){window.__dpTapGuardOn=1;
+  const pt=e=>{const t=e.changedTouches&&e.changedTouches[0];return t?{x:t.clientX,y:t.clientY}:{x:e.clientX,y:e.clientY}};
+  const inSheet=e=>(e.composedPath?e.composedPath():[]).some(n=>n&&n.classList&&n.classList.contains("sheet")&&!n.hidden);
+  const stop=e=>{if(inSheet(e)){if(e.type!=="touchend")lastSheetTap=pt(e);return}
+    const g=window.__dpTapGuard;if(!g||Date.now()>g.until||!g.at)return;const p=pt(e);if(Math.abs(p.x-g.at.x)>40||Math.abs(p.y-g.at.y)>40)return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()};
+  ["pointerdown","click","pointerup","touchend"].forEach(k=>window.addEventListener(k,stop,true))}
 const FOCUSABLE='button,[href],input:not([type=hidden]),select,textarea,[tabindex]:not([tabindex="-1"])';
 document.addEventListener("keydown",e=>{if(host.hidden)return;const top=openSheets().pop();if(!top)return;
   if(e.key==="Escape"){if(e.defaultPrevented)return;e.preventDefault();closeOne(top);return}
@@ -5129,6 +5188,7 @@ document.addEventListener("keydown",e=>{if(host.hidden)return;const top=openShee
   if(!a||!pn.contains(a)){e.preventDefault();f[e.shiftKey?f.length-1:0].focus();return}
   if(e.shiftKey&&i===0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}});
 addEventListener("hashchange",()=>openSheets().forEach(s=>closeOne(s,true)));
+new MutationObserver(()=>{const s=$("#newl");if(s&&s.hidden&&curJob()==="new")location.replace("#hub/jobs")}).observe($("#newl"),{attributes:true,attributeFilter:["hidden"]});
 function guessList(t){t=t.toLowerCase();
   if(/\b(order|need (another|more|a few)|short|bag|box|hinges?|pulls?)\b/.test(t))return"order";
   if(/\b(waiting|still hasn'?t|hasn'?t (sent|picked)|pending|on hold)/.test(t))return"wait";
@@ -5346,13 +5406,8 @@ async function toJpeg(src,max,q){const im=await loadImg(src);const s=Math.min(1,
 const bytesOf=async b=>new Uint8Array(await b.arrayBuffer());
 
 const ownList=sl=>{const j=L().jobOf(sl);return j&&j.own?j:null};
-function newBtn(){return `<button class="gbtn" type="button" data-px="newl" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New list</button>`}
-function homeSection(stats){const {S}=L();const own=S.jobs.filter(j=>j.own);
-  if(!own.length)return `<div class="pxhint"><span>Warranty visit, inspection walk, or a house that isn't a JobTread job yet?</span><button type="button" class="lnk" data-px="newl">Start a list with just a name and address</button></div>`;
-  const card=j=>{const st=stats(j.slug);return `<a class="jc own" href="${esc(L().listHref(j.slug))}"><div><span class="kind">${esc(KINDS[j.kind]||KINDS.other)}</span><h3>${esc(j.customer||j.street)}</h3><div class="addr">${esc(j.street||j.address||"")}</div></div><div class="cnts">${st.open?`<span class="cnt"><b>${st.open}</b> open</span>`:`<span class="cnt">Nothing open</span>`}${st.done?`<span class="cnt"><b>${st.done}</b> done</span>`:""}</div></a>`};
-  return `<h2 class="sec">Other lists</h2><div class="jgrid">${own.map(card).join("")}</div>`}
 function ownHead(j){const n=L().items().filter(i=>i.job===j.slug);
-  return `<header class="jtop own"><div style="min-width:0"><span class="kind">${esc(KINDS[j.kind]||KINDS.other)}</span><h1>${esc(j.customer||j.street)}</h1><p class="sub">${esc(j.address||j.street||"")}</p></div>
+  return `<header class="jtop own"><div style="min-width:0"><a class="back" href="#hub/jobs">‹ All jobs</a><span class="kind">${esc(KINDS[j.kind]||KINDS.other)}</span><h1>${esc(j.customer||j.street)}</h1><p class="sub">${esc(j.address||j.street||"")}</p></div>
    <div class="jtopb"><button class="gbtn" type="button" data-px="editl">Edit</button><button class="gbtn" type="button" data-px="movel" title="Move these items to a JobTread job once one exists">Move to a job</button><button class="gbtn" type="button" data-px="dell">Delete list</button></div>
    ${P.delOwn===j.slug?`<div class="confirm pxconf" role="alert"><span>Delete this list and its ${n.length} item${n.length===1?"":"s"}? This can't be undone.</span><div class="row"><button class="btn danger" type="button" data-px="dellgo">Delete list</button><button class="btn ghost" type="button" data-px="dellno">Cancel</button></div></div>`:""}</header>`}
 function openNewList(edit){const j=edit?ownList(L().curJob()):null;P.newl={edit:!!j,slug:j?j.slug:null};
@@ -5364,11 +5419,11 @@ async function saveNewList(){const {S,$,col,mergeJobs,render,toast,listHref,em}=
   if(!name&&!addr){$("#newlMsg").textContent="Add a name or an address.";$("#newlName").focus();return}
   const slug=P.newl.slug||uid("own-");const old=S.own[slug]||{};
   const d=Object.assign({},old,{slug,kind,customer:name||addr,street:(addr.split(",")[0]||name).trim(),address:addr,createdAt:old.createdAt||now(),at:now()});
-  S.own[slug]=d;mergeJobs();$("#newl").hidden=true;
+  S.own[slug]=d;mergeJobs();if(window.__dpTapGuardSet)window.__dpTapGuardSet();$("#newl").hidden=true;
   if(S.db)col("lists_jobs").doc(slug).set(d).catch(e=>toast("Couldn't save the list. "+em(e,"your lists")));
   if(!P.newl.edit){location.hash=listHref(slug);toast("List started. Add items or take photos.")}else{render(true);toast("Saved")}}
 async function deleteOwn(sl){const {S,col,items,mergeJobs,toast,em}=L();const its=items().filter(i=>i.job===sl);P.delOwn=null;
-  its.forEach(i=>delete S.items[i.id]);delete S.own[sl];mergeJobs();location.hash="#lists";
+  its.forEach(i=>delete S.items[i.id]);delete S.own[sl];mergeJobs();location.hash="#hub/jobs";
   if(S.db)try{await Promise.all(its.map(i=>col("lists_items").doc(i.id).delete()).concat([col("lists_jobs").doc(sl).delete()]))}catch(e){toast("Couldn't delete everything. "+em(e,"your lists"));return}
   toast("List deleted")}
 function moveLabel(j){const st=String(j.street||String(j.address||"").split(",")[0]||"").trim();
@@ -5391,7 +5446,6 @@ const photosOf=i=>(Array.isArray(i.photos)?i.photos:[]).filter(p=>p&&p.url);
 function thumbs(i){const ph=photosOf(i);if(!ph.length)return "";const show=ph.slice(0,4);
   return `<div class="pxthumbs">${show.map((p,k)=>`<button type="button" class="pxth" data-pxlb="${esc(i.id)}" data-k="${k}" aria-label="Photo ${k+1} of ${ph.length}: ${esc(i.text)}"><img src="${esc(p.url)}" alt="" loading="lazy" decoding="async"></button>`).join("")}${ph.length>4?`<button type="button" class="pxth more" data-pxlb="${esc(i.id)}" data-k="4" aria-label="All ${ph.length} photos">+${ph.length-4}</button>`:""}</div>`}
 function editBtns(i){return `<button class="btn" type="button" data-px="photo1">${photosOf(i).length?"Add photo":"Add a photo"}</button>${i.list==="punch"&&!i.done?`<button class="btn" type="button" data-px="send1">Send…</button>`:""}`}
-function punchBtns(sl,openN){return `<button class="ib cam" type="button" data-px="photos" aria-label="Take photos for the punch list" title="Take photos: Claude sorts each one by trade and room">${CAM}</button>${openN?`<button class="ib" type="button" data-px="pdfs" title="Send by trade: PDF with photos, PDF or text" aria-label="Send the punch list by trade">${DOC}<span class="pxl">Send by trade</span></button>`:""}`}
 
 function pick(target){P.target=target;const inp=L().$("#pxIn");inp.value="";inp.click()}
 function startBatch(files){if(!P.target||!P.target.sl)P.target={sl:L().curJob()};if(!L().jobOf(P.target.sl))return;files=[...files].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)).slice(0,24);if(!files.length)return;
@@ -5463,6 +5517,20 @@ async function lbRemove(){const {S,upd,toast,$}=L();if(!P.lb.rm){P.lb.rm=true;dr
 
 const subKey=(sl,t)=>("job__"+sl+"__punch:"+t).replace(/[\/]/g,"_").slice(0,200);
 function recipFor(sl,t){const S=L().S;const ok=d=>d&&(d.email||d.phone);const a=S.subs[subKey(sl,t)],b=S.subs[t];return ok(a)?a:ok(b)?b:null}
+const rcp=t=>recipFor(P.pdf.sl,t)||(P.pdf.sugg&&P.pdf.sugg[t])||null;
+function suggestRecips(){const p=P.pdf;const {S}=L();p.sugg={};
+  for(const [t,its] of tradesIn()){if(recipFor(p.sl,t))continue;
+    const {tradeLabel,tradeOf}=L();const lab=String(tradeLabel(t,its[0])||t).toLowerCase();
+    const tagOk=w=>{const m=String(w).match(/\(([^)]*)\)/);if(!m)return t!=="general";const g=m[1].toLowerCase().trim();return g===t||lab.includes(g)||g.includes(lab)};
+    const whos=its.filter(i=>!i.done&&i.who);if(!whos.length||!whos.every(i=>tagOk(i.who)))continue;
+    const names=[...new Set(whos.map(i=>String(i.who).replace(/\s*\(.*?\)\s*/g," ").trim()).filter(Boolean))];if(names.length!==1)continue;
+    const nm=names[0],low=nm.toLowerCase();
+    const known=Object.values(S.subs).find(d=>d&&d.email&&d.name&&(!d.trade||d.trade===t)&&(d.name.toLowerCase()===low||d.name.toLowerCase().split(/\s+/)[0]===low.split(/\s+/)[0]));
+    if(known){p.sugg[t]={name:known.name,email:known.email,phone:known.phone||null,sugg:true};continue}
+    if(!S.mcp||!window.__dpJT||!window.__dpORG||nm.length<2)continue;const like="%"+nm.split(/\s+/)[0].replace(/[%_]/g,"")+"%";
+    L().call(window.__dpJT,"query",{query:{organization:{$:{id:window.__dpORG},contacts:{$:{size:6,where:{or:[["name","like",like],[["account","name"],"like",like]]}},nodes:{name:{},account:{name:{}},customFieldValues:{$:{size:4},nodes:{value:{},customField:{type:{}}}}}}}}},{label:"JobTread"})
+      .then(r=>{const em=[];(((r&&r.organization||{}).contacts||{}).nodes||[]).forEach(c=>((c.customFieldValues||{}).nodes||[]).forEach(v=>{if(v.customField&&v.customField.type==="emailAddress"&&v.value){const e=String(v.value).toLowerCase();if(!em.some(z=>z.e===e))em.push({e,n:(c.account&&c.account.name)||c.name})}}));
+        if(em.length===1&&P.pdf===p&&!recipFor(p.sl,t)){p.sugg[t]={name:`${nm} (${em[0].n})`,email:em[0].e,sugg:true};if(!p.confirm&&!p.busy)drawPdfKeep(L().R.activeElement)}}).catch(()=>{})}}
 function tradeCrew(sl,t){const r=recipFor(sl,t);if(!r||!r.name)return "";const nm=String(r.name).length>16?String(r.name).slice(0,15)+"…":r.name;return ` · ${esc(nm)}`}
 async function saveRecip(sl,t,v){const {S,col,tradeLabel,TRADES}=L();const d=Object.assign({},v,{at:now(),job:sl,trade:t},TRADES[t]?{}:{tradeLabel:tradeLabel(t)});
   S.subs[subKey(sl,t)]=d;S.subs[t]=Object.assign({},S.subs[t]||{},d);
@@ -5475,9 +5543,11 @@ function scopeItems(){const {S,items}=L();const p=P.pdf;if(!p)return [];
   return items().filter(i=>i.job===p.sl&&i.list==="punch"&&!i.done).sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt)))}
 function tradesIn(){const {tradeOf}=L();const m=new Map();scopeItems().forEach(i=>{const t=tradeOf(i);if(!m.has(t))m.set(t,[]);m.get(t).push(i)});return m}
 const nItems=n=>`${n} item${n===1?"":"s"}`;
-function openPdf(sl,ids){keepOpener();const {S}=L();P.pdf={sl,ids:ids||null,sel:new Set(),fmt:"photos",mode:"each",confirm:null,busy:false,texts:null,msg:"",edit:null};
-  const tr=[...tradesIn().keys()];const picked=!ids&&S.sel&&S.sel.size?[...S.sel].filter(t=>tr.includes(t)):[];
+function openPdf(sl,ids,trades){keepOpener();P.pdf={sl,ids:ids||null,sel:new Set(),fmt:"photos",mode:"each",via:"email",confirm:null,busy:false,texts:null,msg:"",edit:null};
+  const tr=[...tradesIn().keys()];const picked=!ids&&trades&&trades.length?trades.filter(t=>tr.includes(t)):[];
   (picked.length?picked:tr).forEach(t=>P.pdf.sel.add(t));
+  suggestRecips();
+  {const rs=[...P.pdf.sel].map(t=>recipFor(sl,t)).filter(Boolean);if(rs.length&&!rs.some(r=>r.email)&&rs.some(r=>r.phone))P.pdf.via="text"}
   if(!scopeItems().some(i=>photosOf(i).length))P.pdf.fmt="pdf";
   drawPdf();L().$("#pxp").hidden=false;{const f=L().R.querySelector("#pxpBody [data-pxsel],#pxpBody button");if(f)f.focus({preventScroll:true})}
   prefetch(scopeItems())}
@@ -5485,22 +5555,22 @@ function packages(){const p=P.pdf;const {tradeLabel}=L();const m=tradesIn();cons
   const sel=[...m.keys()].filter(t=>p.sel.has(t)).sort((a,b)=>lab(a).localeCompare(lab(b)));if(!sel.length)return [];
   const merge=(a,b)=>({name:a.name||b.name||null,email:a.email||b.email||null,phone:a.phone||b.phone||null});
   const addTo=(to,r)=>{const i=to.findIndex(x=>sameRecip(x,r));if(i<0)to.push(Object.assign({},r));else to[i]=merge(to[i],r)};
-  if(p.mode==="one"||sel.length===1){const items=sel.flatMap(t=>m.get(t));const to=[];const none=[];sel.forEach(t=>{const r=recipFor(p.sl,t);if(r)addTo(to,r);else none.push(lab(t))});
+  if(p.mode==="one"||sel.length===1){const items=sel.flatMap(t=>m.get(t));const to=[];const none=[];sel.forEach(t=>{const r=rcp(t);if(r)addTo(to,r);else none.push(lab(t))});
     return [{key:sel.join("+"),trades:sel,tradeNames:sel.map(lab),items,to,none,name:to.length===1&&to[0].name?to[0].name:sel.length===1?lab(sel[0]):"All trades",one:sel.length>1}]}
-  const gs=[];sel.forEach(t=>{const r=recipFor(p.sl,t);const g=r&&gs.find(x=>x.to[0]&&sameRecip(x.to[0],r));if(g){g.trades.push(t);g.to[0]=merge(g.to[0],r)}else gs.push({trades:[t],to:r?[Object.assign({},r)]:[]})});
+  const gs=[];sel.forEach(t=>{const r=rcp(t);const g=r&&gs.find(x=>x.to[0]&&sameRecip(x.to[0],r));if(g){g.trades.push(t);g.to[0]=merge(g.to[0],r)}else gs.push({trades:[t],to:r?[Object.assign({},r)]:[]})});
   return gs.map(g=>({key:g.trades.join("+"),trades:g.trades,tradeNames:g.trades.map(lab),items:g.trades.flatMap(t=>m.get(t)),to:g.to,name:g.to[0]&&g.to[0].name?g.to[0].name:g.trades.map(lab).join(", ")}))}
 const toLine=r=>r?[r.name,r.email,r.phone&&L().fmtTel(r.phone)].filter(Boolean).join(" · "):"";
 function drawPdf(){const {$,tradeLabel}=L();const p=P.pdf;if(!p)return;const j=L().jobOf(p.sl)||{};const m=tradesIn();const its=scopeItems();
   $("#pxpTitle").textContent=p.ids?(its.length===1?"Send this item":"Send these items"):"Send the punch list";
   const busy=p.busy,conf=p.confirm;const pks=packages();const selN=[...m.keys()].filter(t=>p.sel.has(t)).length;
-  const row=t=>{const g=m.get(t);const on=p.sel.has(t);const r=recipFor(p.sl,t);const lab=tradeLabel(t,g[0]);const ph=g.reduce((s,i)=>s+photosOf(i).length,0);
+  const row=t=>{const g=m.get(t);const on=p.sel.has(t);const r=rcp(t);const lab=tradeLabel(t,g[0]);const ph=g.reduce((s,i)=>s+photosOf(i).length,0);
     const ed=p.edit===t?`<div class="credit" role="group" aria-label="Who gets ${esc(lab)}">
       <div class="g2"><label class="fld">Name <input id="rcName" type="text" value="${esc(r&&r.name||"")}" placeholder="e.g. Luis or Ace Electric" autocomplete="off"></label>
       <label class="fld">Email <input id="rcEmail" type="email" inputmode="email" value="${esc(r&&r.email||"")}" placeholder="For email"></label>
       <label class="fld">Mobile <input id="rcTel" type="tel" inputmode="tel" value="${esc(r&&r.phone?L().fmtTel(r.phone):"")}" placeholder="For texts"></label></div>
       <p class="pmsg" id="rcMsg" role="status"></p><div class="row"><button type="button" class="btn pri" data-px="rcsave">Save</button><button type="button" class="btn ghost" data-px="rccancel">Cancel</button></div></div>`:"";
     return `<li class="crew${on?" on":""}"><button type="button" role="checkbox" class="crck" data-pxsel="${esc(t)}" aria-checked="${on}" aria-label="${esc(lab)}, ${nItems(g.length)}"><span class="box" aria-hidden="true"></span></button>
-      <div class="crb"><b>${esc(lab)}</b><span class="tr">${nItems(g.length)}${ph?` · ${ph} photo${ph===1?"":"s"}`:""}</span><span class="ct">${r?esc(toLine(r)):"Who gets it: not set yet"}</span></div>
+      <div class="crb"><b>${esc(lab)}</b><span class="tr">${nItems(g.length)}${ph?` · ${ph} photo${ph===1?"":"s"}`:""}</span><span class="ct">${r?esc(toLine(r))+(r.sugg?` <em class="sugg">Filled in for ${esc(r.name||"")}. Check it before you send.</em>`:""):"Who gets it: not set yet"}</span></div>
       <button type="button" class="btn ghost sm" data-pxto="${esc(t)}" aria-expanded="${p.edit===t}" aria-label="${r?"Change who gets":"Add who gets"} ${esc(lab)}">${r?"Change":"Add who"}</button>${ed}</li>`};
   const merged=p.mode==="each"?pks.filter(pk=>pk.trades.length>1):[];
   const texts=p.texts?`<div class="txts"><p class="lab">Text each one</p><ul>${p.texts.map((t,k)=>`<li><div><b>${esc(t.name)}</b><span>${esc(t.phone?L().fmtTel(t.phone):"No mobile saved")} · ${nItems(t.ids.length)}</span></div>${t.phone?`<a class="btn pri" href="${esc(smsHref(t))}" data-pxsms="${k}">Open Messages</a>`:`<button type="button" class="btn" data-pxcopy="${k}">Copy</button>`}${t.opened&&!t.marked?`<button type="button" class="btn" data-pxmark="${k}">Mark as texted</button>`:t.marked?`<span class="ok">Texted</span>`:""}</li>`).join("")}</ul><p class="pn">${p.texts.some(t=>t.link)?"Anyone with a link can open its PDF in Google Drive (view only). ":""}Opening Messages isn't proof it went, so mark each one once you've sent it.</p><div class="row"><button type="button" class="btn ghost" data-px="back">Back</button></div></div>`:"";
@@ -5511,9 +5581,11 @@ function drawPdf(){const {$,tradeLabel}=L();const p=P.pdf;if(!p)return;const j=L
    <p class="lab">Send as</p><div class="seg three" role="radiogroup" aria-label="Send as">${Object.entries({photos:"PDF with photos",pdf:"PDF, no photos",text:"Text only"}).map(([k,v])=>`<button type="button" role="radio" data-pxfmt="${k}" aria-checked="${p.fmt===k}">${v}</button>`).join("")}</div>
    ${selN>1?`<div class="seg" role="radiogroup" aria-label="How many"><button type="button" role="radio" data-pxmode="each" aria-checked="${p.mode==="each"}">One for each person<small>Only their trades</small></button><button type="button" role="radio" data-pxmode="one" aria-checked="${p.mode==="one"}">One for everything<small>All checked trades together</small></button></div>`:""}
    ${merged.length?`<p class="snote">${merged.map(pk=>`${esc(pk.tradeNames.length>2?pk.tradeNames.slice(0,-1).join(", ")+" and "+pk.tradeNames.slice(-1):pk.tradeNames.join(" and "))} go to ${esc(pk.name)}, so they're sent together.`).join(" ")}</p>`:""}
-   <p class="pmsg" role="status">${esc(p.msg||"")}</p>${confHtml}
-   <div class="row acts"><button type="button" class="btn pri" data-px="email" ${dis?"disabled":""}>Email…</button><button type="button" class="btn" data-px="text" ${dis?"disabled":""}>Text…</button>${p.fmt==="text"?`<button type="button" class="btn" data-px="copy" ${dis?"disabled":""}>Copy</button>`:`<button type="button" class="btn" data-px="save" ${dis?"disabled":""}>Save PDF</button>`}</div>`}
-   ${texts}`}
+   <p class="lab">Send by</p><div class="seg" role="radiogroup" aria-label="Send by">${[["email","Email"],["text","Text"]].map(([k,v])=>`<button type="button" role="radio" data-pxvia="${k}" aria-checked="${p.via===k}">${v}</button>`).join("")}</div>
+   <div class="pxfoot"><p class="pmsg" role="status">${esc(p.msg||"")}</p>${confHtml}
+   <div class="row acts"><button type="button" class="btn pri" data-px="send" ${dis?"disabled":""}>Send…</button>${p.fmt==="text"?`<button type="button" class="btn ghost" data-px="copy" ${dis?"disabled":""}>Copy</button>`:`<button type="button" class="btn ghost" data-px="save" ${dis?"disabled":""}>Save PDF</button>`}</div></div>`}
+   ${texts}`;
+  const cf=L().R.querySelector("#pxpBody .pxconf");if(cf)requestAnimationFrame(()=>{try{cf.scrollIntoView({block:"nearest"})}catch(e){}})}
 const fileName=(pk,j)=>`Punch list - ${pk.name} - ${(j.street||j.address||j.customer||"job")}`.replace(/[\\/:*?"<>|]+/g," ").replace(/\s+/g," ").trim().slice(0,120)+".pdf";
 let logoP=null;
 function logo(){if(logoP)return logoP;logoP=(async()=>{const el=document.querySelector("a.logo img");if(!el||!el.src)return null;try{const r=await toJpeg(el.src,600,.92);return {bytes:await bytesOf(r.blob),w:r.w,h:r.h}}catch(e){return null}})();return logoP}
@@ -5576,7 +5648,7 @@ async function go(){const p=P.pdf;const c=p.confirm;if(!c||p.busy)return;const {
           inp.attachments=[{content:window.DPPdf.b64(f.bytes),filename:f.name,mimeType:"application/pdf"}]}
         await call(GMAIL,"send_message",inp,{write:true,label:"Gmail",timeoutMs:90000});
         record(pk,"email",to[0],pk.to[0]&&pk.to[0].name);done.push(pk)}
-      p.confirm=null;p.busy=false;p.msg="";L().$("#pxp").hidden=true;render(true);backToOpener();toast(`Sent ${c.pks.length} email${c.pks.length===1?"":"s"}.`);return}
+      p.confirm=null;p.busy=false;p.msg="";if(window.__dpTapGuardSet)window.__dpTapGuardSet();L().$("#pxp").hidden=true;render(true);backToOpener();toast(`Sent ${c.pks.length} email${c.pks.length===1?"":"s"}.`);return}
     if(c.kind==="text"){const folder=window.DP_CONFIG&&window.DP_CONFIG.driveFolder;const out=[];let n=0;
       for(const pk of c.pks){p.msg=`Saving ${++n} of ${c.pks.length} to Drive…`;drawPdf();const f=await buildPdf(pk);
         const a=Object.assign({title:f.name,base64Content:window.DPPdf.b64(f.bytes),contentMimeType:"application/pdf",disableConversionToGoogleType:true},folder?{parentId:folder}:{});
@@ -5589,7 +5661,7 @@ async function go(){const p=P.pdf;const c=p.confirm;if(!c||p.busy)return;const {
   catch(e){p.busy=false;p.confirm=null;
     if(done.length){done.forEach(pk=>pk.trades.forEach(t=>p.sel.delete(t)));L().render(true);p.msg=`Sent ${done.length} of ${c.pks.length} (${done.map(x=>x.name).join(", ")}). The rest didn't go: ${em(e,"Gmail")}`}
     else p.msg="Couldn't finish. "+em(e,c.kind==="email"?"Gmail":"Google Drive");
-    drawPdf();focusIn('[data-px="email"]')}}
+    drawPdf();focusIn('[data-px="send"]')}}
 const focusIn=sel=>{const n=L().R.querySelector(sel.split(",").map(x=>"#pxp "+x).join(","));if(n&&!n.disabled){n.focus({preventScroll:true});return true}return false};
 const fileId=r=>{const v=r&&(r.payload||r);return v&&(v.id||(v.file&&v.file.id)||(v.result&&v.result.id))||null};
 
@@ -5603,7 +5675,6 @@ function click(e){const t=e.target;const a=t.closest&&t.closest("[data-px]");con
   if(k==="dellgo"){deleteOwn(sl);return true}
   if(k==="movel"){openMove();return true}
   if(k==="photos"){pick({sl});return true}
-  if(k==="pdfs"){openPdf(sl,null);return true}
   const li=t.closest("li.it");const it=li&&S.items[li.dataset.i];
   if(k==="photo1"&&it){pick({sl:it.job,item:it.id});return true}
   if(k==="send1"&&it){openPdf(it.job,[it.id]);return true}
@@ -5635,12 +5706,13 @@ function wire(){const api=L();if(!api){setTimeout(wire,50);return}const {R,$}=ap
   $("#pxp").addEventListener("click",e=>{if(e.target.id==="pxp"){if(!(P.pdf&&P.pdf.busy)){$("#pxp").hidden=true;backToOpener()}return}pdfClick(e)});
   $("#pxp").addEventListener("keydown",e=>{if(e.key==="Escape"&&!(P.pdf&&P.pdf.busy)){e.preventDefault();$("#pxp").hidden=true;backToOpener();return}if(e.key==="Enter"&&e.target.closest&&e.target.closest(".credit input")){e.preventDefault();const b=L().R.querySelector('#pxp [data-px="rcsave"]');if(b)b.click()}});}
 function drawPdfKeep(el){const R=L().R;const pn=R.querySelector("#pxp .panel");const top=pn?pn.scrollTop:0;
-  const key=el&&(el.dataset.pxsel?`[data-pxsel="${el.dataset.pxsel}"]`:el.dataset.pxmode?`[data-pxmode="${el.dataset.pxmode}"]`:el.dataset.pxfmt?`[data-pxfmt="${el.dataset.pxfmt}"]`:el.dataset.pxto?`[data-pxto="${el.dataset.pxto}"]`:el.dataset.px?`[data-px="${el.dataset.px}"]`:null);
+  const key=el&&(el.dataset.pxsel?`[data-pxsel="${el.dataset.pxsel}"]`:el.dataset.pxmode?`[data-pxmode="${el.dataset.pxmode}"]`:el.dataset.pxfmt?`[data-pxfmt="${el.dataset.pxfmt}"]`:el.dataset.pxvia?`[data-pxvia="${el.dataset.pxvia}"]`:el.dataset.pxto?`[data-pxto="${el.dataset.pxto}"]`:el.dataset.px?`[data-px="${el.dataset.px}"]`:null);
   drawPdf();if(pn)pn.scrollTop=top;if(key){const n=R.querySelector("#pxp "+key);if(n&&!n.disabled)n.focus({preventScroll:true})}}
 function pdfClick(e){const t=e.target;const p=P.pdf;if(!p)return;const R=L().R;
   const s=t.closest("[data-pxsel]");if(s){const k=s.dataset.pxsel;if(p.sel.has(k))p.sel.delete(k);else p.sel.add(k);p.confirm=null;p.msg="";drawPdfKeep(s);return}
   const m=t.closest("[data-pxmode]");if(m){p.mode=m.dataset.pxmode;p.confirm=null;drawPdfKeep(m);return}
   const f=t.closest("[data-pxfmt]");if(f){p.fmt=f.dataset.pxfmt;p.confirm=null;drawPdfKeep(f);return}
+  const vb=t.closest("[data-pxvia]");if(vb){p.via=vb.dataset.pxvia;p.confirm=null;p.msg="";drawPdfKeep(vb);return}
   const to=t.closest("[data-pxto]");if(to){p.edit=p.edit===to.dataset.pxto?null:to.dataset.pxto;p.confirm=null;drawPdfKeep(to);if(p.edit)focusIn("#rcName");return}
   const sms=t.closest("[data-pxsms]");if(sms){const x=p.texts[+sms.dataset.pxsms];x.opened=true;try{navigator.clipboard.writeText(x.body).catch(()=>{})}catch(err){}const kk=sms.dataset.pxsms;setTimeout(()=>{drawPdf();focusIn(`[data-pxmark="${kk}"]`)},300);return}
   const cp=t.closest("[data-pxcopy]");if(cp){const x=p.texts[+cp.dataset.pxcopy];x.opened=true;try{navigator.clipboard.writeText(x.body).then(()=>L().toast("Copied. Paste it into a text."),()=>{})}catch(err){}const kk=cp.dataset.pxcopy;drawPdf();focusIn(`[data-pxmark="${kk}"]`);return}
@@ -5651,11 +5723,12 @@ function pdfClick(e){const t=e.target;const p=P.pdf;if(!p)return;const R=L().R;
     if(email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.textContent="That email doesn't look right.";focusIn("#rcEmail");return}
     if(!email&&!phone){msg.textContent="Add an email or a mobile number.";focusIn("#rcEmail");return}
     const tt=p.edit;p.edit=null;saveRecip(p.sl,tt,{name:name||null,email:email||null,phone:phone||null});p.confirm=null;drawPdf();focusIn(`[data-pxto="${tt}"]`);L().render(true);return}
-  if(k==="back"){p.texts=null;p.msg="";drawPdf();focusIn('[data-px="text"]');return}
-  if(k==="email"||k==="text"||k==="save"||k==="copy"){act(k);return}
+  if(k==="back"){p.texts=null;p.msg="";drawPdf();focusIn('[data-px="send"]');return}
+  if(k==="send"){act(p.via==="text"?"text":"email");return}
+  if(k==="save"||k==="copy"){act(k);return}
   if(k==="go"){go();return}
-  if(k==="nogo"){p.confirm=null;p.msg="";drawPdf();focusIn('[data-px="email"]');return}}
-window.__dpPunch={newBtn,homeSection,ownHead,thumbs,editBtns,punchBtns,tradeCrew,click,_P:P,_openPdf:openPdf,_packages:packages,_buildPdf:buildPdf};
+  if(k==="nogo"){p.confirm=null;p.msg="";drawPdf();focusIn('[data-px="send"]');return}}
+window.__dpPunch={openNewList,openPdf,ownHead,thumbs,editBtns,tradeCrew,click,_P:P,_openPdf:openPdf,_packages:packages,_buildPdf:buildPdf};
 wire();setTimeout(caps,1500);
 })();
 </script>
@@ -5744,10 +5817,10 @@ function mOf(j){const TARGET=MTG().target,GOOD=MTG().good;const c=costOf(j);cons
 const pct=n=>n==null||isNaN(n)?"—":(Math.round(n*10)/10)+"%";
 function mBadge(m,long){if(m.na)return `<span class="mbadge na">No approved price</span>`;return `<span class="mbadge ${m.cls}" title="Margin if the job finishes on budget. Target ${window.DPOrg.margin().target}%, ${window.DPOrg.margin().good}% still good.">${pct(m.fc)} margin${long?" · "+m.label:""}</span>`}
 
-const JTABS=[["overview","Overview"],["open","Open items"],["lists","Lists"],["done","Completed"],["selections","Selections"],["documents","Plans & docs"],["permits","Permits"],["orders","Purchases"],["costing","Costing"],["timeline","Timeline"]];
-const JL=Object.fromEntries(JTABS);
-const JGROUPS=[["overview","Overview",["overview"]],["todo","To do",["open","lists","done"]],["selections","Selections",["selections"]],["docs","Documents",["documents","permits"]],["money","Money",["orders","costing"]],["timeline","Timeline",["timeline"]]];
-const LEGACY_TAB={log:"timeline",inbox:"overview",todo:"open",docs:"documents",money:"orders"};
+const JTABS=[["overview","Overview"],["todo","To do"],["money","Money"],["files","Files"]];
+const JL={...Object.fromEntries(JTABS),history:"History"};
+const LEGACY_TAB={log:"history",timeline:"history",inbox:"overview",selections:"overview",open:"todo",lists:"todo",done:"todo",docs:"files",documents:"files",permits:"files",orders:"money",costing:"money"};
+const tabOf=t=>JL[t]?t:LEGACY_TAB[t]||"overview";
 const jslug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
 const drCards=()=>{try{return (window.__drCards&&window.__drCards())||[]}catch(e){return[]}};
 const drHub=c=>{try{return window.__hubSlugOf?window.__hubSlugOf(c):null}catch(e){return null}};
@@ -5786,92 +5859,77 @@ function jctxNow(key){
   const openN=mine.reduce((n,c)=>n+(c.items||[]).filter(i=>!drDone(i)).length,0);
   return {slug:canon,id:jidOf(canon),key,hub,cards:mine,list,inv:!!(hub&&isInv(hub)),name:(hub&&hub.customer)||(mine[0]&&mine[0].customer)||(list&&(list.customer||list.street))||canon,
     address:addr,nums,pm:(hub&&hub.pm)||(list&&list.pm)||"",phase:(hub&&hub.phase)||"",openN,listN:list?listOpen(canon):0,doneN:drDoneN(canon,mine.map(c=>c.id))}}
-function jhref(c,tab){if(tab==="open")return c.cards.length?"#job-"+c.id:null;if(tab==="done")return c.doneN?"#job-"+c.id+"--done":null;if(tab==="lists")return c.list?"#lists/"+c.id:null;
+function jhref(c,tab){tab=tabOf(tab);
+  if(tab==="todo")return c.list?"#lists/"+c.id:(c.cards.length||c.doneN)?"#job-"+c.id:null;
   return c.hub?"#hub/job-"+c.id+(tab==="overview"?"":"--"+tab):null}
-const hubHref=(j,tab)=>"#hub/job-"+jidOf(j.slug)+(tab&&tab!=="overview"?"--"+tab:"");
-function jcounts(c){const n={open:c.openN,lists:c.listN};const j=c.hub;if(j){n.selections=rows(j,"selections").length;n.documents=rows(j,"documents").length;n.permits=rows(j,"permits").length;n.orders=(j.bills||[]).length+openPipe(j).length}return n}
-function jcss(root){if(!root)return;jbind(root);if(root!==document&&window.DPShadowCss)DPShadowCss(root)}
+const hubHref=(j,tab)=>{tab=tabOf(tab);return "#hub/job-"+jidOf(j.slug)+(tab!=="overview"?"--"+tab:"")};
+function jcss(root){if(!root)return;if(root!==document&&window.DPShadowCss)DPShadowCss(root)}
 const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
-const CHEVD='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-function jgroups(c,tab){return JGROUPS.map(([g,l,ks])=>{const av=ks.filter(k=>jhref(c,k));if(!av.length)return null;return{g,l:av.length>1?l:JL[av[0]],ks:av,on:av.includes(tab),href:jhref(c,av[0])}}).filter(Boolean)}
-function jshell(root,c,tab){jcss(root);
-  const n=jcounts(c);const gs=jgroups(c,tab);const cur=gs.find(g=>g.on);const cnt=g=>g.ks.reduce((t,k)=>t+(+n[k]||0),0);
-  const back=c.inv?["#hub/investment","All investment properties"]:["#hub/jobs","All jobs"];
+function jfacts(j){if(!j)return [];const out=[];
+  (j.jobs||[]).filter(x=>x&&x.number&&x.id).forEach(x=>out.push(`<a href="https://app.jobtread.com/jobs/${esc(x.id)}" target="_blank" rel="noopener" aria-label="Job #${esc(x.number)} in JobTread (opens in a new tab)">JobTread #${esc(x.number)}</a>`));
+  if(CORE.safeUrl(j.driveFolder))out.push(lnk(j.driveFolder,"Drive folder"));
+  const our=(S.archive["folder__"+safe(j.slug)]||{}).url;if(CORE.safeUrl(our))out.push(lnk(our,"Our copies"));
+  if(j.designer)out.push("Designer "+esc(j.designer));
+  if((j.team||[]).length)out.push("Team "+j.team.map(esc).join(", "));
+  if(j.syncedAt)out.push("Synced "+esc(nice(j.syncedAt)));
+  return out}
+function jshell(root,c,tab){jcss(root);tab=tabOf(tab);
+  const n=(+c.openN||0)+(+c.listN||0);
+  const back=c.inv?"#hub/investment":"#hub/jobs",backL=c.inv?"All investment properties":"All jobs";
   const meta=[c.address,c.nums.length?"Job "+c.nums.join(", "):"",c.pm?"PM: "+c.pm:"",c.phase].filter(Boolean);
-  const lab=g=>`${esc(g.l)}${cnt(g)?`<span class="n">${cnt(g)}</span>`:""}`;
-  const two=!!(cur&&cur.ks.length>1);
-  const row=gs.length>1?`<div class="jsh-row"><nav class="jsh-tabs" aria-label="Job sections">${gs.map(g=>`<a href="${esc(g.href)}" data-raw data-jtab="${g.g}"${g.on?(two?' class="on" aria-current="true"':' class="on" aria-current="page"'):""}>${lab(g)}</a>`).join("")}</nav>`+
-    `<div class="jsh-more" hidden><button type="button" class="jsh-mb" aria-expanded="false" aria-label="More job sections">More${CHEVD}</button><div class="jsh-menu" hidden>${gs.map(g=>`<a href="${esc(g.href)}" data-raw data-jm="${g.g}">${lab(g)}</a>`).join("")}</div></div></div>`:"";
-  const sub=cur&&cur.ks.length>1?`<nav class="jsh-sub subtabs" aria-label="${esc(cur.l)}">${cur.ks.map(k=>`<a href="${esc(jhref(c,k))}" data-raw data-jsub="${k}"${k===tab?' aria-current="page"':""}>${esc(JL[k])}${n[k]?`<span class="n">${n[k]}</span>`:""}</a>`).join("")}</nav>`:"";
-  return `<header class="jsh" data-job="${esc(c.id)}"><a class="jsh-back" href="${back[0]}" data-raw>${CHEV}${back[1]}</a><h1>${esc(c.name)}</h1>${meta.length?`<p class="jsh-meta">${meta.map(x=>`<span>${esc(x)}</span>`).join("")}</p>`:""}${row}${sub}</header>`}
+  const facts=tab==="overview"?jfacts(c.hub):[];
+  const ts=JTABS.map(([k,l])=>({k,l,href:jhref(c,k)})).filter(x=>x.href);const on=tab==="history"?"overview":tab;
+  const row=ts.length>1?`<div class="jsh-row"><nav class="jsh-tabs" aria-label="Job sections">${ts.map(({k,l,href})=>`<a href="${esc(href)}" data-raw data-jtab="${k}"${k===on?(tab==="history"?' class="on"':' class="on" aria-current="page"'):""}>${esc(l)}${k==="todo"&&n?`<span class="n">${n}</span>`:""}</a>`).join("")}</nav></div>`:"";
+  const short=[c.nums.length?"#"+c.nums[0]:"",c.name].filter(Boolean).join(" · ");
+  return `<header class="jsh" data-job="${esc(c.id)}" data-short="${esc(short)}"><a class="jsh-back" href="${back}" data-raw>${CHEV}<span class="jsh-bl">${backL}</span></a><h1>${esc(c.name)}</h1>${meta.length?`<p class="jsh-meta">${meta.map(x=>`<span>${esc(x)}</span>`).join("")}</p>`:""}${row}${facts.length?`<p class="jsh-facts">${facts.map(x=>`<span>${x}</span>`).join("")}</p>`:""}</header>`}
 function jfades(nav){const m=nav.scrollWidth-nav.clientWidth;nav.classList.toggle("fl",nav.scrollLeft>2);nav.classList.toggle("fr",m>2&&nav.scrollLeft<m-2)}
-function jfit(row){const nav=row.querySelector("nav.jsh-tabs"),more=row.querySelector(".jsh-more");if(!nav||!more||!row.clientWidth)return;
-  const as=[...nav.querySelectorAll("a[data-jtab]")];const fits=()=>nav.scrollWidth<=nav.clientWidth+1;
-  as.forEach(a=>{if(a.hidden)a.hidden=false});if(!more.hidden)more.hidden=true;
-  if(!fits()){more.hidden=false;for(let i=as.length-1;i>=0&&!fits();i--){if(!as[i].classList.contains("on"))as[i].hidden=true}}
-  const hid=new Set(as.filter(a=>a.hidden).map(a=>a.dataset.jtab));
-  more.querySelectorAll(".jsh-menu a").forEach(a=>{const h=!hid.has(a.dataset.jm);if(a.hidden!==h)a.hidden=h});
-  if(!hid.size){more.hidden=true;jmenu(more,false)}}
-function jmenu(m,open,focus){const b=m.querySelector(".jsh-mb"),menu=m.querySelector(".jsh-menu");if(!b||!menu)return;
-  if(b.getAttribute("aria-expanded")!==String(!!open))b.setAttribute("aria-expanded",String(!!open));if(menu.hidden===!!open)menu.hidden=!open;
-  if(open&&focus){const f=menu.querySelector("a:not([hidden])");if(f)f.focus()}}
-function jbind(root){const t=root===document?document:root;if(!t||t.__jshB)return;t.__jshB=1;
-  t.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".jsh-mb");
-    t.querySelectorAll(".jsh-more").forEach(m=>{if(!b||!m.contains(b))jmenu(m,false)});
-    if(b){e.preventDefault();jmenu(b.closest(".jsh-more"),b.getAttribute("aria-expanded")!=="true",e.detail===0)}});
-  t.addEventListener("keydown",e=>{const m=e.target.closest&&e.target.closest(".jsh-more");if(!m)return;const b=m.querySelector(".jsh-mb");const open=b.getAttribute("aria-expanded")==="true";
-    if(e.key==="Escape"&&open){e.preventDefault();jmenu(m,false);b.focus()}
-    else if(e.key==="ArrowDown"||e.key==="ArrowUp"){const ls=[...m.querySelectorAll(".jsh-menu a:not([hidden])")];if(!ls.length)return;e.preventDefault();
-      if(!open){jmenu(m,true,true);return}const i=ls.indexOf(e.target.closest("a"));ls[(i+(e.key==="ArrowDown"?1:-1)+ls.length)%ls.length].focus()}});
-  t.addEventListener("focusout",e=>{const m=e.target.closest&&e.target.closest(".jsh-more");if(m&&e.relatedTarget&&!m.contains(e.relatedTarget))jmenu(m,false)})}
-function jsync(scope){if(!scope||!scope.querySelectorAll)return;scope.querySelectorAll(".jsh-row").forEach(jfit);
-  scope.querySelectorAll("nav.jsh-tabs,nav.jsh-sub").forEach(nav=>{if(!nav.clientWidth)return;
+function jsync(scope){if(!scope||!scope.querySelectorAll)return;
+  scope.querySelectorAll("nav.jsh-tabs").forEach(nav=>{if(!nav.clientWidth)return;
   if(!nav.__jw){nav.__jw=1;nav.addEventListener("scroll",()=>jfades(nav),{passive:true})}
-  if(!nav.__jc){nav.__jc=1;const a=nav.querySelector('a.on,[aria-current="page"]');if(a&&nav.scrollWidth>nav.clientWidth){const pad=28,x=a.offsetLeft-nav.scrollLeft;
+  if(!nav.__jc){nav.__jc=1;const a=nav.querySelector('a.on');if(a&&nav.scrollWidth>nav.clientWidth){const pad=28,x=a.offsetLeft-nav.scrollLeft;
     if(x<pad||x+a.offsetWidth>nav.clientWidth-pad){const l=a.offsetLeft-(nav.clientWidth-a.offsetWidth)/2;nav.style.scrollSnapType="none";nav.scrollLeft=Math.max(0,Math.min(l,nav.scrollWidth-nav.clientWidth));requestAnimationFrame(()=>{nav.style.scrollSnapType=""})}}}
-  if(nav.classList.contains("jsh-tabs"))jfades(nav)})}
+  jfades(nav)})}
 function jfromHash(h){h=String(h||"").replace(/^#/,"");let key=null,tab=null;
-  if(h.startsWith("hub/job-")){const p=h.slice(8).split("--");key=p[0];tab=LEGACY_TAB[p[1]]||p[1]||"overview"}
-  else if(h.startsWith("job-")){key=h.slice(4);tab="open";const m=key.match(/^(.*)--done$/);if(m){key=m[1];tab="done"}}
-  else if(h.startsWith("lists/")){try{key=decodeURIComponent(h.slice(6))}catch(e){key=h.slice(6)}tab="lists"}
+  if(h.startsWith("hub/job-")){const p=h.slice(8).split("--");key=p[0];tab=tabOf(p[1]||"overview")}
+  else if(h.startsWith("job-")){key=h.slice(4).replace(/--done$/,"");tab="todo"}
+  else if(h.startsWith("lists/")){try{key=decodeURIComponent(h.slice(6))}catch(e){key=h.slice(6)}tab="todo"}
   if(!key)return null;const c=jctx(key);return c?{...c,tab}:null}
-function jnotFound(root,msg){jcss(root);return `<header class="jsh"><a class="jsh-back" href="#hub/jobs" data-raw>${CHEV}All jobs</a><h1>Job not found</h1><p class="jsh-meta">${esc(msg)}</p></header>`}
-window.DPJob={notFound:jnotFound,ctx:jctx,shell:jshell,href:jhref,sync:jsync,fromHash:jfromHash,css:jcss,id:jidOf,slugOf:slugOfId,tabs:JTABS.map(x=>x.slice()),groups:JGROUPS.map(([g,l,ks])=>[g,l,ks.slice()])};
+function jnotFound(root,msg){jcss(root);return `<header class="jsh"><a class="jsh-back" href="#hub/jobs" data-raw>${CHEV}<span class="jsh-bl">All jobs</span></a><h1>Job not found</h1><p class="jsh-meta">${esc(msg)}</p></header>`}
+window.DPJob={notFound:jnotFound,ctx:jctx,shell:jshell,href:jhref,sync:jsync,fromHash:jfromHash,css:jcss,id:jidOf,slugOf:slugOfId,tabOf,tabs:JTABS.map(x=>x.slice())};
 
 function renderTabs(){
-  const r=route();let cur=r;if(r.startsWith("job-")){const jc=jctx(r.slice(4).split("--")[0]);cur=jc&&jc.inv?"investment":"jobs"}
-  const inbox=S.jobs.reduce((n,j)=>n+inboxOf(j).length,0);
-  const orders=S.jobs.reduce((n,j)=>n+openPipe(j).length,0);
-  const t=[["jobs","Projects",S.jobs.filter(j=>!isInv(j)).length],...(S.jobs.some(isInv)?[["investment","Investment Properties",S.jobs.filter(isInv).length]]:[]),["inbox","To sort",inbox],["orders","Open orders",orders],["log","Source log",0],["costing","Job costing",0],["howto","How it works",0]];
+  const r=route();const cur=r.startsWith("job-")?"jobs":r;
+  const t=[["jobs","Jobs",S.jobs.filter(j=>!isInv(j)).length],["log","Source log",0],["costing","Job costing",0],["howto","How it works",0]];
   $("#tabs").innerHTML=t.map(([h,l,n])=>`<a href="#${h}"${cur===h?' aria-current="page"':""}>${l}${n?`<span class="n">${n}</span>`:""}</a>`).join("");
 }
 function editing(){const el=HROOT.activeElement;return el&&/^(TEXTAREA|SELECT|INPUT)$/.test(el.tagName)&&el.type!=="search"&&!el.dataset.selsort&&el.closest("#view")}
 let pending=false;
 HROOT.addEventListener("focusout",()=>setTimeout(()=>{if(pending&&!editing()){pending=false;keepDrafts(render)}},0));
 function render(){ROWS=new Map();try{renderNow()}finally{ROWS=null}}
+const OLD_PAGES={investment:()=>{S.inv=true},orders:()=>{S.xorders=true;S.inv=false},inbox:()=>{S.need="sort";S.xorders=false;S.inv=false}};
 function renderNow(){
+  {const r0=route();if(OLD_PAGES[r0]){OLD_PAGES[r0]();history.replaceState(null,"","#hub/jobs");if(window.__dpSyncHash)window.__dpSyncHash()}}
   renderTabs();paintRefresh();if(window.__dpTabs)window.__dpTabs();
   if(editing()){pending=true;return}
   const last=S.jobs.map(j=>j.syncedAt).filter(Boolean).sort().pop();
   $("#meta").textContent=S.loaded?`${S.jobs.length} project${S.jobs.length===1?"":"s"}${last?" · synced "+nice(last):""}${S.stale?" · may be out of date":""}`:"Loading…";
   if(!S.loaded&&!S.jobs.length){$("#view").innerHTML=loadBox();return}
   const r=route();let h;
-  if(r.startsWith("job-")){const [key,t]=r.slice(4).split("--");let tab=LEGACY_TAB[t]||t||"overview";if(!JTABS.some(x=>x[0]===tab))tab="overview";
+  if(r.startsWith("job-")){const [key,t]=r.slice(4).split("--");const tab=tabOf(t||"overview");
     const c=jctx(key);
-    if(c&&(tab==="open"||tab==="lists"||tab==="done"||!c.hub)){const to=jhref(c,tab)||jhref(c,"open")||jhref(c,"lists");if(to){location.replace(to);return}}
-    if(c&&c.hub&&(c.id!==key||tab!==(t||"overview"))){history.replaceState(null,"",jhref(c,tab))}
+    if(c&&t==="done"&&window.DPTodo)window.DPTodo.set(true);
+    if(c&&(tab==="todo"||!c.hub)){const to=jhref(c,"todo")||jhref(c,"overview");if(to&&to!==location.hash){location.replace(to);return}}
+    if(c&&c.hub&&(c.id!==key||tab!==(t||"overview"))){if(t==="selections")S.goSel=true;if(t==="permits")S.goPermits=true;if(t==="orders")S.goOrders=true;history.replaceState(null,"",jhref(c,tab))}
     h=viewJob(c&&c.hub?c.slug:key,tab)}
-  else if(r==="inbox")h=viewInbox();
-  else if(r==="orders")h=viewOrders();
   else if(r==="costing")h=viewCosting();
   else if(r==="log")h=viewLog();
   else if(r==="howto")h=viewHow();
-  else if(r==="investment")h=viewJobs(true);
-  else h=viewJobs(false);
+  else h=viewJobs();
   const keepQ=HROOT.querySelector("[data-selq]");
   $("#view").innerHTML=h;
   if(keepQ){const nq=$("#view").querySelector("[data-selq]");if(nq){keepQ.value=nq.value;nq.replaceWith(keepQ)}}
   jsync($("#view"));
+  const go=S.goSel?"#jsel":S.goPermits?"#jpermits":S.goOrders?"#jorders":"";if(go){S.goSel=S.goPermits=S.goOrders=false;const el=$("#view").querySelector(go);if(el)requestAnimationFrame(()=>{if(window.DPScrollTo)DPScrollTo(el);else el.scrollIntoView()})}
 }
 function head(t,sub,crumb){return `<div class="ph"><div>${crumb||""}<h1>${esc(t)}</h1>${sub?`<p>${sub}</p>`:""}</div></div>`}
 function srcTag(r){return `<span class="src">${esc(SRC[r._src||r.source]||r._src||r.source||"")}${r.date?" · "+esc(nice(r.date)):""}</span>`}
@@ -5932,8 +5990,10 @@ function stagePill(j){const x=stageRec(j);if(!x)return"";const f=String(x.r.f||"
   if(x.k==="none")return `<span class="pill">No stage</span>`;
   return f?`<span class="pill${x.k==="active"?" ok":" warn"}">${esc(f)}</span>`:""}
 const needsSel=j=>rows(j,"selections").some(s=>!["approved","installed","ordered"].includes(String(s.status||"").toLowerCase()));
-function viewJobs(inv){
-  const all=S.jobs;const kind=inv?"investment":"jobs";const pool0=all.filter(j=>!!isInv(j)===!!inv);
+function viewJobs(){
+  if(S.inv&&!S.jobs.some(isInv))S.inv=false;
+  const inv=!!S.inv;
+  const all=S.jobs;const pool0=all.filter(j=>!!isInv(j)===!!inv);
   if(!all.length)return head("Projects","")+(CORE&&CORE.get("hub:jobs").status==="error"?CORE.errorBox(CORE.get("hub:jobs").err,"hub:jobs",{label:"Project Hub"}):`<div class="empty">No projects yet. The first sync adds your active Design Pro jobs here, with selections, plans, permits, orders and costs pulled from email, JobTread, Granola and texts.</div>`);
   const hasMine=!inv&&pool0.some(isMine);const role=window.DPR&&window.DPR.role;
   const scope=hasMine?(S.scope||(role==="pm"?"mine":"all")):"all";
@@ -5944,18 +6004,19 @@ function viewJobs(inv){
   const phases=[...new Set(pool0.map(j=>j.phase).filter(Boolean))];
   if(!phases.includes(S.filter)&&S.filter!=="all")S.filter="all";
   const hay=j=>[j.customer,j.address,(j.jobs||[]).map(x=>x.number).join(" "),j.designer,pmsOf(j).join(" "),j.name,j.slug].join(" ").toLowerCase();
-  const list=(q?pool0.filter(j=>allWords(hay(j),q)):pool.filter(j=>(S.filter==="all"||j.phase===S.filter)&&(!S.need||needsSel(j))))
+  const sortAll=S.jobs.filter(j=>inboxOf(j).length>0);
+  const list=(q?pool0.filter(j=>allWords(hay(j),q)):S.need==="sort"?sortAll:pool.filter(j=>(S.filter==="all"||j.phase===S.filter)&&(!S.need||needsSel(j))))
     .sort((a,b)=>(inboxOf(b).length-inboxOf(a).length)||String(a.customer).localeCompare(b.customer));
   const tb=pool.reduce((s,j)=>s+costOf(j).b,0),ta=pool.reduce((s,j)=>s+costOf(j).a,0);
   const sel=pool.reduce((n,j)=>n+rows(j,"selections").filter(s=>!["approved","installed","ordered"].includes(String(s.status||"").toLowerCase())).length,0);
   const selJobs=pool.filter(needsSel).length;
-  const sortN=pool.reduce((n,j)=>n+inboxOf(j).length,0);
+  const sortN=S.jobs.reduce((n,j)=>n+inboxOf(j).length,0);
   const asOf=pool.map(asOfOf).filter(Boolean).sort().pop();
   const tiles=[`<div class="kpi"><b>${pool.length}</b><span>${inv?"Investment properties":(()=>{const onlyAct=stgOn&&stgPick.size===1&&stgPick.has("active");return scope==="mine"?(onlyAct?"My active projects":"My projects shown"):(onlyAct?"Active client projects":"Client projects shown")})()}</span></div>`];
   if(sel)tiles.push(`<button type="button" class="kpi crit" data-need="sel" aria-pressed="${S.need==="sel"}"><b>${sel}</b><span>Selections not yet approved${S.need==="sel"?" · showing these jobs":""}</span></button>`);
-  if(sortN)tiles.push(`<a class="kpi" href="#inbox"><b>${sortN}</b><span>Items to sort</span></a>`);
+  if(sortN)tiles.push(`<button type="button" class="kpi" data-need="sort" aria-pressed="${S.need==="sort"}"><b>${sortN}</b><span>Items to sort${S.need==="sort"?" · showing these jobs":""}</span></button>`);
   if(tb||ta)tiles.push(`<a class="kpi" href="#costing"><b>${money(ta)}</b><span>Spent of ${money(tb)} budgeted<span class="ks">JobTread${asOf?" · "+esc(nice(asOf)):""}</span></span></a>`);
-  const line=[plural(pool.length,inv?"property":"project",inv?"properties":"projects"),sel?`<button type="button" class="linkb" data-need="sel" aria-pressed="${S.need==="sel"}">${plural(sel,"selection")} to approve</button>`:"",sortN?`<a href="#inbox">${sortN} to sort</a>`:"",tb||ta?`<a href="#costing">${money(ta)} of ${money(tb)} spent</a>`:""].filter(Boolean);
+  const line=[plural(pool.length,inv?"property":"project",inv?"properties":"projects"),sel?`<button type="button" class="linkb" data-need="sel" aria-pressed="${S.need==="sel"}">${plural(sel,"selection")} to approve</button>`:"",sortN?`<button type="button" class="linkb" data-need="sort" aria-pressed="${S.need==="sort"}">${sortN} to sort</button>`:"",tb||ta?`<a href="#costing">${money(ta)} of ${money(tb)} spent</a>`:""].filter(Boolean);
   const scopeChips=hasMine?`<div class="chips" role="group" aria-label="Whose jobs">${[["mine","My jobs"],["all","All jobs"]].map(([k,l])=>`<button class="chip" data-scope="${k}" aria-pressed="${scope===k}">${l}</button>`).join("")}</div>`:"";
   const stageChips=`<div class="chips stg-chips" role="group" aria-label="Job stage">${STG.filter(([k])=>k==="active"||stgN[k]||stgPick.has(k)).map(([k,l])=>`<button type="button" class="chip" data-stg="${k}" aria-pressed="${stgPick.has(k)}">${l}${stgOn?` <span class="cn">${stgN[k]||0}</span>`:""}</button>`).join("")}</div>`;
   const hidden=stgOn&&!q?pool0.filter(j=>(scope!=="mine"||isMine(j))&&!stageShown(j)).length:0;
@@ -5965,33 +6026,39 @@ function viewJobs(inv){
     :stg.state==="error"?`<div class="note fnote" role="status"><span>Couldn't check job stages in JobTread, so every job is showing.</span> <button type="button" class="act" data-dpretry="${esc(stg.key)}">Try again</button></div>`
     :hidden?`<p class="small stg-load">${plural(hidden,"job")} hidden by the stage buttons above. Search finds any job.</p>`:"";
   const phaseChips=phases.length>1?`<div class="chips" role="group" aria-label="Phase">${["all",...phases].map(p=>`<button class="chip" data-filter="${esc(p)}" aria-pressed="${S.filter===p}">${p==="all"?"All phases":esc(p)}</button>`).join("")}</div>`:"";
-  return head(inv?"Investment properties":"Jobs",inv?"Investment properties and flips: selections, plans, permits, orders and costs.":"Everything for each client job in one place: selections, plans, permits, orders and costs.")+
-  `<div class="toolbar jtools"><input class="search" id="q" type="search" placeholder="Search any job" value="${esc(S.q)}" aria-label="Search all jobs">${inv?"":stageChips}${scopeChips}${phaseChips}</div>${inv?"":stgNote}
+  const others=inv||S.filter!=="all"||S.need?"":otherJobs(q);
+  const xN=S.jobs.reduce((n,j)=>n+openPipe(j).length,0),invN=S.jobs.filter(isInv).length;
+  const viewChips=invN||xN||S.xorders?`<div class="chips" role="group" aria-label="Show">${invN?`<button type="button" class="chip" data-inv="1" aria-pressed="${inv}">Investment <span class="cn">${invN}</span></button>`:""}${xN||S.xorders?`<button type="button" class="chip" data-xorders="1" aria-pressed="${!!S.xorders}">Open orders <span class="cn">${xN}</span></button>`:""}</div>`:"";
+  const newList=`<a class="act" href="#lists/new" data-raw aria-label="New list: start a list with just a name and address">+ New list</a>`;
+  if(S.xorders)return `<div class="ph"><div><h1>Jobs</h1><p>Material requests, quotes and orders across every job that haven't been delivered yet. Tap a job to see its Money tab.</p></div><div class="ph-acts">${newList}</div></div>`+
+    `<div class="toolbar jtools"><input class="search" id="q" type="search" placeholder="Search any job" value="${esc(S.q)}" aria-label="Search all jobs">${viewChips}</div>`+ordersAll(q);
+  return `<div class="ph"><div><h1>${inv?"Investment properties":"Jobs"}</h1><p>${inv?"Investment properties and flips: selections, plans, permits, orders and costs.":"Every client job: selections, plans, permits, orders and costs."}</p></div><div class="ph-acts">${newList}</div></div>`+
+  `<div class="toolbar jtools"><input class="search" id="q" type="search" placeholder="Search any job" value="${esc(S.q)}" aria-label="Search all jobs">${inv?"":stageChips}${viewChips}${scopeChips}${phaseChips}</div>${inv?"":stgNote}
   <section class="kpis jhero" aria-label="Totals">${tiles.join("")}</section><p class="jline" aria-label="Totals">${line.join('<span aria-hidden="true"> · </span>')}${(()=>{const sy=pool.map(j=>j.syncedAt||"").filter(Boolean).sort().pop();const d=asOf||sy;return d?` <span class="src">JobTread, ${esc(nice(String(d).slice(0,10)))}</span>`:pool.length?` <span class="src">Not synced yet</span>`:""})()}</p>
-  ${S.need==="sel"?`<div class="note fnote" role="status"><span>Showing ${plural(list.length,"job")} with selections to approve.</span> <button type="button" class="act" data-need="">Show all</button></div>`:""}
+  ${S.need?`<div class="note fnote" role="status"><span>Showing ${plural(list.length,"job")} with ${S.need==="sort"?"items to sort, whatever stage, PM or chip is picked above (open a job: they're on its Overview)":"selections to approve"}.</span> <button type="button" class="act" data-need="">Show all</button></div>`:""}
   ${inv?"":archNote("all",null)}${(()=>{const m=S.jobs.reduce((c,j)=>c+manualArch(j).length,0);return m?`<div class="note">${plural(m,"file")} need${m===1?"s":""} saving by hand (too large or not shared with us). They're marked "Save by hand" on each job's Plans &amp; docs tab.</div>`:""})()}
   <h2 class="vh">${inv?"Properties":"Projects"}</h2>
   <div class="jobs">${list.map(j=>{const c=costOf(j);const bpct=c.b?Math.min(100,c.a/c.b*100):0;const ib=inboxOf(j).length;
     const sel=rows(j,"selections"),ap=sel.filter(s=>["approved","ordered","installed"].includes(s.status)).length;
     const docs=rows(j,"documents").length,ords=rows(j,"orders").length;const ao=asOfOf(j);
     return `<article class="jcard"><h2><a class="jlink" href="${esc(hubHref(j))}" data-raw>${esc(j.customer)}</a></h2><span class="addr">${esc(j.address)}</span>${pmTag(j)}
-    <div class="foot">${(j.jobs||[]).map(x=>`<span class="jobno">#${esc(x.number)}</span>`).join("")}${(()=>{const sp=inv?"":stagePill(j);return sp||(j.phase?`<span class="pill acc">${esc(j.phase)}</span>`:"")})()}${j.designer?`<span class="pill">${esc(j.designer)}</span>`:""}${ib?`<span class="pill crit">${ib} to sort</span>`:""}${(()=>{const o=window.DPX&&window.DPX.openFor(j.slug);const n=o?o.items.length:0;const ln=((window.__listItems&&window.__listItems())||[]).filter(x=>x.job===j.slug&&!x.done).length;return (n?`<span class="pill acc">${plural(n,"open item")}</span>`:"")+(ln?`<span class="pill">${ln} on lists</span>`:"")})()}</div>
-    <div class="small">${sel.length?`${ap}/${sel.length} selections approved`:"No selections yet"} · ${plural(docs,"doc")} · ${plural(ords,"order")}</div>
-    ${c.b?`<div class="bar${c.a>c.b?" over":""}"><i style="width:${bpct.toFixed(1)}%"></i></div><div class="mrow"><span class="small">${money(c.a)} spent of ${money(c.b)} budget</span>${c.p?mBadge(mOf(j)):""}</div>${c.p?`<div class="small">Approved price ${money(c.p)} incl. change orders</div>`:""}<div class="src">JobTread job costing${ao?" · "+esc(nice(ao)):""}</div>`:`<div class="small">${j.syncedAt?"No approved budget yet":"Waiting for first sync"}</div>`}</article>`}).join("")||`<div class="empty">${q?"No job matches that search.":stgOn&&pool0.some(j=>(scope!=="mine"||isMine(j))&&!stageShown(j))&&!pool.length?`No jobs at the checked stages. <button type="button" class="act" data-stgall="1">Show every stage</button>`:scope==="mine"&&S.filter==="all"&&!S.need?`None of the jobs list you as PM. <button type="button" class="act" data-scope="all">Show all jobs</button>`:"No projects match."}</div>`}</div>
-  ${inv||S.filter!=="all"||scope==="mine"||S.need?"":otherJobs(q)}`;
+    <div class="foot">${(j.jobs||[]).map(x=>`<span class="jobno">#${esc(x.number)}</span>`).join("")}${(()=>{const sp=inv?"":stagePill(j);return sp||(j.phase?`<span class="pill acc">${esc(j.phase)}</span>`:"")})()}${j.designer?`<span class="pill">${esc(j.designer)}</span>`:""}${ib?`<span class="pill crit">${ib} to sort</span>`:""}${(()=>{const o=window.DPX&&window.DPX.openFor(j.slug);const n=o?o.items.length:0;const li=((window.__listItems&&window.__listItems())||[]).filter(x=>x.job===j.slug);const ln=li.filter(x=>!x.done).length,dn=li.length-ln,late=li.filter(x=>!x.done&&x.due&&x.due<CORE.day(0)).length;return (n?`<span class="pill acc">${plural(n,"open item")}</span>`:"")+(li.length?`<span class="pill">${ln} on lists · ${dn} of ${li.length} done</span>`:"")+(late?`<span class="pill crit">${late} past due</span>`:"")})()}</div>
+    <div class="small">${sel.length?`${ap}/${sel.length} selections approved`:"No selections yet"} · ${plural(docs,"doc")}</div>
+    ${c.b?`<div class="bar${c.a>c.b?" over":""}"><i style="width:${bpct.toFixed(1)}%"></i></div><div class="mrow"><span class="small">${money(c.a)} spent of ${money(c.b)} budget</span>${c.p?mBadge(mOf(j)):""}</div>${c.p?`<div class="small">Approved price ${money(c.p)} incl. change orders</div>`:""}<div class="src">JobTread job costing${ao?" · "+esc(nice(ao)):""}</div>`:`<div class="small">${j.syncedAt?"No approved budget yet":"Waiting for first sync"}</div>`}</article>`}).join("")||`<div class="empty">${q?(others?"No project record matches that search. The matches below have none yet.":"No job matches that search."):stgOn&&pool0.some(j=>(scope!=="mine"||isMine(j))&&!stageShown(j))&&!pool.length?`No jobs at the checked stages. <button type="button" class="act" data-stgall="1">Show every stage</button>`:scope==="mine"&&S.filter==="all"&&!S.need?`None of the jobs list you as PM. <button type="button" class="act" data-scope="all">Show all jobs</button>`:"No projects match."}</div>`}</div>
+  ${others}`;
 }
 function otherJobs(q){
   const by=new Map();
   drCards().forEach(c=>{const hs=drHub(c);if(hs&&job(hs))return;const open=(c.items||[]).filter(i=>!drDone(i));if(!open.length)return;
     const key=hs||jslug(c.id);const o=by.get(key)||{slug:key,name:c.customer,address:c.address||"",job:c.job||"",open:0,urgent:false,kinds:{},list:0};
     o.open+=open.length;o.urgent=o.urgent||open.some(i=>i.urgent||i.aging);open.forEach(i=>o.kinds[i.kind]=(o.kinds[i.kind]||0)+1);if(!o.address&&c.address)o.address=c.address;by.set(key,o)});
-  listJobs().forEach(l=>{if(job(l.slug))return;const n=listOpen(l.slug);const o=by.get(l.slug);if(o){o.list=n;return}if(!n)return;
-    by.set(l.slug,{slug:l.slug,name:l.customer||l.street||l.slug,address:l.address||l.street||"",job:(l.jobNumbers||[]).length?"Job "+l.jobNumbers.join(", "):"",open:0,urgent:false,kinds:{},list:n,listOnly:true})});
+  listJobs().forEach(l=>{if(job(l.slug))return;const n=listOpen(l.slug);const o=by.get(l.slug);if(o){o.list=n;return}if(!n&&!l.own)return;
+    by.set(l.slug,{slug:l.slug,name:l.customer||l.street||l.slug,address:l.address||l.street||"",job:(l.jobNumbers||[]).length?"Job "+l.jobNumbers.join(", "):l.own?"Other list":"",open:0,urgent:false,kinds:{},list:n,listOnly:true,own:!!l.own})});
   const KL={email:["email","emails"],text:["text","texts"],meeting:["meeting item","meeting items"],waiting:["waiting on others","waiting on others"],delivery:["delivery","deliveries"],money:["payment","payments"],jobtread:["JobTread task","JobTread tasks"],estimate:["estimate","estimates"]};
   const list=[...by.values()].filter(o=>!q||allWords([o.name,o.address,o.job].join(" "),q)).sort((a,b)=>(b.urgent-a.urgent)||(b.open-a.open)||String(a.name).localeCompare(b.name));
   if(!list.length)return"";
   const kinds=o=>Object.entries(o.kinds).sort((a,b)=>b[1]-a[1]).map(([k,n])=>n+" "+(KL[k]?KL[k][n===1?0:1]:k));
-  return `<section class="others" aria-labelledby="oth-h" data-nodpd><h2 id="oth-h">Clients, prospects and team</h2><p class="small" style="margin:-4px 0 12px">Open items with no project record yet. Tap one to see what's open.</p><div class="box"><ul class="list olist">${list.map(o=>`<li><a class="orow" href="${o.listOnly?"#lists/"+esc(jidOf(o.slug)):"#job-"+esc(jidOf(o.slug))}" data-raw><div class="body"><b>${esc(o.name)}</b><span class="small">${esc([o.address,o.job].filter(Boolean).join(" · "))}</span><span class="small">${esc([...kinds(o),o.list?o.list+" on lists":""].filter(Boolean).join(" · "))}</span></div><span class="ocnt">${o.urgent?`<span class="pill crit">Urgent</span>`:""}<span class="n" aria-label="${o.open+o.list} open">${o.open||o.list}</span></span><span class="chev" aria-hidden="true">›</span></a></li>`).join("")}</ul></div></section>`}
+  return `<section class="others" aria-labelledby="oth-h" data-nodpd><h2 id="oth-h">Clients, prospects and other lists</h2><p class="small" style="margin:-4px 0 12px">Open items and lists with no project record yet. Tap one to see what's open.</p><div class="box"><ul class="list olist">${list.map(o=>`<li><a class="orow" href="${o.own?"#lists/"+esc(encodeURIComponent(o.slug)):o.listOnly?"#lists/"+esc(jidOf(o.slug)):"#job-"+esc(jidOf(o.slug))}" data-raw><div class="body"><b>${esc(o.name)}</b><span class="small">${esc([o.address,o.job].filter(Boolean).join(" · "))}</span><span class="small">${esc([...kinds(o),o.list?o.list+" on lists":""].filter(Boolean).join(" · "))}</span></div><span class="ocnt">${o.urgent?`<span class="pill crit">Urgent</span>`:""}<span class="n" aria-label="${o.open+o.list} open">${o.open||o.list}</span></span><span class="chev" aria-hidden="true">›</span></a></li>`).join("")}</ul></div></section>`}
 
 let notFoundRetry=0;
 function viewJob(slug,tab){
@@ -6000,21 +6067,18 @@ function viewJob(slug,tab){
     return jnotFound(HROOT,"This link may be out of date, or the job isn't in your Project Hub yet. Find it under All jobs.")}
   notFoundRetry=0;
   let body;
-  if(tab==="selections")body=recordBar(j)+selectionsView(j,["Item","Type","Choice","Status","By","Source"],r=>{const n=(r.history||[]).filter(x=>x.choice).length;return [H(`<b class="selitem">${esc(r.item||"")}</b>${r.area?`<div class="small">${esc(r.area)}</div>`:""}`),H(`<span class="pill stype">${esc(selType(r))}</span>`),H(`<b>${esc(r.choice||"Not chosen yet")}</b>${r.note?`<div class="small">${esc(r.note)}</div>`:""}<div class="acts">${(r.history||[]).length>1?`<button class="act" data-hist="${esc(r.id)}" aria-expanded="${!!S.open[r.id]}">${n>1?`Changed ${n-1}× · `:""}History (${r.history.length})</button>`:""}${S.canWrite&&S.db&&!r._dismissed?`<button class="act" data-chg="${esc(j.slug)}" data-id="${esc(r.id)}" aria-label="Log a change: ${esc((r.area?r.area+" ":"")+(r.item||""))}">Log a change</button>`:""}</div>`),H(statusSel(j,r,SEL_STATUS,"selections")),r.by,H(srcTag(r)+linkOf(r))]},r=>(S.open[r.id]?histHtml(r):"")+chgForm(j,r));
-  else if(tab==="documents")body=docsView(j);
-  else if(tab==="permits")body=jtPermits(j)+`<h2 class="srch">Found in email and meetings by the nightly sync</h2>`+tableView(j,"permits",["Permit","Type","Status","Inspections / notes","Source"],r=>[H(`<b>${esc(r.number||"—")}</b>`),r.type,H(stPill(r.status)),H(`${esc(r.inspections||"")}${r.note?`<div class="small">${esc(r.note)}</div>`:""}`),H(srcTag(r)+linkOf(r))],[1])+addForm(j,"permits");
-  else if(tab==="orders")body=purchasesView(j);
-  else if(tab==="costing")body=costingJob(j);
-  else if(tab==="timeline")body=timeline(j);
+  if(tab==="files")body=jsec("jdocs","Plans &amp; docs",docsView(j))+jsec("jpermits","Permits",jtPermits(j)+`<h3 class="srch">Found in email and meetings by the nightly sync</h3>`+tableView(j,"permits",["Permit","Type","Status","Inspections / notes","Source"],r=>[H(`<b>${esc(r.number||"—")}</b>`),r.type,H(stPill(r.status)),H(`${esc(r.inspections||"")}${r.note?`<div class="small">${esc(r.note)}</div>`:""}`),H(srcTag(r)+linkOf(r))],[1])+addForm(j,"permits"));
+  else if(tab==="money")body=moneyView(j);
+  else if(tab==="history")body=jsec("jhistory","History",`<p class="small jsecp">Events, selections, documents, permits and orders on this job, newest first, each with a link to where it came from.</p>`+timeline(j));
   else body=overview(j);
   return jshell(HROOT,c,tab)+body;
 }
-function drItems(j){return window.DPX&&window.DPX.openFor?window.DPX.openFor(j.slug):null}
+const jsec=(id,title,inner)=>`<section class="jsec" data-nodpd id="${id}" aria-labelledby="${id}-h"><h2 class="jsech" id="${id}-h">${title}</h2>${inner}</section>`;
+function moneyView(j){const pipe=pipeRows(j,!!S.showHidden[j.slug]);const on=openPipe(j).length;
+  return (on?`<p class="jjump"><button type="button" class="linkb" data-jumpto="jorders">${plural(on,"open order")} ↓</button></p>`:"")+costingJob(j)+jsec("jorders","Orders",pipeView(j,pipe)+hiddenBar(j,["orders"])+addForm(j,"orders"))+jsec("jpurch","Purchases",buyView(j))}
 function sitePanel(j){let xs=[];try{xs=window.__dpSiteFor?window.__dpSiteFor(j.slug)||[]:[]}catch(e){}if(!xs.length)return"";
   const href=window.__dpSiteHref?window.__dpSiteHref(j.slug):"#sites";
   return `<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">On site</b><a class="small" href="${esc(href)}" data-raw aria-label="Site schedule for this job">Site schedule</a></div><ul class="list sslist">${xs.slice(0,6).map(x=>`<li class="${x.status?"st-"+esc(x.status):""}"><div class="body"><p><span class="ss-wh">${esc(x.day)}${x.time?" · "+esc(x.time):""}</span> · ${esc(x.who)}${x.co?` <span class="small">(${esc(x.co)})</span>`:""}${x.what?": "+esc(x.what):""}${x.tag?`<em class="ss-tag${x.status==="cancelled"?"":" warn"}">${esc(x.tag)}</em>`:""}</p></div></li>`).join("")}</ul>${xs.length>6?`<p class="small" style="padding:0 18px 12px">+${xs.length-6} more on the site schedule</p>`:""}</section>`}
-function drPanel(j){const r=drItems(j);if(!r||!(r.items||[]).length)return"";const its=r.items;
-  return `<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Open items</b><a class="small" href="#job-${esc(jidOf(j.slug))}" data-raw>See all ›</a></div><ul class="list drlist">${its.slice(0,6).map(i=>`<li><div class="body"><p>${esc(i.text)}</p><span class="pill${i.urgent?" crit":""}">${esc(i.urgent?"urgent":(i.kind||"item"))}</span>${i.who?` <span class="small">${esc(i.who)}</span>`:""}${i.date?` <span class="small">· ${esc(i.date)}</span>`:""}</div></li>`).join("")}</ul>${its.length>6?`<p class="small" style="padding:0 18px 12px">+${its.length-6} more on the Open items tab</p>`:""}</section>`}
 function refreshScope(){const r=route();if(!r.startsWith("job-"))return null;const c=jctx(r.slice(4).split("--")[0]);return c&&c.hub?c.slug:null}
 function lastSync(slug){if(slug){const j=job(slug);return Date.parse(j&&j.syncedAt||"")||0}return Math.max(0,...S.jobs.map(j=>Date.parse(j.syncedAt||"")||0))}
 function paintRefresh(){const b=$("#refresh");if(!b)return;const r=S.refresh;const sl=refreshScope();
@@ -6083,11 +6147,12 @@ function photosUrl(j){const u=j.photosUrl||j.companycamUrl||(j.companycam&&j.com
 function quickActions(j){
   const ph=phoneOf(j);const st=jtIdOf(j)&&CORE?CORE.get(jtKey(j)):null;
   const looking=!ph&&st&&(st.status==="loading"||(st.status==="idle"&&S.jtAsked[jtKey(j)]===1));
-  const btn=(k,label,href,ext,title)=>(href=/^sms:[+0-9]*$/.test(href||"")?href:CORE.safeUrl(href))?`<a class="jbtn" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':""} data-raw${title?` title="${esc(title)}"`:""}>${ic(k)}<span>${label}</span></a>`:`<button type="button" class="jbtn" disabled title="${esc(title||"")}">${ic(k)}<span>${label}</span></button>`;
-  const noPh=looking?"Looking up the client's phone…":"No client phone in JobTread yet";
+  const btn=(k,label,href,ext,title)=>(href=/^sms:[+0-9]*$/.test(href||"")?href:CORE.safeUrl(href))?`<a class="jbtn" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':""} data-raw${title?` title="${esc(title)}"`:""}>${ic(k)}<span>${label}</span></a>`:"";
+  const bs=[ph?btn("call","Call","tel:"+telOf(ph.phone)):"",ph?btn("text","Text","sms:"+telOf(ph.phone)):"",btn("dir","Directions",j.address?mapsUrl(j.address):"",true,j.address?"Directions to "+j.address:""),btn("photo","Photos",photosUrl(j),true,"Job photos in CompanyCam")].filter(Boolean);
   const line=ph?`<p class="jph"><span class="who">${esc(ph.name||j.customer||"Client")}</span><span class="num" data-phone>${esc(ph.phone)}</span><button type="button" class="act" data-copyphone="${esc(ph.phone)}" aria-label="Copy ${esc(ph.phone)}">Copy</button></p>`
-    :`<p class="jph none" role="status">${esc(noPh)}${st&&st.status==="error"&&!looking?` <button type="button" class="linkb" data-dpretry="${esc(jtKey(j))}">Try again</button>`:""}</p>`;
-  return `<section class="jact" aria-label="Contact and site"><div class="jact-row">${btn("call","Call",ph?"tel:"+telOf(ph.phone):"",false,ph?"":noPh)}${btn("text","Text",ph?"sms:"+telOf(ph.phone):"",false,ph?"":noPh)}${btn("dir","Directions",j.address?mapsUrl(j.address):"",true,j.address?"Directions to "+j.address:"No address on this job")}${btn("photo","Photos",photosUrl(j),true,"Job photos in CompanyCam")}</div>${line}</section>`}
+    :looking?`<p class="jph none" role="status">Looking up the client's phone…</p>`
+    :st&&st.status==="error"?`<p class="jph none" role="status">Couldn't look up the client's phone in JobTread. <button type="button" class="linkb" data-dpretry="${esc(jtKey(j))}">Try again</button></p>`:"";
+  return `<section class="jact" aria-label="Contact and site"><div class="jact-row" style="--n:${bs.length}">${bs.join("")}</div>${line}</section>`}
 function jtPermits(j){if(!jtIdOf(j)||!CORE)return"";const st=jtInfo(j);const board=window.DPOPS&&window.DPOPS.has&&window.DPOPS.has("permits");
   const headH=`<div class="box-h"><b class="bt" role="heading" aria-level="2">From JobTread</b>${board?`<a class="small" href="#permits" data-raw>Permits board</a>`:""}</div>`;
   if(!st||st.status==="idle"||(st.status==="loading"&&!st.data))return CORE.demo&&(!st||st.status==="idle")?"":`<section class="box jtp">${headH}<p class="small pad" role="status">Checking JobTread for permit dates…</p></section>`;
@@ -6102,35 +6167,56 @@ function jtPermits(j){if(!jtIdOf(j)||!CORE)return"";const st=jtInfo(j);const boa
   const when=st.at?new Date(st.at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
   return `<section class="box jtp">${headH}${any?`<dl class="facts">${out.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`:`<p class="small pad">No permit dates on this job in JobTread yet. Add them to the job's location in JobTread and they show here and on the Permits board.</p>`}<p class="src pad">Live from JobTread${when?" · checked "+esc(when):""}</p></section>`}
 function sumStrip(j){const c=costOf(j),m=mOf(j);let cal=null;try{cal=window.__drCalFor?window.__drCalFor({customer:j.customer,address:j.address}):null}catch(e){}
+  if(cal&&cal.past)cal=null;
   const cells=[];
   const ao=asOfOf(j);
   if(c.b){const p=Math.min(100,c.a/c.b*100);cells.push(`<div class="sc"><span class="lab">Budget used</span><b>${pct(c.a/c.b*100)}</b><div class="bar${c.a>c.b?" over":""}" role="img" aria-label="${esc(pct(c.a/c.b*100))} of budget spent"><i style="width:${p.toFixed(1)}%"></i></div><span class="small">${money(c.a)} of ${money(c.b)}</span><span class="src">JobTread${ao?" · "+esc(nice(ao)):""}</span></div>`)}
   if(c.p)cells.push(`<div class="sc"><span class="lab">Approved price</span><b>${money(c.p)}</b><span class="small">Includes change orders</span></div>`);
-  if(!m.na)cells.push(`<a class="sc" href="${esc(hubHref(j,"costing"))}" data-raw><span class="lab">Margin</span><b class="${m.cls}">${pct(m.fc)}</b><span class="mbadge ${m.cls}">${esc(m.label)}</span></a>`);
-  if(j.pm)cells.push(`<div class="sc"><span class="lab">Project manager</span><b class="t">${esc(j.pm)}</b></div>`);
+  if(!m.na)cells.push(`<a class="sc" href="${esc(hubHref(j,"money"))}" data-raw><span class="lab">Margin</span><b class="${m.cls}">${pct(m.fc)}</b><span class="mbadge ${m.cls}">${esc(m.label)}</span></a>`);
   if(cal)cells.push(`<div class="sc"><span class="lab">${esc(cal.day||"Next on the calendar")}</span><b class="t">${esc(cal.time||"")}</b><span class="small">${esc(cal.title||"")}</span></div>`);
   if(!cells.length)return `<p class="small sumnone">${j.syncedAt?"No budget or approved price in JobTread yet.":"Budget, price and margin appear after the first sync."}</p>`;
   return `<div class="jsum" role="group" aria-label="Key facts">${cells.join("")}</div>`}
 function overview(j){
-  const sel=rows(j,"selections");const open=sel.filter(s=>!["approved","ordered","installed"].includes(String(s.status||"").toLowerCase()));
-  const ds=docSets(j);const docs=(ds.plans||[]).map(x=>x.cur).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,6);const n=(S.notes[j.slug]||{}).text||"";
-  const jt=(j.jobs||[]).filter(x=>x&&x.number);const sortN=inboxOf(j).length;
-  const facts=[[jt.length?"JobTread":"",jt.map(x=>x.id?`<a href="https://app.jobtread.com/jobs/${esc(x.id)}" target="_blank" rel="noopener">Job #${esc(x.number)}</a>${x.status?` <span class="small">${esc(x.status)}</span>`:""}`:`Job #${esc(x.number)}${x.status?` <span class="small">${esc(x.status)}</span>`:""}`).join("<br>")],
-    ...(()=>{if(jt.length)return[];let nums=[];try{nums=(jctx(j.slug)||{}).nums||[]}catch(e){}return nums.length?[["JobTread",nums.map(n=>"Job #"+esc(n)).join("<br>")]]:[]})(),
-    [j.designer?"Designer":"",esc(j.designer)],[(j.team||[]).length?"Team":"",(j.team||[]).map(esc).join(", ")],
-    [CORE.safeUrl(j.driveFolder)?"Files":"",lnk(j.driveFolder,"Google Drive folder")],
-    [CORE.safeUrl((S.archive["folder__"+safe(j.slug)]||{}).url)?"Our copies":"",lnk((S.archive["folder__"+safe(j.slug)]||{}).url,"Project Hub Drive folder")],
-    [j.syncedAt?"Last synced":"",`${esc(nice(j.syncedAt))}${j.searchedBack?` <span class="small">(history back to ${esc(nice(j.searchedBack))})</span>`:""}`]].filter(([k])=>k);
-  return quickActions(j)+sumStrip(j)+(sortN?`<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">To sort</b><span class="small">${sortN} item${sortN===1?"":"s"} the sync wasn't sure about. Confirm, move or dismiss.</span></div>${inboxUl([j])}</section>`:"")+`<div class="grid2"><div style="display:flex;flex-direction:column;gap:20px;min-width:0">
-   ${jobClosed(j)?recordBar(j):""}${j.summary?`<div class="note">${esc(j.summary)}</div>`:""}
-   <section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Waiting on decisions</b><a class="small" href="${esc(hubHref(j,"selections"))}" data-raw>All selections</a></div>${open.length?`<ul class="list">${open.slice(0,8).map(s=>`<li><div class="body"><p><b>${esc(s.area?s.area+" · ":"")}${esc(s.item)}</b>: ${esc(s.choice||"not chosen")}</p>${stPill(s.status)} ${srcTag(s)}</div></li>`).join("")}</ul>`:`<p class="small" style="padding:0 18px 14px">${sel.length?"All logged selections are approved.":"No selections logged yet."}</p>`}</section>
-   <section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Newest plans</b><a class="small" href="${esc(hubHref(j,"documents"))}" data-raw>All documents</a></div>${docs.length?`<ul class="list">${docs.map(d=>`<li><div class="body"><p><b>${esc(d.title)}</b>${d.version?" · "+esc(d.version):""}${linkOf(d)}</p>${srcTag(d)}${d.from?` <span class="small">from ${esc(d.from)}</span>`:""}</div></li>`).join("")}</ul>`:`<p class="small" style="padding:0 18px 14px">No documents logged yet.</p>`}</section>
-  </div><div style="display:flex;flex-direction:column;gap:20px;min-width:0">
-   ${sitePanel(j)}${drPanel(j)}
-   <section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Job details</b></div><dl class="facts">${facts.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></section>
+  const n=(S.notes[j.slug]||{}).text||"";const sortN=inboxOf(j).length;
+  return quickActions(j)+sumStrip(j)+(sortN?`<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">To sort</b><span class="small">${sortN} item${sortN===1?"":"s"} the sync wasn't sure about. Confirm, move or dismiss.</span></div>${inboxUl([j])}</section>`:"")+`<div class="grid2"><div class="jcol">
+   ${j.summary?`<div class="note">${esc(j.summary)}</div>`:""}
+   ${jsec("jsel","Selections",recordBar(j)+selList(j))}
+  </div><div class="jcol">
+   ${sitePanel(j)}
    <section class="panel"><h2 style="margin:0"><label for="note-${esc(j.slug)}">Project notes</label></h2><textarea class="notes" id="note-${esc(j.slug)}" data-note="${esc(j.slug)}" placeholder="Notes for this job. The nightly sync reads these too."${S.canWrite?"":" disabled"}>${esc(n)}</textarea><span class="status" id="ns-${esc(j.slug)}" role="status" aria-live="polite"></span></section>
-  </div></div>`;
+  </div></div><p class="jhist"><a href="${esc(hubHref(j,"history"))}" data-raw>History ›</a><span class="small">Every event, selection, document, permit and order, with where it came from</span></p>`;
 }
+const SEL_TOOLS_OVER=8;
+function selList(j){
+  const st=S.sel||(S.sel={q:"",sort:"new",type:""});
+  if(st.job!==j.slug){st.job=j.slug;st.q="";st.type=""}
+  const all=rows(j,"selections",!!S.showHidden[j.slug]);
+  if(!all.length)return `<div class="empty">No selections logged yet${j.syncedAt?"":". The first sync fills this in"}.</div>`+hiddenBar(j,["selections"])+addForm(j,"selections");
+  const tools=all.length>SEL_TOOLS_OVER;if(!tools){st.q="";st.type=""}
+  const cnt=new Map();all.forEach(r=>{const t=selType(r);cnt.set(t,(cnt.get(t)||0)+1)});
+  const cur=cnt.has(st.type)?st.type:"";
+  const types=[...cnt.keys()].sort((a,b)=>selIdx(a)-selIdx(b)||a.localeCompare(b));
+  const P=selParse(st.q);const words=P.dates.concat(P.words);
+  const dsc=(a,b)=>String(b.date||"").localeCompare(String(a.date||""));
+  const cmp={new:dsc,old:(a,b)=>(!a.date)-(!b.date)||String(a.date||"").localeCompare(String(b.date||"")),
+    type:(a,b)=>selIdx(selType(a))-selIdx(selType(b))||selType(a).localeCompare(selType(b))||dsc(a,b),
+    area:(a,b)=>(!a.area)-(!b.area)||String(a.area||"").localeCompare(String(b.area||""))||String(a.item||"").localeCompare(String(b.item||""))||dsc(a,b),
+    status:(a,b)=>SEL_STATUS.indexOf(String(a.status||"").toLowerCase())-SEL_STATUS.indexOf(String(b.status||"").toLowerCase())||dsc(a,b)}[tools?st.sort:"new"]||dsc;
+  const list=all.filter(r=>(!cur||selType(r)===cur)&&selMatch(r,P)).sort(cmp);
+  const bar=tools?`<div class="toolbar seltools"><input class="search" data-selq="1" type="search" placeholder="Search: tile, a name, Aug 19, 8/19" value="${esc(st.q||"")}" aria-label="Search selections by word, person or date">
+   <label class="selsort"><span>Sort</span><select class="act" data-selsort="1" aria-label="Sort selections">${SEL_SORT.map(([k,l])=>`<option value="${k}"${st.sort===k?" selected":""}>${l}</option>`).join("")}</select></label>
+   <span class="small selcount" role="status">${list.length===all.length?plural(all.length,"selection"):`${list.length} of ${plural(all.length,"selection")}`}</span></div>
+  <div class="chips seltypes" role="group" aria-label="Type of selection"><button type="button" data-seltype="" aria-pressed="${!cur}">All types<span class="n">${all.length}</span></button>${types.map(t=>`<button type="button" data-seltype="${esc(t)}" aria-pressed="${cur===t}">${esc(t)}<span class="n">${cnt.get(t)}</span></button>`).join("")}</div>`:"";
+  const body=list.length?`<ul class="sellist">${list.map(r=>selRow(j,r)).join("")}</ul>`:`<div class="empty">No selections match${words.length?" that search":""}${cur?" in "+esc(cur):""}. <button type="button" class="act" data-selclear="1">Show all selections</button></div>`;
+  return bar+body+hiddenBar(j,["selections"])+addForm(j,"selections")}
+function selRow(j,r){const k=safe(j.slug+"__"+r.id);const did="seld-"+safe(r.id);
+  const open=!!(S.open["sel"+r.id]||S.pend[k]||S.open[r.id]||S.forms["chg"+j.slug+r.id]);
+  const name=[r.area,r.item].filter(Boolean).join(" · ")||"Selection";const n=(r.history||[]).filter(x=>x.choice).length;
+  const det=open?`<div class="seldet" id="${esc(did)}"><div class="selfacts"><span class="pill stype">${esc(selType(r))}</span>${statusSel(j,r,SEL_STATUS,"selections")}${r.by?`<span class="small">By ${esc(r.by)}</span>`:""}${srcTag(r)}${linkOf(r)}</div>
+    ${r.note?`<p class="small selnote">${esc(r.note)}</p>`:""}
+    <div class="acts">${(r.history||[]).length>1?`<button class="act" data-hist="${esc(r.id)}" aria-expanded="${!!S.open[r.id]}">${n>1?`Changed ${n-1}× · `:""}History (${r.history.length})</button>`:""}${S.canWrite&&S.db&&!r._dismissed?`<button class="act" data-chg="${esc(j.slug)}" data-id="${esc(r.id)}" aria-label="Log a change: ${esc(name)}">Log a change</button>`:""}${hideBtn(j,r)}</div>
+    ${statusConfirmBox(j,r)}${S.open[r.id]?histHtml(r):""}${chgForm(j,r)}</div>`:"";
+  return `<li class="selr${r._dismissed?" dim":""}${open?" open":""}" data-rid="${esc(r.id)}"><button type="button" class="selhd" data-selrow="${esc(r.id)}" aria-expanded="${open}"${open?` aria-controls="${esc(did)}"`:""}><span class="seln">${r._dismissed?'<span class="pill">hidden</span> ':""}<b>${esc(name)}</b><span class="selc">${esc(r.choice||"Not chosen yet")}</span></span>${stPill(r.status)}<span class="selchev" aria-hidden="true">›</span></button>${det}</li>`}
 const NEEDS_CHOICE=["approved","ordered","installed"];
 function rowLabel(r){return [r.area,r.item||r.vendor||r.number||r.title].filter(Boolean).join(" · ")||"this row"}
 function statusSel(j,r,opts,kind){
@@ -6143,6 +6229,8 @@ function statusSel(j,r,opts,kind){
 }
 function statusConfirm(j,r,span){const k=safe(j.slug+"__"+r.id);const p=S.pend[k];if(!p)return"";
   return `<tr class="sub confirm"><td colspan="${span}"><div class="sconf" role="group" aria-label="Confirm status change"><span>Mark <b>${esc(rowLabel(r))}</b> as <b>${esc(p.value)}</b>?</span><div class="acts"><button class="act primary" data-sgo="${esc(k)}"${p.busy?" disabled":""}>${p.busy?"Saving…":"Save"}</button><button class="act" data-sno="${esc(k)}"${p.busy?" disabled":""}>Cancel</button></div>${p.msg?`<span class="status${p.err?" err":""}" role="status">${esc(p.msg)}</span>`:""}</div></td></tr>`}
+function statusConfirmBox(j,r){const k=safe(j.slug+"__"+r.id);const p=S.pend[k];if(!p)return"";
+  return `<div class="sconf" role="group" aria-label="Confirm status change"><span>Mark <b>${esc(rowLabel(r))}</b> as <b>${esc(p.value)}</b>?</span><div class="acts"><button class="act primary" data-sgo="${esc(k)}"${p.busy?" disabled":""}>${p.busy?"Saving…":"Save"}</button><button class="act" data-sno="${esc(k)}"${p.busy?" disabled":""}>Cancel</button></div>${p.msg?`<span class="status${p.err?" err":""}" role="status">${esc(p.msg)}</span>`:""}</div>`}
 function hideBtn(j,r){if(!S.canWrite)return"";return r._dismissed?`<button class="act" data-unhide="${esc(j.slug)}" data-id="${esc(r.id)}" title="Show this row on the job again" aria-label="Show again: ${esc(rowName(r))}">Show again</button>`:`<button class="act" data-hide="${esc(j.slug)}" data-id="${esc(r.id)}" title="Hide this row from the job. You can undo it or show hidden rows later." aria-label="Hide: ${esc(rowName(r))}">Hide</button>`}
 const rowName=r=>String((r.area?r.area+" ":"")+(r.item||r.title||r.vendor||r.number||r.type||"this row")).trim();
 function hiddenBar(j,kinds){const n=kinds.reduce((t,k)=>t+rows(j,k,true).filter(r=>r._dismissed).length,0);if(!n)return"";const on=!!S.showHidden[j.slug];
@@ -6158,28 +6246,6 @@ function keepDrafts(fn){const key=el=>{const f=el.closest("form");return f&&el.n
   HROOT.querySelectorAll("form input,form textarea,form select").forEach(el=>{const k=key(el);if(k)vals.set(k,el.type==="checkbox"||el.type==="radio"?el.checked:el.value)});
   fn();
   HROOT.querySelectorAll("form input,form textarea,form select").forEach(el=>{const k=key(el);if(!k||!vals.has(k))return;const v=vals.get(k);if(el.type==="checkbox"||el.type==="radio")el.checked=v;else el.value=v})}
-function selectionsView(j,cols,cells,extra){
-  const st=S.sel||(S.sel={q:"",sort:"new",type:""});
-  if(st.job!==j.slug){st.job=j.slug;st.q="";st.type=""}
-  const all=rows(j,"selections",!!S.showHidden[j.slug]);
-  if(!all.length)return tableView(j,"selections",cols,cells,[0,4],undefined,extra)+addForm(j,"selections");
-  const cnt=new Map();all.forEach(r=>{const t=selType(r);cnt.set(t,(cnt.get(t)||0)+1)});
-  const cur=cnt.has(st.type)?st.type:"";
-  const types=[...cnt.keys()].sort((a,b)=>selIdx(a)-selIdx(b)||a.localeCompare(b));
-  const P=selParse(st.q);const words=P.dates.concat(P.words);
-  const dsc=(a,b)=>String(b.date||"").localeCompare(String(a.date||""));
-  const cmp={new:dsc,old:(a,b)=>(!a.date)-(!b.date)||String(a.date||"").localeCompare(String(b.date||"")),
-    type:(a,b)=>selIdx(selType(a))-selIdx(selType(b))||selType(a).localeCompare(selType(b))||dsc(a,b),
-    area:(a,b)=>(!a.area)-(!b.area)||String(a.area||"").localeCompare(String(b.area||""))||String(a.item||"").localeCompare(String(b.item||""))||dsc(a,b),
-    status:(a,b)=>SEL_STATUS.indexOf(String(a.status||"").toLowerCase())-SEL_STATUS.indexOf(String(b.status||"").toLowerCase())||dsc(a,b)}[st.sort]||dsc;
-  let shown=0;
-  const pick=list=>{const out=list.filter(r=>(!cur||selType(r)===cur)&&selMatch(r,P)).sort(cmp);shown=out.length;return out};
-  const table=tableView(j,"selections",cols,cells,[0,4],undefined,extra,pick,`No selections match${words.length?" that search":""}${cur?" in "+esc(cur):""}. <button type="button" class="act" data-selclear="1">Show all selections</button>`);
-  const tools=`<div class="toolbar seltools"><input class="search" data-selq="1" type="search" placeholder="Search: tile, a name, Aug 19, 8/19" value="${esc(st.q||"")}" aria-label="Search selections by word, person or date">
-   <label class="selsort"><span>Sort</span><select class="act" data-selsort="1" aria-label="Sort selections">${SEL_SORT.map(([k,l])=>`<option value="${k}"${st.sort===k?" selected":""}>${l}</option>`).join("")}</select></label>
-   <span class="small selcount" role="status">${shown===all.length?plural(all.length,"selection"):`${shown} of ${plural(all.length,"selection")}`}</span></div>
-  <div class="chips seltypes" role="group" aria-label="Type of selection"><button type="button" data-seltype="" aria-pressed="${!cur}">All types<span class="n">${all.length}</span></button>${types.map(t=>`<button type="button" data-seltype="${esc(t)}" aria-pressed="${cur===t}">${esc(t)}<span class="n">${cnt.get(t)}</span></button>`).join("")}</div>`;
-  return tools+table+addForm(j,"selections")}
 const ORD_VENDORS=(v=>v.length?[...v,"Other"]:undefined)(window.DPOrg.vendors());
 const FIELDS={
   selections:[["type","Type (blank = picked automatically)","",["",...SEL_TYPES]],["area","Area / room","e.g. Kitchen"],["item","Item","e.g. Countertop"],["choice","Choice","e.g. Calacatta Laza quartz, 3cm"],["status","Status","",SEL_STATUS],["by","Approved by","e.g. Jacqueline"],["date","Date","","date"],["link","Link (email, photo, spec)",""],["note","Notes","","wide"]],
@@ -6198,7 +6264,6 @@ function addForm(j,kind){
 }
 function costingJob(j){
   const c=j.costing||{};const b=+c.budgetCost||0,a=+c.actualCost||0;
-  const ordersAmt=rows(j,"orders").filter(o=>o.status!=="returned").reduce((s,o)=>s+(+o.amount||0),0);
   const g=(c.groups||[]).slice().sort((x,y)=>(+y.budget||0)-(+x.budget||0));const max=Math.max(1,...g.map(x=>Math.max(+x.budget||0,+x.actual||0)));
   const m=mOf(j);
   return `<section class="kpis"><div class="kpi"><b>${money(c.budgetPrice)}</b><span>Approved price incl. change orders</span></div><div class="kpi"><b>${money(b)}</b><span>Expected budget</span></div><div class="kpi${a>b&&b?" crit":""}"><b>${money(a)}</b><span>Current spend${b?" · "+pct(a/b*100)+" of budget":""}</span></div><div class="kpi${b&&a<=b?" ok":b?" crit":""}"><b>${b?money(b-a):"—"}</b><span>${a>b?"Over budget":"Budget left"}</span></div><div class="kpi ${m.na?"":m.cls==="ok"?"ok":m.cls==="crit"?"crit":""}"><b>${m.na?"—":pct(m.fc)}</b><span>Profit margin${m.na?"":" · "+money(m.profit)}</span></div></section>
@@ -6209,7 +6274,6 @@ function costingJob(j){
    ${m.billed!=null?`<div class="r"><span>Billed to client</span><div class="track"><i style="width:${Math.min(100,m.billed/m.price*100).toFixed(1)}%;background:var(--ok)"></i></div><span class="v">${money(m.billed)}</span></div>`:""}
    <div class="legend">Margin on budget is ${pct(m.onBudget)} (price minus expected budget). ${m.over?`Spend is ${money(m.spend-m.budget)} over budget, so the margin drops to ${pct(m.fc)}.`:`${money(m.left)} of budget left before spend starts eating into margin.`} Target ${MTG().target}%, ${MTG().good}% is still good.</div>
   </div></section>`}
-  <div class="small">Material orders logged in the hub: ${money(ordersAmt)}</div>
   ${c.note?`<div class="note">${esc(String(c.note).split(" || ").pop())}</div>`:""}
   ${g.length?`<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Budget vs. actual by cost group</b><span class="small">Bar = actual, outline = budget</span></div>${g.map(x=>{const bb=+x.budget||0,aa=+x.actual||0;const d=aa-bb;return `<div class="cgrow"><span>${esc(x.name)}</span><div style="position:relative;height:12px;border-radius:99px;background:var(--surface-2)"><i style="position:absolute;inset:0 auto 0 0;width:${(bb/max*100).toFixed(1)}%;border:1.5px solid var(--faint);border-radius:99px"></i><i style="position:absolute;inset:2px auto 2px 2px;width:calc(${(aa/max*100).toFixed(1)}% - 4px);max-width:calc(100% - 4px);background:${aa>bb?"var(--crit)":"var(--accent)"};border-radius:99px"></i></div><span class="v ${aa?d>0?"over":"under":""}">${money(aa)} / ${money(bb)}</span></div>`}).join("")}</section>`:`<div class="empty">${j.syncedAt?"No cost groups with budget or actuals in JobTread yet.":"Costs fill in after the first sync."}</div>`}
   ${(j.jobs||[]).length?`<p class="small">From JobTread ${j.jobs.map(x=>`<a href="https://app.jobtread.com/jobs/${esc(x.id)}" target="_blank" rel="noopener">#${esc(x.number)}</a>`).join(", ")}${c.asOf?" as of "+esc(nice(c.asOf)):""}.</p>`:""}`;
@@ -6310,11 +6374,6 @@ function matchReceipts(j,bills){const used=new Set(),un=[];
   rows(j,"orders").filter(isReceiptRow).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).forEach(o=>{const v=vnorm(vClean(o.vendor)).split(" ")[0];
     const b=bills.find(b=>!used.has(b.id)&&b.cost>0&&vnorm(b.vendor).split(" ")[0]===v&&Math.abs(new Date(b.date)-new Date(String(o.date).slice(0,10)))<=(/home depot/i.test(o.vendor||"")?3:10)*864e5&&(o.amount==null||o.amount===""||Math.abs(+o.amount-b.cost)<1));
     if(b){used.add(b.id);b.receipt=o}else un.push(o)});return un}
-function purchasesView(j){
-  const pipe=pipeRows(j,!!S.showHidden[j.slug]),open=openPipe(j),nb=(j.bills||[]).length;
-  const tab=S.purTab[j.slug]||(nb||!pipe.length?"buy":"pipe");
-  const chips=`<div class="dsecs" role="group" aria-label="Purchases view"><button class="chip" data-pur="${esc(j.slug)}|buy" aria-pressed="${tab==="buy"}">Bills &amp; returns<span class="n">${nb}</span></button><button class="chip" data-pur="${esc(j.slug)}|pipe" aria-pressed="${tab==="pipe"}">Orders &amp; bids in progress<span class="n">${open.length}</span></button></div>`;
-  return chips+(tab==="pipe"?pipeView(j,pipe)+hiddenBar(j,["orders"]):buyView(j))+addForm(j,"orders")}
 function buyView(j){
   const bills=billsOf(j);const un=matchReceipts(j,bills);
   const buys=bills.filter(b=>b.cost>0),rets=bills.filter(b=>b.cost<0);
@@ -6451,15 +6510,11 @@ function inboxUl(js){
   return `<ul class="list">${items.map(({j,r})=>`<li><span class="when">${esc(nice(r.date))}</span><div class="body"><p>${esc(r.text)}${linkOf(r)}</p><div class="small">${esc(j.customer)} · ${esc(SRC[r.source]||r.source||"")}${r.suggest?` · looks like a <b>${esc(r.suggest)}</b>`:""}</div>
   ${S.canWrite?`<div class="acts">${r.suggest&&FIELDS[r.suggest+"s"]||FIELDS[r.suggest]?`<button class="act primary" data-confirm="${esc(j.slug)}" data-id="${esc(r.id)}">Add as ${esc(r.suggest)}</button>`:""}<label class="small" style="display:inline-flex;gap:6px;align-items:center">Move to <select class="act" data-move="${esc(j.slug)}" data-id="${esc(r.id)}"><option value="">choose job…</option>${S.jobs.filter(x=>x!==j).map(x=>[x.slug,sortJobLabel(x)]).sort((p,q)=>p[1].localeCompare(q[1])).map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("")}</select></label><button class="act" data-dismiss="${esc(j.slug)}" data-id="${esc(r.id)}">Not relevant</button></div>`:""}</div></li>`).join("")}</ul>`;
 }
-function viewInbox(){return head("To sort","Things the sync found but wasn't sure where they belong. Confirm, move or dismiss.")+inboxList(S.jobs)}
-function viewOrders(){
-  const all=S.jobs.flatMap(j=>openPipe(j).map(o=>({j,o})));
-  const spend={};S.jobs.forEach(j=>billsOf(j).forEach(b=>{if(catOfV(b.vendor)==="Materials")spend[b.vendor]=(spend[b.vendor]||0)+b.cost}));
+function ordersAll(q){
+  const all=S.jobs.filter(j=>!q||allWords([j.customer,j.address,(j.jobs||[]).map(x=>x.number).join(" ")].join(" "),q)).flatMap(j=>openPipe(j).map(o=>({j,o})));
   const st=s=>STAGES.findIndex(x=>x[0]===s);
-  return head("Open orders","Material requests, quotes and orders across every project that haven't been delivered yet. What's been bought, with amounts, is on each job's Money tab.")+
-  (all.length||Object.keys(spend).length?`<section class="kpis">${all.length?`<div class="kpi"><b>${all.length}</b><span>${all.length===1?"Open order or bid":"Open orders &amp; bids"}</span></div>`:""}${Object.entries(spend).filter(([,n])=>n).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([v,n])=>`<div class="kpi"><b>${money(n)}</b><span>${esc(v)} · materials bought · JobTread</span></div>`).join("")}</section>`:"")+
-  (all.length?`<div class="box tscroll"><table><thead><tr><th>Project</th><th>Vendor</th><th>Items</th><th>Status</th><th class="num">Amount</th><th>Source</th></tr></thead><tbody>${all.sort((a,b)=>st(a.o._stage)-st(b.o._stage)||String(b.o.date||"").localeCompare(String(a.o.date||""))).map(({j,o})=>`<tr><td><a href="${esc(hubHref(j,"orders"))}" data-raw>${esc(j.customer)}</a></td><td>${esc(vClean(o.vendor))}</td><td>${esc(o.items)}</td><td>${stPill(o.status)}${["requested","quoted"].includes(o.status)&&days(o.date)>14?` <span class="pill warn">${days(o.date)} days</span>`:""}</td><td class="num">${o.amount?money(o.amount):""}</td><td>${srcTag(o)}${linkOf(o)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">No open orders or bids.</div>`)
-}
+  if(!all.length)return `<div class="empty">${q?"No open orders on jobs that match that search.":"No open orders or bids."}</div>`;
+  return `<div class="box tscroll"><table><thead><tr><th>Job</th><th>Vendor</th><th>Items</th><th>Status</th><th class="num">Amount</th><th>Source</th></tr></thead><tbody>${all.sort((a,b)=>st(a.o._stage)-st(b.o._stage)||String(b.o.date||"").localeCompare(String(a.o.date||""))).map(({j,o})=>`<tr><td><a href="${esc(hubHref(j,"orders"))}" data-raw>${esc(j.customer)}</a></td><td>${esc(vClean(o.vendor))}</td><td>${esc(o.items)}</td><td>${stPill(o.status)}${["requested","quoted"].includes(o.status)&&days(o.date)>14?` <span class="pill warn">${days(o.date)} days</span>`:""}</td><td class="num">${o.amount?money(o.amount):""}</td><td>${srcTag(o)}${linkOf(o)}</td></tr>`).join("")}</tbody></table></div>`}
 function viewCosting(){
   const js=S.jobs.filter(j=>costOf(j).b||costOf(j).a);
   const cats={};js.forEach(j=>((j.costing||{}).groups||[]).forEach(g=>{const k=g.category||g.name;cats[k]=cats[k]||{b:0,a:0,n:0};cats[k].b+=+g.budget||0;cats[k].a+=+g.actual||0;cats[k].n++}));
@@ -6524,10 +6579,14 @@ HROOT.addEventListener("click",async e=>{
     const f=HROOT.querySelector(d.stg?`[data-stg="${d.stg}"]`:'[data-stg="active"]');if(f&&f.offsetParent)f.focus({preventScroll:true});return}
   if("seltype" in d||d.selclear){const st=S.sel||(S.sel={q:"",sort:"new",type:""});if(d.selclear){st.q="";st.type=""}else st.type=d.seltype;keepDrafts(render);
     const f=d.selclear?HROOT.querySelector("[data-selq]"):[...HROOT.querySelectorAll("[data-seltype]")].find(b=>b.dataset.seltype===st.type);if(f&&f.offsetParent)f.focus({preventScroll:true});
-    if(window.DPAnnounce){const n=HROOT.querySelectorAll(".tscroll tbody tr[data-rid]").length;DPAnnounce(`Showing ${plural(n,"selection")}${st.type?": "+st.type:""}`)}return}
+    if(window.DPAnnounce){const n=HROOT.querySelectorAll(".sellist li[data-rid]").length;DPAnnounce(`Showing ${plural(n,"selection")}${st.type?": "+st.type:""}`)}return}
+  if(d.jumpto){const el=HROOT.getElementById(d.jumpto);if(el){const h=el.querySelector("h2");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true})}const top=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--chrome-top"))||0;if(window.DPReleaseTap)setTimeout(()=>DPReleaseTap(),0);if(window.DPReleaseTap)DPReleaseTap();if(window.DPHoldHeader)DPHoldHeader();scrollTo(0,Math.max(0,scrollY+el.getBoundingClientRect().top-top-12))}return}
+  if(d.inv||d.xorders){if(d.inv){S.inv=!S.inv;S.xorders=false}else{S.xorders=!S.xorders;S.inv=false}S.need="";render();
+    const f=HROOT.querySelector(d.inv?"[data-inv]":"[data-xorders]");if(f&&f.offsetParent)f.focus({preventScroll:true});
+    if(window.DPAnnounce)DPAnnounce(S.xorders?"Showing open orders across every job":S.inv?"Showing investment properties":"Showing client jobs");return}
   if(d.clearq){S.q="";render();const f=HROOT.querySelector("#q");if(f&&f.offsetParent)f.focus({preventScroll:true});return}
   if(d.scope){S.scope=d.scope;render();const n=HROOT.querySelectorAll(".jobs .jcard").length;if(window.DPAnnounce)DPAnnounce(`${d.scope==="mine"?"My jobs":"All jobs"}: ${plural(n,"project")}`);return}
-  if("need" in d){S.need=d.need&&S.need!==d.need?d.need:"";render();const n=HROOT.querySelectorAll(".jobs .jcard").length;if(window.DPAnnounce)DPAnnounce(S.need?`Showing ${plural(n,"job")} with selections to approve`:`Showing all ${plural(n,"job")}`);
+  if("need" in d){S.need=d.need&&S.need!==d.need?d.need:"";render();const n=HROOT.querySelectorAll(".jobs .jcard").length;if(window.DPAnnounce)DPAnnounce(S.need?`Showing ${plural(n,"job")} with ${S.need==="sort"?"items to sort":"selections to approve"}`:`Showing all ${plural(n,"job")}`);
     const f=HROOT.querySelector(S.need?'[data-need]:not([data-need=""])[aria-pressed="true"]':"#q");if(f&&f.offsetParent)f.focus({preventScroll:true});return}
   if(d.copyphone){const v=d.copyphone;const ok=()=>{t.textContent="Copied";if(window.DPAnnounce)DPAnnounce("Phone number copied");setTimeout(()=>{if(t.isConnected)t.textContent="Copy"},2000)};
     try{navigator.clipboard.writeText(v).then(ok,()=>{selectPhone(t);toast("Couldn't copy here. The number is selected, so you can copy it yourself.")})}catch(x){selectPhone(t)}return}
@@ -6538,8 +6597,8 @@ HROOT.addEventListener("click",async e=>{
   if(d.archgo){const a=S.archAsk;if(!a||a.scope!==d.archgo){render();return}t.disabled=true;runArch(a.scope,a.slug,a.id);return}
   if(d.archdone){S.archRun=null;render();return}
   if(d.hist){S.open[d.hist]=!S.open[d.hist];render();return}
+  if(d.selrow){const id=d.selrow;const was=t.getAttribute("aria-expanded")==="true";S.open["sel"+id]=!was;if(was)delete S.open[id];render();const b=HROOT.querySelector(`[data-selrow="${CSS.escape(id)}"]`);if(b)b.focus({preventScroll:true});return}
   if(d.dsec){const [sl,k]=d.dsec.split("|");S.docTab[sl]=k;render();return}
-  if(d.pur){const [sl,k]=d.pur.split("|");S.purTab[sl]=k;render();return}
   if(d.vgrp){S.open[d.vgrp]=!S.open[d.vgrp];render();return}
   if(d.vers){S.open["v"+d.vers]=!S.open["v"+d.vers];render();return}
   if(d.spend){S.open["spend"+d.spend]=!S.open["spend"+d.spend];render();return}
@@ -6616,7 +6675,8 @@ window.addEventListener("hashchange",e=>{const h=location.hash||"";if(!h.startsW
   else{const saved=M&&M.get(h);if(saved>0)M.restore(saved);else scrollTo(0,0)}
   focusRow()});
 function focusRow(){const f=window.__dpFocusRow;if(!f||Date.now()-f.at>8000)return;let n=0;
-  const go=()=>{const tr=HROOT.querySelector(`tr[data-rid="${CSS.escape(f.id)}"]`);if(!tr){if(++n<30)setTimeout(go,100);else window.__dpFocusRow=null;return}window.__dpFocusRow=null;
+  const go=()=>{let tr=HROOT.querySelector(`[data-rid="${CSS.escape(f.id)}"]`);if(!tr){if(++n<30)setTimeout(go,100);else window.__dpFocusRow=null;return}window.__dpFocusRow=null;
+    if(tr.matches("li.selr")&&!tr.classList.contains("open")){S.open["sel"+f.id]=true;render();tr=HROOT.querySelector(`[data-rid="${CSS.escape(f.id)}"]`);if(!tr)return}
     const top=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--chrome-top"))||0;if(window.DPHoldHeader)DPHoldHeader();
     scrollTo({top:Math.max(0,scrollY+tr.getBoundingClientRect().top-top-16),behavior:"auto"});
     tr.classList.add("hl-row");tr.setAttribute("tabindex","-1");try{tr.focus({preventScroll:true})}catch(e){}setTimeout(()=>tr.classList.remove("hl-row"),2600)};
@@ -10379,7 +10439,7 @@ const hdBtn=document.getElementById("hd");
 if(hdBtn)hdBtn.addEventListener("click",()=>{const inMenu=hmenu&&hmenu.classList.contains("open");setTimeout(()=>{const on=hdBtn.getAttribute("aria-checked")==="true";if(window.DPAnnounce)DPAnnounce(on?"Done items hidden":"Done items shown");if(inMenu)setMenu(false,true)},0)});
 const fa=document.getElementById("faOpen");if(fa)fa.addEventListener("click",()=>{const g=document.getElementById("gsOpen");if(g)g.click()});
 function activeRoot(){const b=document.body;if(b.classList.contains("app-hub")&&window.__hubRoot)return {root:window.__hubRoot,view:window.__hubRoot.querySelector("#view")};
-  const lh=document.getElementById("listhost");if(b.classList.contains("app-lists")&&lh&&lh.shadowRoot)return {root:lh.shadowRoot,view:lh.shadowRoot.querySelector("#main")};
+  const lh=document.getElementById("listhost");if(b.classList.contains("app-lists")&&!b.classList.contains("app-todo")&&lh&&lh.shadowRoot)return {root:lh.shadowRoot,view:lh.shadowRoot.querySelector("#main")};
   return {root:document,view:document.getElementById("view")}}
 function pageH1(){const a=activeRoot();return a.view?a.view.querySelector("h1"):null}
 const clean=t=>String(t||"").replace(/\s+/g," ").trim();
@@ -10390,7 +10450,8 @@ function routeSettle(){const h1=pageH1();if(!h1){if(routeFocus&&Date.now()-route
   const tab=a.view.querySelector('.jsh-sub a[aria-current="page"]')||a.view.querySelector(".jsh-tabs a[aria-current],.jx a[aria-current],nav.subtabs a[aria-current]");const tl=tab?textOf(tab):"";
   if(tl&&!/^overview$/i.test(tl)&&tl!==parts[0])parts.push(tl);
   const t=parts.filter(Boolean).join(" · ")+" · Design Pro Workspace";if(document.title!==t)document.title=t;
-  const pt=document.getElementById("ptitle");if(pt&&pt.textContent!==parts[0])pt.textContent=parts[0];
+  const jh=h1.closest("header.jsh");const short=jh&&jh.dataset.short||parts[0];
+  const pt=document.getElementById("ptitle");if(pt&&pt.textContent!==short)pt.textContent=short;
   if(routeFocus){routeFocus=false;const ae=deepActive();const gs=document.getElementById("gs"),ap=document.getElementById("askp");
     const moved=!ae||ae===document.body||ae===document.documentElement||(ae.closest&&ae.closest("nav,.side,header.site,.jx,#main>.wrap>#banner"));
     if(moved&&(!gs||gs.hidden)&&(!ap||ap.hidden||!ap.contains(ae))){h1.setAttribute("tabindex","-1");h1.focus({preventScroll:true});routeHeld=routeAt}}
