@@ -5,11 +5,11 @@ description: Sets up, checks, updates or removes a personal Design Pro Workspace
 
 # Design Pro Workspace
 
-Skill version: 2026-11-22e
+Skill version: 2026-11-22f
 
 One private page per person (title exactly "Design Pro Workspace") plus the scheduled tasks that keep it current. The core runs in the cloud; texts are an optional Mac extra that never holds up anything else.
 
-Files: `assets/workspace-template.html` (the page; never hand-edit), `assets/capabilities-template.json`, `assets/prompts.json` (scheduled-task instructions), `assets/claude-texts-export.py` (read-only Mac script), `scripts/build_page.py config.json page.html caps.json`, `scripts/fill_prompts.py config.json outdir`, `scripts/verify_kit.py`, `scripts/rollup_build.py`. Python runs only from these `scripts/`, never the Kit.
+Files: `assets/workspace-template.html` (the page; never hand-edit), `assets/capabilities-template.json`, `assets/prompts.json` (scheduled-task instructions), `assets/claude-texts-export.py`, `assets/claude-whatsapp-export.py` (read-only Mac scripts), `scripts/build_page.py config.json page.html caps.json`, `scripts/fill_prompts.py config.json outdir`, `scripts/verify_kit.py`, `scripts/rollup_build.py`. Python runs only from these `scripts/`, never the Kit.
 
 ## Rules for every request
 - Scheduled runs and setup never send email or texts, never change JobTread or calendars, and never share a file. Only exceptions: (1) the end-of-day roll-up writes their own roll-up sheet (not the team sheet) and shares that sheet read-only with at most 3 new readers a day approved by `rollup_build.py` (company domain, JobTread Owner/Admin/Operations, on an owner-only team sheet); (2) when turned on from that sheet, up to 5 team-only "Client follow-up" JobTread comments a day; (3) one Updater status row on `config.org.statusSheet` (if set, `shareStatus` on). On the page, anything that sends or changes something needs the person's tap plus a confirm.
@@ -93,7 +93,7 @@ One file per franchise so teammates aren't asked the same things: `dp-workspace-
 ## E. Texts (its own step; never blocks the core)
 Needs the Mac tools (section A) and an iPhone. Stop at the first problem, say the one thing to fix, leave `texts` "disabled", and carry on with everything else.
 1. Tell them only what isn't already true: Messages on the Mac signed in with the iPhone's Apple ID; iPhone Settings › Messages › Text Message Forwarding on for this Mac.
-2. The Mac's texts helper ("Claude Texts Export", with its own Full Disk Access) comes first: device_request_folder_access `/Users/<their Mac user name>/Documents/Claude Texts` (user name from get_device_info; never "~"). If granted and `$HOME/mnt/Claude Texts/claude-texts-status.json` exists, that is the texts folder: skip steps 3–4.
+2. The Mac's texts helper ("Claude Texts Export", with its own Full Disk Access) comes first: device_request_folder_access `/Users/<their Mac user name>/Documents/Claude Texts` (user name from get_device_info; never "~"). If granted and `$HOME/mnt/Claude Texts/claude-texts-status.json` exists, that is the texts folder: skip steps 3–4. WhatsApp (helper only): if the WhatsApp desktop app is on this Mac, also write `assets/claude-whatsapp-export.py` there; the helper runs it after each texts export and adds the chats to claude-texts.json (`"app": "whatsapp"`), reading a copy of WhatsApp's database, never writing to it.
 3. Otherwise: Full Disk Access on for both "Claude" and lowercase "claude"; ask the same way for `/Users/<their Mac user name>/Library/Messages` (they click Allow); write `assets/claude-texts-export.py` into it with device_bash. It only reads chat.db.
 4. Test: `python3 "$HOME/mnt/Messages/claude-texts-export.py" 48 "<timeZone>"` must print JSON with threads. If it fails, show the real error line; for "unable to open database", "authorization denied" or "not permitted": open the pane with device_bash (`open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"`) and say: "I opened Full Disk Access. Switch on Claude and claude, quit and reopen Claude, then in a new task say: Add texts to my Design Pro Workspace".
 5. Set `texts` = "enabled", run fill_prompts.py, and create "Daily Review - Texts" (out/texts_relay.txt, `CRON_TZ=<timeZone> <the texts_relay schedule in out/schedules.json>`, `requires_local_device` true, `folders` = [the texts folder's absolute path], no notifications) unless it already exists. Update the cloud tasks' instructions, rebuild and republish to the same url without capabilities, save `setup/config`.
@@ -141,8 +141,8 @@ Verify, fix what needs no click, write the result to the page, and end with one 
 ## What the page does (for answering questions)
 - **Roles** (`settings/profile`, set in the page's Setup and read by every run; no reinstall): Owner: company-wide pipeline, Operations boards and their own jobs. Project Manager: only MY JOBS. Operations: company-wide pipeline, every active job and the Operations boards, no jobsite tools. A PM who ticks "I also handle operations" gets both.
 - **Today / Inbox**: the daily review, weather, who is on site; a live Gmail inbox (reply, forward, Draft with Claude; sending always asks to confirm).
-- **Jobs**: one job page (Overview, Open items, Lists), the Project Hub (selections, plans, documents, purchases) and Job Lists (punch, to order, to do, waiting on). Items arrive typed, pasted, talked in, from a recorded walkthrough, an email to themselves or tagged CompanyCam photos; what Claude finds lands in Needs review first.
-- **Ask and Find**: Ask answers from the Workspace, Gmail, Granola and JobTread and prepares emails as editable cards (Send plus confirm). Find searches the page.
+- **Jobs**: one page per job (Overview, To do, Money, Files) with the Project Hub and Job Lists; what Claude finds lands in Needs review first.
+- **Ask and Find**: Ask answers from the Workspace and its sources and prepares emails as editable cards (Send plus confirm); Find searches the page.
 - **Optional features** (owners and operations, in the page's Setup; never turn them on yourself): the Utilities tracker (companies from `config.org.utilities`) and Feedback file uploads (only with `config.org.sopFolder`).
 - **Feedback**: a shared beta board (`config.org.feedbackSheet`; missing → D4, then update). **System status** (More menu): what works, and the fix for what doesn't.
 
@@ -151,7 +151,6 @@ Verify, fix what needs no click, write the result to the page, and end with one 
 - A PM sees others' jobs: role Project Manager (More menu). A job they help on is missing: add them to it in JobTread.
 - Wrong or missing jobs: `config.name` must match the project-manager field's spelling exactly; fix it and update.
 - Operations boards empty: the JobTread login needs company-wide read access; permit dates come from the job location's custom fields.
-- Walkthrough items show "(check job)": the recording didn't start with the job's name and address.
 - CompanyCam photos missing: tag names must match exactly and the project must be linked to the JobTread job.
 - Email or Feedback buttons fail with a permission message: "Update my Design Pro Workspace" (republish with caps.json).
 - Texts note on the page: the Mac was asleep or Claude closed; texts catch up (48 hours back). Errors: System status.

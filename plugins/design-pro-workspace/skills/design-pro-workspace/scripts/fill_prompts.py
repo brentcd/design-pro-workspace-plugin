@@ -197,7 +197,8 @@ FRAG = re.compile(r'\{\{([A-Z][A-Z0-9_]*)\}\}')
 
 def module_on(name, cfg, org, vals):
     """An optional module's fragments go in only when it is on. Leads comes from the team settings (on, a sheet, and this
-    person named as its owner); the others from config.runMods, which the Updater keeps current. Missing = on."""
+    person named as its owner), Expenses too (on, and this person owns a listed card);
+    the others from config.runMods, which the Updater keeps current. Missing = on."""
     if name == 'leads':
         mods = org.get('modules') if isinstance(org.get('modules'), dict) else {}
         m = mods.get('leads')
@@ -205,6 +206,16 @@ def module_on(name, cfg, org, vals):
             return False
         owner = clean(m.get('owner') or '').lower()
         return bool(owner) and (owner == vals['NAME'].lower() or (' ' not in owner and owner == vals['FIRST'].lower()))
+    if name == 'expenses':
+        # team module: on, and this person owns a listed card (each page pulls and commits only its own person's cards)
+        mods = org.get('modules') if isinstance(org.get('modules'), dict) else {}
+        m = mods.get('expenses')
+        if not isinstance(m, dict) or m.get('on') is False or not isinstance(m.get('cards'), list):
+            return False
+        owners = [clean(c.get('owner') or '').lower() for c in m['cards'] if isinstance(c, dict)]
+        if not any(owners):
+            return False
+        return any(o and (o == vals['NAME'].lower() or (' ' not in o and o == vals['FIRST'].lower())) for o in owners)
     if name == 'subpay':
         return True  # always on: the updates are what find a sub's first request (owner decision, 2026-11-22)
     rm = cfg.get('runMods')
