@@ -758,6 +758,14 @@ header.site .logo{min-height:44px;min-width:44px;align-items:center}
   .jsh-facts a{display:inline-flex;align-items:center;min-height:44px;margin-block:-12px}}
 @media (max-width:560px){header.jsh h1{font-size:var(--fs-large)}}
 @media (pointer:coarse) and (min-width:600px) and (max-width:1000px) and (max-height:1200px){header.jsh h1{font-size:var(--fs-large)}}
+@media (pointer:coarse) and (min-width:600px) and (max-width:1000px){
+  body.injob main>.wrap{padding-top:8px}
+  header.jsh h1::after{display:none}
+  header.jsh .jsh-back{margin-bottom:0}
+  header.jsh .jsh-meta{margin-top:4px}
+  header.jsh .jsh-row{margin-top:10px}
+  header.jsh .jsh-facts{margin-top:4px}
+}
 @media (max-width:599px){
   header.jsh{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:2px}
   header.jsh a.jsh-back{grid-column:1;grid-row:1;margin:0 0 0 -12px;padding:0;width:44px;min-height:44px;justify-content:center}
@@ -1359,6 +1367,10 @@ tr.dim td{opacity:1;color:var(--muted)} tr.dim td b{color:var(--muted)}
 
 .src{font:400 var(--fs-caption)/1.4 var(--body);color:var(--text-faint)}
 .jtools .search{flex:1 1 260px;max-width:none}
+.jsrow{display:flex;gap:8px;align-items:center;flex:1 1 100%;min-width:0}.jsrow .search{flex:1 1 auto;min-width:0}.jsrow .jnew{flex:none;white-space:nowrap}
+.ckpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.ctot{display:flex;flex-wrap:wrap;gap:2px 14px;margin:0;font-size:var(--fs-footnote);color:var(--muted)}.ctot b{color:var(--fg)}.ctot span{white-space:nowrap}
+.jfmore{display:flex;flex-direction:column;gap:8px;flex:1 1 100%}.jfmore[hidden]{display:none}
 .jline{display:none;margin:-10px 0 0;font-size:var(--fs-footnote);line-height:1.6;color:var(--muted)}
 .jline a,.jline .linkb{color:var(--fg);font-weight:600}
 .jline .src{white-space:nowrap}
@@ -1505,13 +1517,16 @@ function renderTabs(){
     {k:"money",l:"Money",ic:"dollar-sign",kids:[["hub/costing","Job costing",0]].concat(modKids("money"))},
     ...MODS.filter(m=>!m.sec).map(m=>({k:m.k,l:m.l,ic:m.ic,kids:m.kids()})),
    {k:"ops",l:"Operations",ic:"clipboard-check",n:opsOver,kids:opsKids.map(([h,l,n])=>[h,l,n,n?"hot":""])},
-   {k:"more",l:"More",ic:"ellipsis",kids:(S0.all?[]:[["start","Getting started",S0.left]]).concat([["feedback","Feedback",0],["history","Past reviews",0],["hub/log","Source log",0]]).concat(S0.all?[["start","Help",0]]:[]).concat([["system","System status",SYSN,SYSN?"hot":""],["setup","Setup",0]])}].filter(s=>s.kids.length);
+   {k:"more",l:"More",ic:"ellipsis",kids:(S0.all?[]:[["start","Getting started",S0.left]]).concat([["feedback","Feedback",0]]).concat(S0.all?[["start","Help",0]]:[]).concat([["system","System status",SYSN,SYSN?"hot":""],["setup","Setup",0]])}].filter(s=>s.kids.length);
   const secOf=h=>{const mo=MODS.find(m=>m.owns(h));if(mo)return mo.sec||mo.k;if(/^(today|people|calendar|later|assigned)$/.test(h))return"today";if(h==="email"||h==="inbox"||KINDS.some(x=>x[2]===h))return"inbox";
     if(h==="jobs"||h.startsWith("job-")||h.startsWith("lists")||/^sites(\/|$)/.test(h)||/^hub\/(jobs|job-|investment|inbox|orders)/.test(h))return"jobs";
     if(h==="pipeline")return"pipeline";if(h==="hub/costing")return"money";if(ops.some(x=>x[0]===h))return"ops";if(/^(history|feedback|setup|start|system)$/.test(h)||/^hub\/(log|howto)/.test(h))return"more";return"today"};
-  const kidOf=h=>{if(h.startsWith("lists"))return"hub/jobs";if(/^sites(\/|$)/.test(h))return"sites";if(h==="jobs"||h.startsWith("job-"))return"hub/jobs";if(h==="later")return"today";if(h==="hub/howto")return"start";if(KINDS.some(x=>x[2]===h&&x[0]!=="email"))return"inbox";
+  const kidOf=h=>{if(h.startsWith("lists"))return"hub/jobs";if(/^sites(\/|$)/.test(h))return"sites";if(h==="jobs"||h.startsWith("job-"))return"hub/jobs";if(h==="later")return"today";if(h==="hub/howto")return"start";if(h==="history"||h==="hub/log")return"system";if(KINDS.some(x=>x[2]===h&&x[0]!=="email"))return"inbox";
     if(/^hub\/(job-|investment|inbox|orders)/.test(h))return"hub/jobs";return h};
   const cs=secOf(H),ck=kidOf(H);window.__dpSec=cs;
+  if(cs==="ops"){try{if(localStorage.getItem("dp_ops_last")!==ck)localStorage.setItem("dp_ops_last",ck)}catch(e){}}
+  const opsLand=(()=>{const ks=(SECS.find(s=>s.k==="ops")||{kids:[]}).kids.map(k=>k[0]);let l="";try{l=localStorage.getItem("dp_ops_last")||""}catch(e){}return ks.includes(l)?l:window.DPR&&DPR.role==="ops"&&ks.includes("officeq")?"officeq":ks[0]})();
+  const landOf=s=>s.k==="ops"&&opsLand?opsLand:s.kids[0][0];
   document.body.dataset.sec=cs;
   document.body.classList.toggle("injob",/^(job-|lists\/.|hub\/job-)/.test(H));document.body.dataset.kt=(KINDS.find(x=>x[2]===H)||[])[0]||"";
   const SIC={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
@@ -1528,15 +1543,17 @@ function renderTabs(){
   const kidA=([h,l,n,cls])=>`<a href="#${h}"${setup(h)}${ck===h?' aria-current="page"':""}>${esc(l)}${badge(n,ck===h?"":cls)}</a>`;
   const secN=s=>{const k=s.kids[0];return s.k==="today"?badge(k[2],urgentN&&cs!=="today"?"hot":""):s.k==="inbox"?badge(open.length):s.k==="ops"&&s.n?`<span class="n hot" aria-hidden="true">${s.n}</span><span class="vh">, ${s.n} overdue</span>`
     :s.k==="jobs"&&ht.inbox?`<span class="n" aria-hidden="true">${ht.inbox}</span><span class="vh">, ${ht.inbox} to sort</span>`:""};
-  const secA=(s,extra)=>`<a href="#${s.kids[0][0]}"${setup(s.kids[0][0])}${cs===s.k?' aria-current="page"':""}${extra||""}>${sic(s.ic)}<span class="tl">${s.l}</span>${secN(s)}</a>`;
+  const secA=(s,extra)=>`<a href="#${landOf(s)}"${setup(landOf(s))}${cs===s.k?' aria-current="page"':""}${extra||""}>${sic(s.ic)}<span class="tl">${s.l}</span>${secN(s)}</a>`;
   const T=$("#tabs");T.style.gridTemplateColumns=`repeat(${SECS.length},minmax(0,1fr))`;T.innerHTML=SECS.map(s=>secA(s)).join("");
   const B=$("#btabs");if(B){B.style.setProperty("--cols",SECS.length);B.innerHTML=SECS.map(s=>secA(s)).join("");
     B.classList.remove("icononly"); if(B.getClientRects().length&&getComputedStyle(B).display!=="none"&&[...B.querySelectorAll(".tl")].some(t=>t.scrollWidth>t.clientWidth+1))B.classList.add("icononly")}
   const cur=SECS.find(s=>s.k===cs);const st=$("#subtabs");
+  const subpg=!!cur&&!document.body.classList.contains("injob")&&cs!=="today";
+  [document.body,document.getElementById("hubhost"),document.getElementById("listhost")].forEach(el=>{if(el)el.classList.toggle("subpg",subpg)});
   if(st){const html=cur&&cur.kids.length>1?cur.kids.map(kidA).join(""):"";if(st.innerHTML!==html)st.innerHTML=html;st.hidden=!(cur&&cur.kids.length>1);st.setAttribute("aria-label",cur?`Pages in ${cur.l}`:"Pages in this section")}
   $("#side").innerHTML=SECS.map(s=>{const on=cs===s.k;const many=s.kids.length>1;
     if(on&&many)return `<div class="sec on"><div class="sech lab" id="sech-${s.k}">${sic(s.ic)}<span>${s.l}</span></div><div class="kids" role="group" aria-labelledby="sech-${s.k}">${s.kids.map(kidA).join("")}</div></div>`;
-    return `<div class="sec${on?" on":""}"><a class="sech" href="#${s.kids[0][0]}"${setup(s.kids[0][0])}${on?' aria-current="page"':""}>${sic(s.ic)}<span>${s.l}</span>${secN(s)}${many?`<i class="chev" aria-hidden="true"></i>`:""}</a></div>`}).join("")+(window.DPR&&DPR.loaded?`<p class="rolelab">Signed in as <b>${esc(DPR.label())}</b></p>`:"");
+    return `<div class="sec${on?" on":""}"><a class="sech" href="#${landOf(s)}"${setup(landOf(s))}${on?' aria-current="page"':""}>${sic(s.ic)}<span>${s.l}</span>${secN(s)}${many?`<i class="chev" aria-hidden="true"></i>`:""}</a></div>`}).join("")+(window.DPR&&DPR.loaded?`<p class="rolelab">Signed in as <b>${esc(DPR.label())}</b></p>`:"");
   paintRefresh();icons();renderTabsBadge();
   const keep=(row,el)=>{if(!row||!el)return;const r=row.getBoundingClientRect(),e=el.getBoundingClientRect();if(e.left<r.left)row.scrollLeft-=r.left-e.left+40;else if(e.right>r.right)row.scrollLeft+=e.right-r.right+40};
   keep(T,T.querySelector("[aria-current]"));keep(st,st&&st.querySelector("[aria-current]"));
@@ -1576,6 +1593,18 @@ function viewStart(){const {xs,left,all}=startState();
      ...(window.DPOrg&&DPOrg.mod&&DPOrg.mod("closeout")?[["Operations › Weekly closeout","Jobs ready to close, from your team's closeout Sheet, so everyone sees the same list. Tick the checks with the project manager (the hints under each check come from JobTread; you tick the boxes), send the job to the person who does the final check in accounting, then close it out once they're done. Nothing changes in JobTread or QuickBooks."]]:[]),
      ["Operations › Office to-dos","The office team's open JobTread to-dos, with chips for overdue ones, utilities (electric, gas and water steps as JobTread to-dos, with Start utilities on each new build), permits and inspections (dates from each job location in JobTread, with Request inspection), and Rocks (Quarterly planning suggests next quarter's). Mark done is on every row; Change due date, +1 week and Reassign are under More."]]:[]),
    ["More","Feedback, past reviews, where each item came from, this page and Setup."]];
+  const PG=[["Inbox","Everything open from email, texts, meetings and JobTread, grouped by job, the most urgent job first. The Email chip's All mail shows your live Gmail inbox."],
+   ["All jobs","Every client job (and investment properties and flips): selections, plans, permits, orders and costs. Open orders lists material requests, quotes and orders not delivered yet."],
+   ["Site schedule","Who is supposed to be at each job, doing what, on which day, from your email, texts, meetings and JobTread. Your own appointments stay on the Calendar."],
+   ["Pipeline","Proposals and change orders waiting on clients and invoices due, from JobTread, for the jobs where the chosen project manager is the job's project manager in JobTread."],
+   ["Job costing","Approved price (proposals plus change orders), expected budget and current spend for every project, with the margin each one is on track for against your team's margin target."],
+   ...(window.DPOrg&&DPOrg.mod&&DPOrg.mod("leads")?[["Leads","Your team's lead tracker, read live from the shared Google Sheet. Changes you save go straight into the Sheet, so everyone sees the same list."]]:[]),
+   ["Sub payments","Payments your subs have asked for, from email, texts and JobTread bills. Approve, send to the office as a JobTread to-do, and it closes itself once paid."],
+   ...(window.DPOPS&&DPOPS.tabs().length?[["Team","Money, open asks, who's on site and every job, for everyone or one project manager."],["Office to-dos","The office team's open JobTread to-dos, plus utilities, permits and Rocks."]]:[]),
+   ["Feedback","Ask for what would help, report anything broken, and upvote what others asked for. Everyone using the Workspace sees the same list."],
+   ["Past reviews","Earlier daily reviews and everything you've checked off (from System status)."],
+   ["Source log","Every selection, change, document, permit and order, with the date and a link back to where it came from (from System status)."],
+   ["System status","Whether your page, daily updates, texts and scheduled tasks are working, and exactly what to do when one isn't."]];
   const SRC=[["Today, Inbox, Calendar and Pipeline","The daily review, every morning. Refresh runs it again in about 5–10 minutes."],
    ["Email","Your live inbox, checked every 2 minutes while this page is open."],
    ["Jobs","The Project Hub sync, which reads JobTread, email and meetings for each job."],
@@ -1586,6 +1615,7 @@ function viewStart(){const {xs,left,all}=startState();
    `<div class="stgrid">${list}
    <section class="dcard" data-nodpd><h2>Nothing is sent without your OK</h2><p class="stp">Emails, texts, JobTread changes, calendar events and files are only sent or saved after you tap and then confirm a step that says exactly what will happen. Checking items off and notes only change this Workspace.</p></section>
    <section class="dcard" data-nodpd><h2>What each menu is for</h2><dl class="stdl">${G.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></section>
+   <section class="dcard" data-nodpd data-pgintro><h2>What each page shows</h2><dl class="stdl">${PG.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl><p class="stp"><a href="#history">Past reviews ›</a> · <a href="#hub/log">Source log ›</a></p></section>
    <section class="dcard" data-nodpd><h2>Where the information comes from</h2><dl class="stdl">${SRC.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl><p class="stp"><a href="#hub/howto">How the Project Hub works ›</a></p></section>${window.__dpSaysHtml?window.__dpSaysHtml():""}</div>`}
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-stmark],[data-stsetup],[data-stfind]");if(!t)return;
   if(t.dataset.stmark!==undefined){startSave(t.dataset.stmark,true);return}
@@ -1715,7 +1745,7 @@ function aRow(i,c,o={}){
    <input class="tcb" type="checkbox" data-topcb="${esc(i.id)}" data-ttext="${esc(o.text||i.text)}" ${d?"checked":""} aria-label="Mark done: ${esc(o.text||i.text)}">${o.num?`<span class="num" aria-hidden="true">${o.num}</span>`:""}
    <a class="abody" href="${jobHref(c)}">${o.lead?`<b>${esc(o.lead)}</b>`:""}<span class="atext">${esc(o.lead?dropLead(i.text,o.lead):(o.text||i.text))}</span><small>${esc(meta.join(" · "))}${jl}</small>${(state.status[safeId(i.id)]||{}).note?`<span class="anote"><b>Note</b> ${esc(cut48((state.status[safeId(i.id)]||{}).note))}</span>`:""}</a>
    <span class="aact">${o.age!==false?ageChip(i):""}${d?"":`<button class="act topx" type="button" data-topx="${esc(i.id)}" data-verb="${vk}" aria-expanded="${open}" aria-label="${open?"Close":vl}: ${esc(o.text||i.text)}">${open?"Close":vl}</button>`}</span>
-   ${open?`<ul class="items topitem">${itemHtml(i,c)}</ul>`:""}</li>`}
+   ${open?`<ul class="items topitem">${itemTextLink(itemHtml(i,c))}</ul>`:""}</li>`}
 function topRow(p,ix,r,f){
   const num=ix+1;
   if(f.i&&snoozed(f.i)){const u=(state.later[safeId(f.i.id)]||{}).until;return `<li class="arow numd snz" data-arow="${esc(f.i.id)}"><span class="tcb ph" aria-hidden="true"></span><span class="num" aria-hidden="true">${num}</span><a class="abody" href="${jobHref(f.c)}"><span class="atext">${esc(p.text)}</span><small>Snoozed until ${esc(nice(u))}</small></a><span class="aact"><button class="act" type="button" data-unsnooze="${esc(f.i.id)}">Bring back</button></span></li>`}
@@ -1771,7 +1801,7 @@ function weatherCard(r){const w=r&&r.weather;if(!w||typeof w!=="object"||Array.i
   const day=d=>{const hi=wxTemp(d.hi),lo=wxTemp(d.lo),p=wxPct(d);const ik=WX_ICON[wxIconKey(d)];
     return `<li><span aria-hidden="true" class="wx-dv"><span class="wx-dl">${esc(d._lab)}</span>${ik?wxSvg(ik,"wx-sm"):""}<span class="wx-dt">${hi!=null?`<b>${wxDeg(hi)}</b>`:""}${lo!=null?`<span>${hi!=null?"/":"Low "}${wxDeg(lo)}</span>`:""}${hi==null&&lo==null?`<span class="wx-na">–</span>`:""}</span>${p!=null&&p>=30?`<span class="wx-dp">${wxSvg("droplet","wx-drop")}${p}%</span>`:""}</span><span class="vh">${esc(hi==null&&lo==null&&p==null&&!String(d.summary||"").trim()?d._long+", no forecast":wxSay(d._long,d))}.</span></li>`};
   return `<section class="wx${W.old?" old":""}${hasNow?"":" nonow"}" aria-labelledby="wxh" data-wx>
-    <div class="wx-hd"><h2 id="wxh"${place?` aria-label="${esc("Weather, "+place)}"`:""}>Weather${place?`<span class="wx-dot" aria-hidden="true">·</span><span class="wx-pl">${esc(place)}</span>`:""}</h2>${W.label?`<span class="wx-up${W.old?" old":""}">${esc(W.label)}</span>`:""}</div>
+    <div class="wx-hd${W.old?"":" vh"}"><h2 id="wxh"${place?` aria-label="${esc("Weather, "+place)}"`:""}>Weather${place?`<span class="wx-dot" aria-hidden="true">·</span><span class="wx-pl">${esc(place)}</span>`:""}</h2>${W.label?`<span class="wx-up${W.old?" old":""}">${esc(W.label)}</span>`:""}</div>
     ${hasNow||days.length?`<div class="wx-row">${now}${days.length?`<ul class="wx-days" aria-label="Next ${days.length===1?"day":days.length+" days"}">${days.map(day).join("")}</ul>`:""}</div>`:""}
     ${alerts.map(a=>`<p class="wx-alert">${wxSvg("alert-triangle","wx-ai")}<span><span class="vh">Weather alert: </span>${esc(a)}</span></p>`).join("")}
     ${note?`<p class="wx-note">${esc(note)}</p>`:""}
@@ -1799,7 +1829,7 @@ function viewToday(){
   const overdue=ps?ps.overdue:[],waitProps=ps?ps.pend:[];
   const mineA=Object.values(state.assigns).filter(a=>a.to===state.me&&!isDoneId(a.itemId));
   const li=(href,b,t,cls)=>`<li${cls?` class="${cls}"`:""}><a href="${href}"><b>${esc(b)}</b><span>${esc(t)}</span><i class="go" aria-hidden="true">›</i></a></li>`;
-  const card=(key,title,n,body,more,moreLbl,extra)=>`<section class="dcard t-${key}" data-dkey="today-${key}"${extra||""}><h2>${title}${n!=null?`<span class="cnt" aria-hidden="true">${n}</span><span class="vh">, ${n}</span>`:""}</h2>${body}${more?`<a class="dmore" href="${more}">${moreLbl} ›</a>`:""}</section>`;
+  const card=(key,title,n,body,more,moreLbl,extra)=>`<section class="dcard t-${key}" data-dkey="today-${key}"${more&&key!=="needs"?" data-dmore":""}${extra||""}><h2>${title}${n!=null?`<span class="cnt" aria-hidden="true">${n}</span><span class="vh">, ${n}</span>`:""}</h2>${body}${more?`<a class="dmore" href="${more}"><span>${moreLbl}<span class="dmore-n"></span> ›</span></a>`:""}</section>`;
   const needN=urg.length+ovr.length+oth.length;
   const pplAllN=new Set(vis.filter(({i,c})=>(i.kind==="email"||i.kind==="text")&&whoOf(i,c)&&!isDone(i)).map(({i,c})=>whoOf(i,c))).size;
   const sub=(k,l,xs,note)=>{if(!xs.length)return"";return `<li class="tsub dpd-sub" id="tsub-${k}">${l}<span class="cnt" aria-hidden="true">${xs.length}</span><span class="vh">, ${xs.length}</span>${note?`<em>${note}</em>`:""}</li>`+xs.map(({i,c})=>aRow(i,c)).join("")};
@@ -2040,7 +2070,7 @@ window.__drCalFor=j=>{const cal=(state.review&&state.review.calendar)||[];if(!ca
   const t0=new Date();t0.setHours(12,0,0,0);const diff=Math.round((cd-t0)/864e5);const lab=cd.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
   return {day:diff===0?"Today on the calendar":diff===1?"Tomorrow on the calendar":diff<0?"Was on the calendar":"On the calendar",time:(diff===0||diff===1?"":lab+", ")+(hit.time||""),title:hit.title||"",past:diff<0}};
 document.addEventListener("click",e=>{const x=e.target.closest&&e.target.closest("[data-topx]");if(!x)return;const id=x.dataset.topx,v=x.dataset.verb;
-  const was=!!(state.topOpen||{})[id];state.topOpen=was?{}:{[id]:true};if(!was&&v==="acts")state.more[id]=true;render();
+  const was=!!(state.topOpen||{})[id];state.topOpen=was?{}:{[id]:true};if(!was)delete state.more[id];render();
   if(was)return;const a=state.actions[safeId(id)];const busy=a&&a.type==="working";
   if(v==="reply"&&!busy&&!(a&&a.type==="reply"))doReply(id,false);else if(v==="text"&&!busy&&!(a&&a.type==="textreply"))doTextReply(id)});
 function tScrollTo(el){if(!el)return;const hd=document.querySelector("header.site");const hide=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--hdrhide"))||0;const off=hd&&getComputedStyle(hd).position!=="static"?hd.offsetHeight-(innerWidth<600?hide:0):0;scrollTo({top:scrollY+el.getBoundingClientRect().top-off-10,behavior:"smooth"})}
@@ -2389,7 +2419,7 @@ function viewFeedback(){
      <div class="meta"><span class="pill ${cls}">${esc(st)}</span><span class="pill${/bug|broken/i.test(r.type)?" bug":""}">${esc(/bug|broken/i.test(r.type)?"Bug":/idea|other/i.test(r.type)?"Idea":"Feature")}</span>${r.area?`<span class="pill">${esc(r.area)}</span>`:""}<span>${esc(r.from||"Someone")}${r.date?" · "+esc(nice(r.date)):""}</span></div>
      ${r.note?`<div class="note"><b>Response:</b> ${esc(r.note)}</div>`:""}</div></div>`}).join("");
   const age=FB.at?Math.round((Date.now()-FB.at)/60000):null;
-  return pageHead("Feedback & requests","The Workspace is in beta. Ask for what would help, report anything broken, and upvote what others asked for. Everyone using the Workspace sees this same list.")+
+  return pageHead("Feedback & requests","")+
   `<form class="fbform" id="fbf"><h2 style="margin:0">Suggest something</h2><div class="grid">
     <label>Type<select data-fb="type"${dis}>${opt(["Feature request","Bug / something broken","SOP / how we do it","Idea / other"],FB.form.type)}</select></label>
     <label>Part of the app<select data-fb="area"${dis}>${opt(["Daily Review","Email","Project Hub","Job Lists","Pipeline","Operations","Utilities","Texts","Calendar","Scheduled updates","Other"],FB.form.area)}</select></label></div>
@@ -2398,7 +2428,7 @@ function viewFeedback(){
     ${!SOP_FOLDER?"":`<div class="fbfile">${FB.file?`<span>Attached: <b>${esc(FB.file.name)}</b></span> <button type="button" class="act ghost" data-fbfilex${dis}>Remove</button>`:`<label>Attach a screenshot or document (optional)<input type="file"${dis} data-fbfile accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.heic"></label>`}<small>A screenshot of what you see, or a document such as an SOP or checklist. It goes to the shared <a href="${SOP_URL}" target="_blank" rel="noopener">SOP uploads</a> folder so the Workspace can be fixed and built around how your team already works. Up to 10 MB.</small></div>`}
     ${FB.confirm?`<div class="fbconf" role="alert" style="border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;font-size:.9rem;color:var(--fg)"><b>Post “${esc(FB.form.title.trim().slice(0,140))}” to the shared list?</b> Everyone using the Workspace will see it.${FB.file?` The file <b>${esc(FB.file.name)}</b> goes to the shared SOP uploads folder.`:""}</div>`:""}
     <div class="acts" style="margin:0;align-items:center">${FB.confirm?`<button class="act primary" type="button" data-fbgo${FB.sending?" disabled":""}>Post feedback</button><button class="act ghost" type="button" data-fbback${FB.sending?" disabled":""}>Cancel</button>`:`<button class="act primary" type="submit">Submit</button>`}${FB.msg?`<span class="status" role="status">${esc(FB.msg)}</span>`:""}</div></form>
-  <div class="embar"><div class="chips" role="group" aria-label="Sort">${chips}</div><span class="live${FB.err?" off":""}">${FB.busy?"Updating…":FB.err?"Offline":age!=null?"Live · updated "+(age<1?"just now":age+" min ago"):"Loading…"}</span><button class="act ghost" data-fbr type="button">Refresh</button>${((FB.email&&FB_ADMINS.includes(String(FB.email).toLowerCase()))||state.owner)?`<a class="act ghost" href="${FB_URL}" target="_blank" rel="noopener">Open sheet</a>`:""}</div>
+  <div class="embar"><div class="chips" role="group" aria-label="Sort">${chips}</div><span class="live${FB.err?" off":""}">${FB.busy?"Updating…":FB.err?"Offline":age!=null?"Live · updated "+(age<1?"just now":age+" min ago"):"Loading…"}</span>${((FB.email&&FB_ADMINS.includes(String(FB.email).toLowerCase()))||state.owner)?`<a class="act ghost" href="${FB_URL}" target="_blank" rel="noopener">Open sheet</a>`:""}</div>
   ${FB.err?dpErrBox(FB.err,FB.errObj,"data-fbr"):""}
   ${FB.reqs?(list.length?`<div class="fblist">${rows}</div>`:`<div class="empty">${FB.sort==="top"?"No requests yet. Be the first.":"Nothing here yet."}</div>`):FB.err?"":dpLoadBox("Loading requests…",4)}`;
 }
@@ -2582,7 +2612,7 @@ function emSeg(cur){const needOpen=allItems().filter(({i})=>i.kind==="email"&&!i
 function viewEmail(){
   const need=allItems().filter(({i})=>i.kind==="email"&&(!isDone(i)||!state.hideDone));
   const seg=emSeg(EM.tab);
-  if(EM.tab==="need"){const sub="Emails that need a reply, from your scheduled updates. The most urgent job is first.";
+  if(EM.tab==="need"){const sub="";
     return (window.DPPageHead?DPPageHead("Email",esc(sub),"",ibxAllBtn()):pageHead("Email",sub))+`<div class="embar ibx-bar">${seg}</div>`+(need.length?inboxGroups(need):`<div class="empty">No emails need a reply.</div>`);}
   EM.newCount=0;
   if(!state.mcp)return pageHead("Email","Your Gmail inbox, live.")+`<div class="embar">${seg}</div><div class="empty">The live inbox needs the Gmail connector. Open this page signed in on claude.ai.</div>`;
@@ -2766,6 +2796,7 @@ document.addEventListener("click",e=>{const li=e.target.closest&&e.target.closes
   if(!li||e.target.closest("a,button,input,select,textarea,label,.panel,.menu,.fslot,.badge"))return;
   const id=li.dataset.item;const on=!li.classList.contains("ibx-on");if(on)INB.reveal.add(id);else INB.reveal.delete(id);li.classList.toggle("ibx-on",on)});
 
+function itemTextLink(h){return h.replace(/<p>([^<]*) <a href="([^"]*)" target="_blank" rel="noopener" aria-label="([^"]*)">Open<\/a><\/p>/,(m,t,u,l)=>`<p><a class="itext" href="${u}" target="_blank" rel="noopener" aria-label="${l}">${t}</a></p>`)}
 const ibxItemBase=itemHtml;
 itemHtml=function(i,c,quiet){let h=ibxItemBase.apply(this,arguments);if(!i||!c)return h;
   const ctx=esc(ibxCtx(i,c));const sid=safeId(i.id);if(typeof quiet!=="boolean")quiet=INB.quiet.has(i.id);
@@ -2775,6 +2806,11 @@ itemHtml=function(i,c,quiet){let h=ibxItemBase.apply(this,arguments);if(!i||!c)r
   h=h.replace(/(data-a="punch"[^>]*>)Punch list</g,"$1Make punch list<");
   h=h.replace(/<button class="act([^"]*)" data-a="([\w-]+)"((?:(?!aria-label)[^>])*)>([^<]+)<\/button>/g,(m,cl,a,rest,lab)=>a==="more"?m:`<button class="act${cl}" data-a="${a}"${rest} aria-label="${lab.trim()}: ${ctx}">${lab}</button>`);
   h=h.replace(/(<a class="act" href="[^"]*" target="_blank" rel="noopener")>Open draft in Gmail</,`$1 aria-label="Open draft in Gmail (new tab): ${ctx}">Open draft in Gmail<`);
+  if(window.__dpSec==="inbox"){
+    h=itemTextLink(h);
+    const nb=h.match(/<button class="act ghost" data-dn-new="[^"]*" aria-label="[^"]*">Note<\/button>/);
+    if(nb){h=h.replace(nb[0],"");
+      const add=nb[0].replace('class="act ghost"','class="act"').replace(">Note<",">Add note<");h=h.replace(/<div class="menu"[^>]*>/,m=>m+add)}}
   return h};
 
 function ibxRecip(a){const raw=String((a&&a.to)||"");const list=Array.isArray(a&&a.toList)&&a.toList.length?rtList(a.toList):emList(raw);const addr=list[0]||"";
@@ -2873,7 +2909,7 @@ function viewInbox(preset){
   const jobSel=jobs.size>1||jobKey?`<label class="injob"><span class="vh">Show one job</span><select data-injob aria-label="Show one job"><option value="">All jobs</option>${[...jobs.values()].sort((a,b)=>String(a.l).localeCompare(String(b.l))).map(o=>`<option value="${esc(o.k)}"${o.k===jobKey?" selected":""}>${esc(o.l)} · ${o.n}</option>`).join("")}</select></label>`:"";
   const openN=all.filter(({i})=>!isDone(i)).length;const short={waiting:"Waiting"};
   const chips=[["all","All",openN],...KINDS.filter(([k])=>cnt[k]).map(([k,l])=>[k,short[k]||l,cnt[k]])].map(([k,l,n])=>`<button type="button" data-inkind="${k}" aria-pressed="${kind===k}">${esc(l)} <span class="n" aria-hidden="true">${n}</span><span class="vh">, ${n}</span></button>`).join("");
-  const sub={all:"Everything open from email, texts, meetings and JobTread, grouped by job. The most urgent job is first.",email:"Emails that need a reply. All mail shows your live Gmail inbox.",text:"Texts that need a reply.",meeting:"Action items from meetings.",waiting:"People you're waiting on.",delivery:"Orders and deliveries.",money:"Payments, invoices and deposits.",jobtread:"JobTread tasks and fixes.",estimate:"Estimates to write, update or chase."}[kind]||"";
+const sub="";
   const roll=kind==="all";
   const bar=kind==="email"?`<div class="embar ibx-bar">${emSeg("need")}</div>`:"";
   const head=roll&&window.DPPageHead?DPPageHead("Inbox",esc(sub),"",ibxAllBtn()):pageHead("Inbox",sub);
@@ -2885,6 +2921,7 @@ function viewInbox(preset){
 .ibx li.item.ibx-q:not(.ibx-on) .ibody>.acts:not(:focus-within){max-height:0;overflow:hidden;margin:0;padding:0;opacity:0;pointer-events:none}
 .ibx li.item.ibx-q:not(.ibx-on) .ibody{cursor:pointer}
 .ibx li.item.ibx-q:not(.ibx-on) .ibody>.acts [data-a="more"]{display:none}
+.ibx a.itext,.topitem a.itext{display:block;min-height:44px;color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .ibx .ibx-qm{margin-left:auto;min-height:32px;min-width:44px;padding:0 10px;font-weight:700;line-height:1}
 .ibx li.item.ibx-on .ibx-qm{display:none}
 @media (pointer:coarse){.ibx .ibx-qm{min-height:44px}}
@@ -3137,8 +3174,8 @@ function pipeExtra(inv,x){
   const jobA=job&&!job.ext?`<a class="act ghost" href="${esc(DPCore.safeUrl(job.h))}">Open job page</a>`:"";
   const acts=qb?`<p class="pcm-s">In QuickBooks only, so there are no JobTread actions for it.</p>`:`<div class="pacts2">`+jobA+
     (url?`<a class="act ghost" href="${esc(DPCore.safeUrl(url))}" target="_blank" rel="noopener" aria-label="Open in JobTread (new tab): ${esc(docLabel)}, ${esc(x.customer||"")}">Open in JobTread</a>`:"")+
-    `<button type="button" class="act ghost" data-pcm-box="${esc(k)}" aria-expanded="${!!PIPE.box[k]}" aria-label="Add comment: ${esc(docLabel)}, ${esc(x.customer||"")}">Add comment</button>`+(closable?cl.btn:"")+`</div>`+(closable?cl.extra:"");
-  const box=PIPE.box[k]&&!qb?`<div class="pcbox"><label class="vh" for="pcm-${esc(k)}">Comment on ${esc(docLabel)}</label><textarea id="pcm-${esc(k)}" data-pcm-t="${esc(k)}" rows="2" placeholder="Write a comment for your team">${esc(PIPE.text[k]||"")}</textarea>
+    (PIPE.box[k]===false?`<button type="button" class="act ghost" data-pcm-box="${esc(k)}" aria-expanded="false" aria-label="Add comment: ${esc(docLabel)}, ${esc(x.customer||"")}">Add comment</button>`:"")+(closable?cl.btn:"")+`</div>`+(closable?cl.extra:"");
+  const box=PIPE.box[k]!==false&&!qb?`<div class="pcbox"><label class="vh" for="pcm-${esc(k)}">Comment on ${esc(docLabel)}</label><textarea id="pcm-${esc(k)}" data-pcm-t="${esc(k)}" rows="2" placeholder="Write a comment for your team">${esc(PIPE.text[k]||"")}</textarea>
     <div class="acts"><button type="button" class="act primary" data-pcm-post="${esc(k)}">Post comment</button><button type="button" class="act ghost" data-pcm-x="${esc(k)}">Cancel</button></div></div>`:"";
   const err=PIPE.err[k]?`<p class="pcm-s err" role="alert">${esc(PIPE.err[k])}</p>`:"";
   return `<div class="pext" data-pk="${esc(k)}"${closable?` data-doc="${esc(x.docId)}"`:""}>${chips}${cmts}${acts}${box}${err}${DPCore.confirmHtml("pipe:cm:"+k)}${chk?pipeFollowUps(k,x):""}</div>`;
@@ -3167,7 +3204,7 @@ async function jtComment(x,message){
 async function jtDocComments(docId){const p=await jtq({document:{$:{id:docId},id:{},comments:{$:{size:10,sortBy:[{field:"createdAt",order:"desc"}]},nodes:{id:{},message:{},createdAt:{},createdByUser:{name:{}}}}}});
   const n=(((p||{}).document||{}).comments||{}).nodes;if(!Array.isArray(n))throw DPCore.error("bad_reply","JobTread",'reply has no "document.comments"');
   return n.filter(c=>c&&c.message).map(c=>({text:String(c.message),at:c.createdAt||"",by:(c.createdByUser||{}).name||""}))}
-function pipeOpen(k){PIPE.row[k]=!PIPE.row[k];const f=pipeFind(k);
+function pipeOpen(k){PIPE.row[k]=!PIPE.row[k];if(PIPE.row[k])delete PIPE.box[k];const f=pipeFind(k);
   if(PIPE.row[k]&&f&&f.inv&&f.x.docId&&state.mcp)pipeCmLoad(f.x.docId,true).then(render,render);render()}
 function pipeFocus(sel){setTimeout(()=>{const el=document.querySelector(sel);if(el)try{el.focus({preventScroll:true})}catch(e){}},40)}
 function pipeBox(k,open){PIPE.box[k]=open;DPCore.cancelConfirm("pipe:cm:"+k,true);delete PIPE.err[k];render();
@@ -3200,15 +3237,16 @@ function pipeFU(k,what,from){const f=pipeFind(k);if(!f)return;delete PIPE.err[k]
     DPCore.confirm({key:"pipe:dep:"+k,what:`Create a JobTread to-do asking ${who.replace(/ \(you\)$/,"")} if the check for ${lab} was deposited`,to:who,target:"JobTread · job #"+job,note:"Due tomorrow. Only your team sees it.",label:"Create to-do",busy:"Creating…",done:"To-do created in JobTread",from,
       sig:()=>{const s=document.querySelector(`[data-pdep="${CSS.escape(k)}"]`);return s?s.value:id},
       onConfirm:async()=>{await pipeTodo(x,`Was the check for ${lab} (${x.customer||""}) deposited?`,desc,id);PIPE.did[k+":dep"]="To-do created";render()}})}}
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-prow],[data-pcm-box],[data-pcm-x],[data-pcm-post],[data-pfu],[data-pkind]");if(!b)return;e.preventDefault();const d=b.dataset;
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-prow],[data-pcm-box],[data-pcm-x],[data-pcm-post],[data-pfu],[data-pkind],[data-pkmore]");if(!b)return;e.preventDefault();const d=b.dataset;
   if(d.pkind!==undefined){PIPE.kind=d.pkind;return render()}
+  if(d.pkmore!==undefined){PIPE.kmore=b.getAttribute("aria-expanded")!=="true";render();const n=document.querySelector("#view [data-pkmore]");if(n)n.focus({preventScroll:true});return}
   if(d.prow!==undefined)return pipeOpen(d.prow);if(d.pcmBox!==undefined)return pipeBox(d.pcmBox,!PIPE.box[d.pcmBox]);if(d.pcmX!==undefined)return pipeBox(d.pcmX,false);
   if(d.pcmPost!==undefined)return pipePost(d.pcmPost,b);if(d.pfu)return pipeFU(d.pk2,d.pfu,b)});
 document.addEventListener("input",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pcmT!==undefined){PIPE.text[t.dataset.pcmT]=t.value;DPCore.cancelConfirm("pipe:cm:"+t.dataset.pcmT,true)}});
 document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pdep!==undefined){PIPE.dep=t.value;if(t.value&&PIPE.depErr[t.dataset.pdep]){delete PIPE.depErr[t.dataset.pdep];render()}try{localStorage.setItem("dp_check_depositor",t.value)}catch(x){}DPCore.cancelConfirm("pipe:dep:"+t.dataset.pdep,true)}});
 function viewPipeline(){
   const p=state.review.pipeline;
-  if(!p)return pageHead("Pipeline","Proposals waiting on clients and invoices due, from JobTread.")+`<div class="empty">The pipeline fills in with the next morning review.</div>`;
+  if(!p)return pageHead("Pipeline","")+`<div class="empty">The pipeline fills in with the next morning review.</div>`;
   const all=[...(p.proposals||[]),...(p.invoices||[])];
   const cnt={};all.forEach(x=>pmOf(x).forEach(n=>cnt[n]=(cnt[n]||0)+1));
   const ALL=window.DPR?DPR.all():DPC.role!=="pm";const pms=ALL?Object.keys(cnt).filter(n=>n!==ME).sort():[];
@@ -3224,19 +3262,22 @@ function viewPipeline(){
   const appr=props.filter(pipeAppr).filter(kf);
   const title=pm===ME?"My pipeline":pm==="All"?"Pipeline · all PMs":"Pipeline · "+pm;
   const F=freshness();const upd=F.has?"Updated "+(F.days>=2?F.dayLong:F.when)+".":p.asOf?"Updated "+p.asOf+".":"";
-  const PMF=esc(window.DPOrg.jt().pm.name);const sub=(pm===ME?`Jobs where you're the ${PMF} in JobTread.`:pm==="All"?`Jobs where any project manager is the ${PMF} in JobTread.`:`Jobs where ${esc(pm)} is the ${PMF} in JobTread.`)+(upd?" "+upd:"");
+  const PMF=esc(window.DPOrg.jt().pm.name);const sub=upd;void PMF;
   const days=daysWord;
   const card=(key,t,n,body,foot)=>`<section class="dcard pcard" data-dkey="pipe-${key}"><h2>${t}${n!=null?`<span class="cnt" aria-hidden="true">${n}</span><span class="vh">, ${n}</span>`:""}</h2>${body}${foot||""}</section>`;
-  const cProps=card("props","Proposals waiting",pend.length,pend.length?`<p class="pnote pcount">${esc(pipeCountText(pend))}</p><ul class="dig plist">${pend.map(x=>pipeRow(pipeKind(x),x,money(amt(x.amount)),pipeDays(x)!=null?"waiting "+days(pipeDays(x)):"",[x.address,x.number?"#"+x.number:"",x.sentDate?"sent "+x.sentDate:"",who(x)].filter(Boolean).join(" · "),(pipeDays(x)||0)>=7)).join("")}</ul>`:`<div class="empty">${KIND==="co"?"No change orders waiting.":"No proposals waiting."}</div>`);
+  const kOpen=PIPE.kmore==null?KIND!=="all":PIPE.kmore;
+  const fbtn=`<button type="button" class="pfbtn" data-pkmore aria-expanded="${kOpen}" aria-controls="pkinds">Filter</button>`;
+  const kinds=`<div class="chips pkinds" id="pkinds" role="group" aria-label="Show"${kOpen?"":" hidden"}>${[["all","All"],["prop","Proposals"],["co","Change orders"],["inv","Invoices"]].map(([v,l])=>`<button type="button" data-pkind="${v}" aria-pressed="${KIND===v}">${l}</button>`).join("")}</div>`;
+  const pstat=[`Approved, 30 days: ${money(s.approved30Value)}`,s.winRate!=null?`win rate, 90 days: ${Math.round(s.winRate*100)}%`:""].filter(Boolean).join(" · ");
+  const cProps=card("props","Proposals waiting",pend.length,pend.length?`<p class="pnote pcount">${esc(pipeCountText(pend))}</p><ul class="dig plist">${pend.map(x=>pipeRow(pipeKind(x),x,money(amt(x.amount)),pipeDays(x)!=null?"waiting "+days(pipeDays(x)):"",[x.address,x.number?"#"+x.number:"",x.sentDate?"sent "+x.sentDate:"",who(x)].filter(Boolean).join(" · "),(pipeDays(x)||0)>=7)).join("")}</ul>`:`<div class="empty">${KIND==="co"?"No change orders waiting.":"No proposals waiting."}</div>`,`<p class="pnote pstat">${esc(pstat)}</p>`);
   const cAppr=appr.length?card("appr","Recently approved",appr.length,`<ul class="dig plist">${appr.map(x=>pipeRow("Approved "+pipeKind(x).toLowerCase(),x,money(amt(x.amount)),"",[x.address,x.number?"#"+x.number:"",x.approvedDate?"approved "+x.approvedDate:"",who(x)].filter(Boolean).join(" · "),false)).join("")}</ul>`):"";
-  const occ=ALL?`<div class="pacts"><button class="act primary" type="button" data-oemail>Email PMs about overdue</button><button class="act" type="button" data-occ aria-label="Choose who is copied on the overdue-invoice emails">Choose who's copied</button><p class="pnote">Builds one email per project manager from JobTread. You check each one before it's sent.</p></div>`:"";
+  const occ=ALL?`<div class="pacts"><button class="act primary" type="button" data-oemail>Email PMs about overdue</button><p class="pnote">Builds one email per project manager from JobTread. You check each one before it's sent. Who's copied is in <a href="#setup" data-setupcc>Setup</a>.</p></div>`:"";
   const invAmt=x=>pipeLate(x)?money(pipeDue(x)):money(amt(x.amount));
   const invWhen=x=>pipeLate(x)?"overdue"+(x.amount!=null&&pipeDue(x)!==amt(x.amount)?" of "+money(amt(x.amount)):"")+" · "+days(amt(x.daysOverdue))+" late":String(x.status||"");
   const cInv=card("inv","Invoices",inv.length,inv.length?`<ul class="dig plist">${inv.map(x=>pipeRow("Invoice",x,invAmt(x),invWhen(x),[x.address,x.number?"#"+x.number:"",x.dueDate?"due "+x.dueDate:"",who(x)].filter(Boolean).join(" · "),x.daysOverdue>0)).join("")}</ul>`:`<div class="empty">No open invoices.</div>`,occ);
-  const kinds=`<div class="chips" role="group" aria-label="Show">${[["all","All"],["prop","Proposals"],["co","Change orders"],["inv","Invoices"]].map(([v,l])=>`<button type="button" data-pkind="${v}" aria-pressed="${KIND===v}">${l}</button>`).join("")}</div>`;
   const left=KIND==="inv"?"":cProps+cAppr,right=KIND==="prop"||KIND==="co"?"":cInv;
-  return pageHead(title,esc(sub))+chips+kinds+
-  `<section class="kpis">${kpi(money(s.openValue),"Open proposals")}${kpi(s.openCount??pend.length,"Pending")}${kpi(money(s.approved30Value),"Approved, 30 days")}${s.winRate!=null?kpi(Math.round(s.winRate*100)+"%","Win rate, 90 days"):""}${kpi(money(s.arOverdue),"Overdue invoices",s.arOverdue>0?"crit":"")}</section>
+  return pageHead(title,esc(sub))+chips.replace(/<\/div>$/,fbtn+"</div>")+kinds+
+  `<section class="kpis pkpis">${kpi(money(s.openValue),`Open proposals · ${s.openCount??pend.length} pending`)}${kpi(money(s.arOverdue),"Overdue invoices",s.arOverdue>0?"crit":"")}</section>
   ${p.weekly&&pm==="All"?`<div class="note"><b>This week:</b> ${esc(p.weekly)}</div>`:""}
   <div class="grid2 pgrid">${left?`<div class="stack">${left}</div>`:""}${right?`<div class="stack">${right}</div>`:""}${KIND==="inv"?"":staleHtml(staleXs,who)}</div>`;
 }
@@ -3331,7 +3372,7 @@ function viewHistory(){
     else{const items=(h.cards||[]).flatMap(c=>(c.items||[]).map(i=>({i,c})));
       dayHtml=`<div class="stack">${(h.cards||[]).map(c=>`<section class="box"><div class="box-h"><h3 class="bh">${esc(c.customer)}</h3>${c.job?`<span class="jobno">${esc(c.job)}</span>`:""}</div><ul class="items">${(c.items||[]).map(i=>`<li class="item${isDone(i)?" done":""}"><div class="irow"><span aria-hidden="true" style="width:22px;flex:none;color:var(--ok);font-weight:700">${isDone(i)?"✓":""}</span><div class="ibody"><div class="tags"><span class="pill ${esc(i.kind)}">${esc(labelFor(i.kind))}</span>${i.date?`<span class="d">${esc(i.date)}</span>`:""}</div><p>${esc(i.text)}${i.link?` <a href="${esc(DPCore.safeUrl(i.link))}" target="_blank" rel="noopener">Open</a>`:""}</p></div></div></li>`).join("")}</ul></section>`).join("")}</div>`;
       if(!items.length)dayHtml=`<div class="empty">That review had no items.</div>`}}
-  return pageHead("Past reviews","Earlier daily reviews and everything you've checked off.")+
+  return pageHead("Past reviews","")+
   `<section><h2>Past reviews</h2><div class="dates">${days.map(x=>`<button data-hist="${x}" aria-pressed="${d===x}">${esc(nice(x))}</button>`).join("")}</div></section>
   ${d?`<section>${hasAm?`<div class="chips" style="margin-bottom:12px"><button data-histam="0" aria-pressed="${!am}">End of day</button><button data-histam="1" aria-pressed="${am}">Morning</button></div>`:""}${dayHtml}</section>`:""}
   <section><h2>Checked off</h2><input class="search" id="hq" type="search" placeholder="Search completed items" value="${esc(state.hq)}" aria-label="Search completed items">
@@ -3419,7 +3460,7 @@ addEventListener("hashchange",()=>{const v=route();if(!/^sites(\/|$)/.test(v))SS
 function viewSites(){const v=route();ssApplyRoute(v);
   const W=ssWhen();const today=todayStr();const all=ssUpcoming();
   const stamp=W.label?`<span class="ss-up${W.old?" old":""}">${esc(W.label)}</span>`:"";
-  const head=pageHead("Site schedule","Who is supposed to be at each job, doing what, on which day. Pulled from your email, texts, meetings and JobTread. Your own appointments stay on the <a href=\"#calendar\">Calendar</a>."+(stamp?`</p><p class="ss-stamp">${stamp}`:""));
+  const head=pageHead("Site schedule","");
   if(!state.sitesLoaded)return head+`<div class="empty">Loading the site schedule…</div>`;
   if(!all.length)return head+`<div class="empty ss-empty">Nothing scheduled on site yet. The morning update fills this from your emails and texts.</div>`;
   const maxD=ssAdd(today,13);
@@ -3434,11 +3475,13 @@ function viewSites(){const v=route();ssApplyRoute(v);
   const byLabel=m=>[...m].sort((a,b)=>String(a[1]).localeCompare(String(b[1])));
   const nCx=inRange.filter(e=>e.status==="cancelled").length;
   const pickSel=(f,label,allLabel,m,cur)=>`<label class="ss-pick${cur?" on":""}"><span>${label}</span><select data-sssel="${f}" aria-label="${label==="Job"?"Show one job":"Show one person or company"}"><option value="">${allLabel} (${m.size})</option>${byLabel(m).map(([k,l])=>`<option value="${esc(k)}"${cur===k?" selected":""}>${esc(l)}</option>`).join("")}</select></label>`;
+  const fN=(SS.job?1:0)+(SS.who?1:0)+(SS.hideCx?1:0)+(SS.mode==="time"?1:0);const fOpen=SS.more==null?fN>0:SS.more;
   const filters=`<div class="ss-filters">
-   <div class="ss-nav" role="group" aria-label="Day"><button type="button" class="ss-arrow" data-ssf="step" data-v="-1"${day>today?"":" disabled"} aria-label="Previous day">‹</button><label class="ss-pick ss-date"><span class="vh">Day shown</span><input type="date" data-ssdate="1" min="${today}" max="${maxD}" value="${day}" aria-label="Day shown"></label><button type="button" class="ss-arrow" data-ssf="step" data-v="1"${day<maxD?"":" disabled"} aria-label="Next day">›</button></div>${day!==today?`<button type="button" class="act ss-back" data-ssf="day" data-v="${today}">Today</button>`:""}
+   <div class="ss-dayrow"><div class="ss-nav" role="group" aria-label="Day"><button type="button" class="ss-arrow" data-ssf="step" data-v="-1"${day>today?"":" disabled"} aria-label="Previous day">‹</button><label class="ss-pick ss-date"><span class="vh">Day shown</span><input type="date" data-ssdate="1" min="${today}" max="${maxD}" value="${day}" aria-label="Day shown"></label><button type="button" class="ss-arrow" data-ssf="step" data-v="1"${day<maxD?"":" disabled"} aria-label="Next day">›</button></div>${day!==today?`<button type="button" class="act ss-back" data-ssf="day" data-v="${today}">Today</button>`:""}<button type="button" class="act ghost ss-fbtn" data-ssmore aria-expanded="${fOpen}" aria-controls="ssmore">Filter</button>${stamp?`<span class="ss-stamp">${stamp}</span>`:""}</div>
+   <div class="ss-more" id="ssmore"${fOpen?"":" hidden"}>
    ${jobs.size>1||SS.job?pickSel("job","Job","All jobs",jobs,SS.job):""}
    ${ppl.size>1||SS.who?pickSel("who","Who","Everyone",ppl,SS.who):""}
-   <div class="chips ss-chips ss-opts" role="group" aria-label="Show">${chip("mode","job","By job",SS.mode==="job")}${chip("mode","time","By time",SS.mode==="time")}${nCx||SS.hideCx?chip("cx","1","Hide cancelled",SS.hideCx):""}</div></div>`;
+   <div class="chips ss-chips ss-opts" role="group" aria-label="Show">${chip("mode","job","By job",SS.mode==="job")}${chip("mode","time","By time",SS.mode==="time")}${nCx||SS.hideCx?chip("cx","1","Hide cancelled",SS.hideCx):""}</div></div></div>`;
   if(!list.length){const dl=ssDayLabel(day,today).filter(Boolean).join(", ");const filt=SS.job||SS.who||SS.hideCx;
     const nx=all.filter(e=>e.date&&e.date>day&&ssJobOk(e)&&(!SS.who||e.pkey===SS.who)&&!(SS.hideCx&&e.status==="cancelled")).map(e=>e.date).sort()[0];
     return head+filters+`<div class="empty ss-none"><b>Nothing scheduled on site ${esc(day===today?"today":dl)}</b><span>${filt?"Nothing matches the job or person you picked for this day.":"Nobody is scheduled at a job this day."}</span>${nx?`<button type="button" class="act" data-ssf="day" data-v="${nx}">Next visit: ${esc(ssDayLabel(nx,today).filter(Boolean).join(", "))}</button>`:""}${filt?`<button type="button" class="act" data-ssf="clear" data-v="1">Show every job and person</button>`:""}</div>`}
@@ -3462,23 +3505,21 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   else if(f==="clear"){SS.job="";SS.jobParam="";SS.who="";SS.hideCx=false}
   render();
   if(f==="clear"||f==="day"||f==="step"){const a=lab&&document.querySelector('#view .ss-nav [aria-label="'+lab+'"]');const b=a&&!a.disabled?a:document.querySelector('#view [data-ssdate]');if(b)b.focus({preventScroll:true})}});
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-sstday]");if(!t||t.disabled||!t.closest("#view"))return;const lab=t.getAttribute("aria-label");
-  const card=t.closest(".t-site");if(card)SS.tminH=Math.max(SS.tminH||0,card.offsetHeight);
-  const cur=(t.closest(".ss-tnav")||{dataset:{}}).dataset.day||todayStr();SS.tday=ssAdd(cur,t.dataset.sstday==="prev"?-1:1);render();const n=document.querySelector('#view .ss-tnav [aria-label="'+lab+'"]');const o=n&&!n.disabled?n:document.querySelector("#view .ss-tnav button:not(:disabled)");if(o)o.focus({preventScroll:true})});
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-ssmore]");if(!t||!t.closest("#view"))return;SS.more=t.getAttribute("aria-expanded")!=="true";render();
+  const n=document.querySelector("#view [data-ssmore]");if(n)n.focus({preventScroll:true})});
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("a[data-ssgo]");if(!t||!t.closest("#view"))return;if(/^\d{4}-\d\d-\d\d$/.test(t.dataset.ssgo))SS.day=t.dataset.ssgo});
 function siteCard(){if(!state.sites)return"";const today=todayStr(),tom=ssAdd(today,1),maxD=ssAdd(today,13);const all=ssUpcoming().filter(e=>e.date&&e.date>=today&&e.date<=maxD);
   if(!all.length)return"";
   const real=xs=>xs.filter(e=>e.status!=="cancelled");
-  let day=SS.tday;
-  if(!day||day<today||day>maxD){const T=all.filter(e=>e.date===today),M=all.filter(e=>e.date===tom);const now=new Date();const later=now.getDay()===0||now.getDay()===6||now.getHours()>=15;
+  let day="";{const T=all.filter(e=>e.date===today),M=all.filter(e=>e.date===tom);const now=new Date();const later=now.getDay()===0||now.getDay()===6||now.getHours()>=15;
     day=today;if(!real(T).length&&real(M).length&&(T.length||later))day=tom;else if(!T.length&&later&&M.length)day=tom}
   const xs=all.filter(e=>e.date===day).sort(ssSort);const W=ssWhen();
   const rows=xs.map(e=>{const where=ssWhere(e);const href=e.slug&&ssJobHref(e.slug)||"#sites";
     return `<li class="ss-t${e.status?" st-"+e.status:""}"><a href="${esc(DPCore.safeUrl(href))}"><b>${esc(ssWho(e))}${ssCo(e)?`<small> · ${esc(ssCo(e))}</small>`:""}</b><span>${esc([e.time,e.what,where].filter(Boolean).join(" · "))}${ssTag(e)}</span>${e.status==="confirmed"?`<em class="vh">, confirmed</em>`:""}<i class="go" aria-hidden="true">›</i></a></li>`}).join("");
   const n=real(xs).length,cx=xs.length-n;const dl=ssDayLabel(day,today).filter(Boolean).join(", ");
   const say=`On site, ${dl}, ${n?n+" visit"+(n===1?"":"s"):"nothing scheduled"}${cx?`, ${cx} cancelled`:""}`;
-  const prev=day>today?ssAdd(day,-1):"",next=day<maxD?ssAdd(day,1):"";
-  const nav=`<div class="ss-nav ss-tnav" role="group" aria-label="Day" data-day="${day}"><button type="button" class="ss-arrow" data-sstday="prev"${prev?"":" disabled"} aria-label="Previous day">‹</button><b class="ss-tday" aria-live="polite">${esc(dl)}</b><button type="button" class="ss-arrow" data-sstday="next"${next?"":" disabled"} aria-label="Next day">›</button></div>`;
-  return `<section class="dcard t-site" data-dkey="today-site" data-dlim="4"${SS.tday&&SS.tminH?` style="min-height:${+SS.tminH}px"`:""}><h2 data-say="${esc(say)}"><span class="vh">${esc(say)}</span><span aria-hidden="true">On site</span>${n?`<span class="cnt" aria-hidden="true">${n}</span>`:""}</h2>${nav}${n?"":`<p class="tnote">Nothing scheduled on site${cx?` (${cx} cancelled)`:""}.</p>`}${W.old?`<p class="tnote">${esc(W.label)}.</p>`:""}${xs.length?`<ul class="dig ss-today">${rows}</ul>`:""}<a class="dmore" href="#sites">Full site schedule ›</a></section>`}
+  const nav=`<p class="ss-tday">${esc(dl)}</p>`;
+  return `<section class="dcard t-site" data-dkey="today-site" data-dlim="4" data-dmore><h2 data-say="${esc(say)}"><span class="vh">${esc(say)}</span><span aria-hidden="true">On site</span>${n?`<span class="cnt" aria-hidden="true">${n}</span>`:""}</h2>${nav}${n?"":`<p class="tnote">Nothing scheduled on site${cx?` (${cx} cancelled)`:""}.</p>`}${W.old?`<p class="tnote">${esc(W.label)}.</p>`:""}${xs.length?`<ul class="dig ss-today">${rows}</ul>`:""}<a class="dmore" href="#sites" data-ssgo="${day}"><span>Full site schedule<span class="dmore-n"></span> ›</span></a></section>`}
 (function(){
 const PTR_GO=70;
 const P={on:false,pull:null,x0:0,y0:0,d:0};
@@ -3693,15 +3734,17 @@ function viewSystem(){const {rows,probs,h}=sysRows();const bad=probs.filter(p=>p
     x.probs.forEach((p,j)=>{lines.push(`<p class="sysprob">${esc(sysEnd(p.text))}</p>`+sysFixHtml(p.fix,`sysph-${i}-${j}`)+(p.pauseKey?`<div class="acts syspause"><button type="button" class="act ghost" data-syspause="${esc(p.pauseKey)}">I turned it off on purpose</button><span class="small muted">It stops showing as a problem. Turn it back on any time in Claude › Scheduled.</span></div>`:""))});
     if(x.fix)lines.push(sysFixHtml(x.fix,`sysph-${i}-f`));
     if(x.tasks)lines.push(`<ul class="systasks" aria-label="Each scheduled task">${x.tasks.map(t=>`<li class="is-${t.t.st}">${sysDot(t.t.st)}<span><b>${esc(t.l)}</b> ${esc(t.t.note)}<span class="vh"> (${esc(SYS_WORD[t.t.st])})</span></span></li>`).join("")}</ul>`);
-    return `<li class="sysr is-${x.st}" data-sysrow="${esc(x.k)}" data-sysst="${x.st}">${sysDot(x.st)}<div class="sysm"><div class="syshd"><h3>${esc(x.label)}</h3><span class="sysw">${esc(SYS_WORD[x.st])}</span></div>${lines.join("")}</div></li>`};
-  return pageHead("System status","Whether your page, daily updates, texts and scheduled tasks are working, and exactly what to do when one isn't.")+
+    const hd=`<div class="syshd"><h3>${esc(x.label)}</h3><span class="sysw">${esc(SYS_WORD[x.st])}</span></div>`;const shut=lines.length&&!(SYS_RANK[x.st]>=SYS_RANK.warn)&&!x.fix&&!x.probs.length;
+    return `<li class="sysr is-${x.st}" data-sysrow="${esc(x.k)}" data-sysst="${x.st}">${sysDot(x.st)}<div class="sysm">${shut?`<details class="sysd"><summary>${hd}</summary>${lines.join("")}</details>`:hd+lines.join("")}</div></li>`};
+  return pageHead("System status","")+
   `<section class="dcard sysc" data-nodpd aria-labelledby="sys-h"><div class="sysov is-${overall}" data-sysoverall="${overall}">${sysDot(overall)}<div><h2 id="sys-h">${esc(head)}</h2><p class="syschk" data-syschecked>${esc(checked)}</p></div></div>
   <ul class="sys" aria-label="Each part of your Workspace">${rows.map(li).join("")}</ul>
   ${window.__dpConnHtml?window.__dpConnHtml():""}
   ${sysSharesHtml()}
   ${window.__dpUsageHtml?window.__dpUsageHtml():""}
-  <div class="syslite" data-syslite><p class="sysfix"><b>Running short on Claude usage?</b> Lite mode pauses the hourly check and the midday update; your page still updates every morning and evening, and Refresh works any time. In a new task in the Claude desktop app, say:</p><div class="syssay"><span class="sysph" id="sysph-lite">Use lite mode</span><button type="button" class="act" data-syscopy="Use lite mode" data-sysph="sysph-lite" aria-label="Copy the words: Use lite mode">Copy</button></div></div>
+  <div class="syslite" data-syslite><details class="sysd sysfold"><summary><h3>Running short on Claude usage?</h3></summary><p class="sysfix">Lite mode pauses the hourly check and the midday update; your page still updates every morning and evening, and Refresh works any time. In a new task in the Claude desktop app, say:</p><div class="syssay"><span class="sysph" id="sysph-lite">Use lite mode</span><button type="button" class="act" data-syscopy="Use lite mode" data-sysph="sysph-lite" aria-label="Copy the words: Use lite mode">Copy</button></div></details></div>
   ${window.__dpChangesHtml?window.__dpChangesHtml():""}
+  <p class="sysfoot sysmore"><a href="#history">Past reviews</a> · <a href="#hub/log">Source log</a> (where each job item came from)</p>
   <p class="sysfoot">Need a hand? Ask ${esc(window.DPOrg.support)}. <a href="#start">Things you can say to Claude</a> · <a href="${esc(DPCore.safeUrl(window.DP_GUIDE_URL||""))}" target="_blank" rel="noopener">Workspace guide</a></p></section>`}
 function sysNotice(skipReview){const bad=sysProblems().filter(p=>p.sev==="bad"&&!(skipReview&&sysRowOf(p.key)==="review"));if(!bad.length)return null;
   let s=0;const t=bad.map(p=>p.key+"|"+p.text.replace(/\d+:\d+ ?[AP]M/g,"")).join("||")+"|"+todayStr();for(let i=0;i<t.length;i++)s=(s*31+t.charCodeAt(i))|0;const key="na"+(s>>>0).toString(36);
@@ -3758,8 +3801,10 @@ window.__dpConnProblems=()=>{const out=[];HC_LIST.filter(x=>x.req&&x.k!=="texts"
   if(c&&c.st==="bad")out.push({key:"conn-"+x.k,sev:"bad",src:"page",text:x.l+" isn't connected for this page.",fix:hcFix(x,c)})});return out};
 window.__dpConnHtml=()=>{const items=HC_LIST.map(x=>({x,s:hcState(x)}));
   const n=items.filter(i=>SYS_RANK[i.s.st]>=SYS_RANK.warn).length;
-  return `<section class="hconn" aria-labelledby="hconn-h" data-hconn><div class="hconn-hd"><h3 id="hconn-h">Connections</h3><span class="sysw">${n?esc(n+" to look at"):"All checked ones are working"}</span></div>
-  <ul class="hcl">${items.map(({x,s},i)=>`<li class="hci is-${s.st}" data-hc="${x.k}" data-hcst="${s.st}">${sysDot(s.st)}<div class="hcm"><b>${esc(x.l)}</b><span class="sysw">${esc(SYS_WORD[s.st])}</span>${s.line?`<p class="sysline">${esc(s.line)}</p>`:""}${s.fix?sysFixHtml(s.fix,"hcph-"+i):""}</div></li>`).join("")}</ul></section>`};
+  return `<section class="hconn" aria-labelledby="hconn-h" data-hconn><details class="sysd sysfold"${n?" open":""}><summary><div class="hconn-hd"><h3 id="hconn-h">Connections</h3><span class="sysw">${n?esc(n+" to look at"):"All checked ones are working"}</span></div></summary>
+  <ul class="hcl">${items.map(({x,s},i)=>{const hd=`<b>${esc(x.l)}</b><span class="sysw">${esc(SYS_WORD[s.st])}</span>`,body=(s.line?`<p class="sysline">${esc(s.line)}</p>`:"")+(s.fix?sysFixHtml(s.fix,"hcph-"+i):"");
+    const shut=body&&!s.fix&&!(SYS_RANK[s.st]>=SYS_RANK.warn);
+    return `<li class="hci is-${s.st}" data-hc="${x.k}" data-hcst="${s.st}">${sysDot(s.st)}<div class="hcm">${shut?`<details class="sysd"><summary>${hd}</summary>${body}</details>`:hd+body}</div></li>`}).join("")}</ul></details></section>`};
 function hcOverall(){const probs=sysProblems();if(probs.some(p=>p.sev==="bad"))return"bad";
   if(probs.some(p=>p.sev==="warn"&&p.stale))return"warn";
   const known=state.reviewLoaded||state.healthLoaded||Object.keys(HC.c).length;return known?"ok":"unknown"}
@@ -3781,9 +3826,9 @@ function huSum(doc){const runs=doc&&doc.runs&&typeof doc.runs==="object"?Object.
     (by[t]=by[t]||{n:0,ms:0});by[t].n++;by[t].ms+=d;n++;ms+=d});return{n,ms,by}}
 const huMin=ms=>{const m=Math.round(ms/60e3);return m<1&&ms>0?"under a minute":m+" minute"+(m===1?"":"s")};
 window.__dpUsageHtml=()=>{huLoad();const t=huDay(0),y=huDay(1);const T=huSum(HU.days[t]),Y=huSum(HU.days[y]);
-  if(!T.n&&!Y.n)return `<section class="hconn hus" aria-labelledby="hus-h" data-usage><div class="hconn-hd"><h3 id="hus-h">Claude time</h3></div><p class="sysline">Each scheduled update notes how long it took here. Nothing has been noted yet.</p></section>`;
+  if(!T.n&&!Y.n)return `<section class="hconn hus" aria-labelledby="hus-h" data-usage><details class="sysd sysfold"><summary><div class="hconn-hd"><h3 id="hus-h">Claude time</h3></div></summary><p class="sysline">Each scheduled update notes how long it took here. Nothing has been noted yet.</p></details></section>`;
   const line=(lab,S)=>`<p class="sysline"><b>${esc(lab)}:</b> ${S.n} run${S.n===1?"":"s"}, about ${esc(huMin(S.ms))}${S.n?" ("+Object.entries(S.by).map(([k,v])=>esc((HU_NAME[k]||"Other")+" "+v.n+"×, "+huMin(v.ms))).join("; ")+")":""}.</p>`;
-  return `<section class="hconn hus" aria-labelledby="hus-h" data-usage><div class="hconn-hd"><h3 id="hus-h">Claude time</h3><span class="sysw">How long your scheduled updates took</span></div>${line("Today",T)}${Y.n?line("Yesterday",Y):""}<p class="sysline">Credits aren't visible to this page; run time is the closest measure. A light check that finds nothing takes seconds.</p></section>`};
+  return `<section class="hconn hus" aria-labelledby="hus-h" data-usage><details class="sysd sysfold"><summary><div class="hconn-hd"><h3 id="hus-h">Claude time</h3><span class="sysw">How long your scheduled updates took</span></div></summary>${line("Today",T)}${Y.n?line("Yesterday",Y):""}<p class="sysline">Credits aren't visible to this page; run time is the closest measure. A light check that finds nothing takes seconds.</p></details></section>`};
 const LS={data:null,sig:"",at:0,busy:false,err:"",open:false};
 const LS_DOC={customerOrder:"Proposal",customerInvoice:"Invoice",vendorOrder:"Purchase order",vendorBill:"Bill",bidRequest:"Bid request"};
 function lsSince(){const g=sysMs(state.review&&state.review.generatedAt);return g}
@@ -3830,7 +3875,7 @@ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest
   const s=document.querySelector("#view [data-lstrip] summary")||document.querySelector("#view [data-lslink]");if(s)s.focus({preventScroll:true})});
 (function(){const go=()=>window.DPCore&&DPCore.poll?DPCore.poll(lsFetch,{every:5*60e3,first:window.__DP_DEMO?500:4000,when:()=>route()==="today"&&!!lsSince()}):null;
   if(window.DPCore)go();else addEventListener("load",go)})();
-window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22d","highlights":["Your scheduled updates read about 30% less and rewrite about 40% less each weekday: the nightly job sync only rewrites what changed, and the quick checks no longer reread your whole Today page.","Items a quick check finds land on Today straight away, merged into the right job card; the morning and evening updates fold them in.","Refresh now runs one full update instead of two.","One number everywhere: the Operations badge always matches the Overdue chip, Today's money card matches Pipeline, and amounts look the same on every page (overdue-invoice emails keep exact cents).","Request payment, Assign to office and Office to-dos always pick the same office people.","The page is a little lighter and loads less data when it opens.","No new permissions: installs on its own."]},{"version":"2026-11-22c","highlights":["Each job has four tabs: Overview, To do, Money and Files. To do holds the job's open items and its lists together, with one Show checked switch; Money puts job costing, orders and purchases on one page.","Fewer taps on a phone: adding a punch item and sending a punch list each take 3 taps, and a job's money or orders 1.","One Send sheet for punch lists: the whole list or one trade, who gets each trade, email or text, then a confirm. A suggested sub is only filled in when their trade matches, and is marked to check before sending.","Lists, To sort, Open orders and Investment properties now live on All jobs as a button, a filter and chips. To sort shows every job with items to sort, and the Jobs menu shows how many.","On phones the job header keeps the street on its own line, and the job details wrap instead of scrolling sideways.","No new permissions: installs on its own."]},{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]}];
+window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22e","highlights":["Every page shows its first rows right away on a phone: the one-line intros moved into Help, and filters sit behind one Filter button.","An opened Today item shows just Mark done, Close, Note and ⋯ instead of 13 buttons; Inbox rows have two buttons (tap the text to open, Add note is under ⋯).","Team › Everyone is one row per project manager; System status, Leads and Team are about a third as long.","Operations open on Office to-dos (3 taps to mark one done); a Pipeline row opens with its comment box ready.","Job costing, Pipeline and Sub payments show fewer tiles and chips; every figure and filter is still there.","No new permissions: installs on its own."]},{"version":"2026-11-22d","highlights":["Your scheduled updates read about 30% less and rewrite about 40% less each weekday: the nightly job sync only rewrites what changed, and the quick checks no longer reread your whole Today page.","Items a quick check finds land on Today straight away, merged into the right job card; the morning and evening updates fold them in.","Refresh now runs one full update instead of two.","One number everywhere: the Operations badge always matches the Overdue chip, Today's money card matches Pipeline, and amounts look the same on every page (overdue-invoice emails keep exact cents).","Request payment, Assign to office and Office to-dos always pick the same office people.","The page is a little lighter and loads less data when it opens.","No new permissions: installs on its own."]},{"version":"2026-11-22c","highlights":["Each job has four tabs: Overview, To do, Money and Files. To do holds the job's open items and its lists together, with one Show checked switch; Money puts job costing, orders and purchases on one page.","Fewer taps on a phone: adding a punch item and sending a punch list each take 3 taps, and a job's money or orders 1.","One Send sheet for punch lists: the whole list or one trade, who gets each trade, email or text, then a confirm. A suggested sub is only filled in when their trade matches, and is marked to check before sending.","Lists, To sort, Open orders and Investment properties now live on All jobs as a button, a filter and chips. To sort shows every job with items to sort, and the Jobs menu shows how many.","On phones the job header keeps the street on its own line, and the job details wrap instead of scrolling sideways.","No new permissions: installs on its own."]},{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]}];
 const updTask=()=>(DPC.tasks&&DPC.tasks.updater)||(window.__DP_DEMO?"demo-updater":"");
 const UPD={open:false,confirm:false,busy:false,msg:""};
 const updTxt=(v,n)=>String(v==null?"":v).replace(/[\u0000-\u001f<>]/g," ").trim().slice(0,n||200);
@@ -3882,7 +3927,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.c
     catch(err){UPD.msg="Couldn't start the update. "+DPCore.errMsg(err,"the update task");UPD.failed=true}
     UPD.busy=false;updPaint()}});
 window.__dpChangesHtml=function(){const c=Array.isArray(window.DP_CHANGES)?window.DP_CHANGES:[];if(!c.length)return "";
-  return `<div class="syschg"><h3>What's new</h3>${c.slice(0,5).map(v=>`<div class="updv"><b>${esc(v.version)}${v.version===DPC.kitVersion?" (this page)":""}</b><ul>${(v.highlights||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`).join("")}</div>`};
+  return `<div class="syschg"><details class="sysd sysfold"><summary><h3>What's new</h3></summary>${c.slice(0,5).map(v=>`<div class="updv"><b>${esc(v.version)}${v.version===DPC.kitVersion?" (this page)":""}</b><ul>${(v.highlights||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`).join("")}</details></div>`};
 window.DP_GUIDE_URL=window.DP_GUIDE_URL||"https://claude.ai/artifact/KP7mn3ziHWnJVmpazJGF1e";
 const DP_SAYS=[["Check my Design Pro Workspace","Looks everything over and fixes what it can: your page, scheduled updates and connections."],
   ["Update my Design Pro Workspace","Installs the newest version now. Needed only when the banner says an update needs your OK, or once when System status asks for a one-time switch."],
@@ -6003,7 +6048,7 @@ function viewJobs(){
   if(sel)tiles.push(`<button type="button" class="kpi crit" data-need="sel" aria-pressed="${S.need==="sel"}"><b>${sel}</b><span>Selections not yet approved${S.need==="sel"?" · showing these jobs":""}</span></button>`);
   if(sortN)tiles.push(`<button type="button" class="kpi" data-need="sort" aria-pressed="${S.need==="sort"}"><b>${sortN}</b><span>Items to sort${S.need==="sort"?" · showing these jobs":""}</span></button>`);
   if(tb||ta)tiles.push(`<a class="kpi" href="#costing"><b>${money(ta)}</b><span>Spent of ${money(tb)} budgeted<span class="ks">JobTread${asOf?" · "+esc(nice(asOf)):""}</span></span></a>`);
-  const line=[plural(pool.length,inv?"property":"project",inv?"properties":"projects"),sel?`<button type="button" class="linkb" data-need="sel" aria-pressed="${S.need==="sel"}">${plural(sel,"selection")} to approve</button>`:"",sortN?`<button type="button" class="linkb" data-need="sort" aria-pressed="${S.need==="sort"}">${sortN} to sort</button>`:"",tb||ta?`<a href="#costing">${money(ta)} of ${money(tb)} spent</a>`:""].filter(Boolean);
+  const line=[plural(pool.length,inv?"property":"project",inv?"properties":"projects"),sel?`<button type="button" class="linkb" data-need="sel" aria-pressed="${S.need==="sel"}">${plural(sel,"selection")} to approve</button>`:"",sortN?`<button type="button" class="linkb" data-need="sort" aria-pressed="${S.need==="sort"}">${sortN} to sort</button>`:""].filter(Boolean);
   const scopeChips=hasMine?`<div class="chips" role="group" aria-label="Whose jobs">${[["mine","My jobs"],["all","All jobs"]].map(([k,l])=>`<button class="chip" data-scope="${k}" aria-pressed="${scope===k}">${l}</button>`).join("")}</div>`:"";
   const stageChips=`<div class="chips stg-chips" role="group" aria-label="Job stage">${STG.filter(([k])=>k==="active"||stgN[k]||stgPick.has(k)).map(([k,l])=>`<button type="button" class="chip" data-stg="${k}" aria-pressed="${stgPick.has(k)}">${l}${stgOn?` <span class="cn">${stgN[k]||0}</span>`:""}</button>`).join("")}</div>`;
   const hidden=stgOn&&!q?pool0.filter(j=>(scope!=="mine"||isMine(j))&&!stageShown(j)).length:0;
@@ -6011,27 +6056,31 @@ function viewJobs(){
     :stg.stale?`<div class="note fnote" role="status"><span>Couldn't refresh job stages from JobTread, so these are from earlier.</span> <button type="button" class="act" data-dpretry="${esc(stg.key)}">Try again</button></div>`
     :stg.state==="loading"||stg.state==="partial"?`<p class="small stg-load" role="status">Checking ${stg.state==="partial"?"new jobs'":"each job's"} stage in JobTread…</p>`
     :stg.state==="error"?`<div class="note fnote" role="status"><span>Couldn't check job stages in JobTread, so every job is showing.</span> <button type="button" class="act" data-dpretry="${esc(stg.key)}">Try again</button></div>`
-    :hidden?`<p class="small stg-load">${plural(hidden,"job")} hidden by the stage buttons above. Search finds any job.</p>`:"";
+    :"";void hidden;
   const phaseChips=phases.length>1?`<div class="chips" role="group" aria-label="Phase">${["all",...phases].map(p=>`<button class="chip" data-filter="${esc(p)}" aria-pressed="${S.filter===p}">${p==="all"?"All phases":esc(p)}</button>`).join("")}</div>`:"";
   const others=inv||S.filter!=="all"||S.need?"":otherJobs(q);
   const xN=S.jobs.reduce((n,j)=>n+openPipe(j).length,0),invN=S.jobs.filter(isInv).length;
   const viewChips=invN||xN||S.xorders?`<div class="chips" role="group" aria-label="Show">${invN?`<button type="button" class="chip" data-inv="1" aria-pressed="${inv}">Investment <span class="cn">${invN}</span></button>`:""}${xN||S.xorders?`<button type="button" class="chip" data-xorders="1" aria-pressed="${!!S.xorders}">Open orders <span class="cn">${xN}</span></button>`:""}</div>`:"";
-  const newList=`<a class="act" href="#lists/new" data-raw aria-label="New list: start a list with just a name and address">+ New list</a>`;
-  if(S.xorders)return `<div class="ph"><div><h1>Jobs</h1><p>Material requests, quotes and orders across every job that haven't been delivered yet. Tap a job to see its Money tab.</p></div><div class="ph-acts">${newList}</div></div>`+
-    `<div class="toolbar jtools"><input class="search" id="q" type="search" placeholder="Search any job" value="${esc(S.q)}" aria-label="Search all jobs">${viewChips}</div>`+ordersAll(q);
-  return `<div class="ph"><div><h1>${inv?"Investment properties":"Jobs"}</h1><p>${inv?"Investment properties and flips: selections, plans, permits, orders and costs.":"Every client job: selections, plans, permits, orders and costs."}</p></div><div class="ph-acts">${newList}</div></div>`+
-  `<div class="toolbar jtools"><input class="search" id="q" type="search" placeholder="Search any job" value="${esc(S.q)}" aria-label="Search all jobs">${inv?"":stageChips}${viewChips}${scopeChips}${phaseChips}</div>${inv?"":stgNote}
-  <section class="kpis jhero" aria-label="Totals">${tiles.join("")}</section><p class="jline" aria-label="Totals">${line.join('<span aria-hidden="true"> · </span>')}${(()=>{const sy=pool.map(j=>j.syncedAt||"").filter(Boolean).sort().pop();const d=asOf||sy;return d?` <span class="src">JobTread, ${esc(nice(String(d).slice(0,10)))}</span>`:pool.length?` <span class="src">Not synced yet</span>`:""})()}</p>
+  const newList=`<a class="act jnew" href="#lists/new" data-raw aria-label="New list: start a list with just a name and address">+ New list</a>`;
+  const fUsed=!!(inv||S.xorders||S.filter!=="all");const fOpen=S.jfilt==null?fUsed:S.jfilt;const fN=(inv||S.xorders?1:0)+(S.filter!=="all"?1:0);
+  const fBtn=viewChips||phaseChips?`<button type="button" class="chip jfbtn" data-jfilt="1" aria-expanded="${fOpen}" aria-controls="jfmore">Filter</button>`:"";void fN;
+  const fMore=viewChips||phaseChips?`<div id="jfmore" class="jfmore"${fOpen?"":" hidden"}>${viewChips}${phaseChips}</div>`:"";
+  const srch=`<div class="jsrow"><input class="search" id="q" type="search" placeholder="Search any job" value="${esc(S.q)}" aria-label="Search all jobs">${newList}</div>`;
+  if(S.xorders)return `<div class="ph"><div><h1>Jobs</h1><p class="vh">Open orders: material requests, quotes and orders across every job that haven't been delivered yet.</p></div></div>`+
+    `<div class="toolbar jtools">${srch}<div class="chips jfrow" role="group" aria-label="Filter">${fBtn}</div>${fMore}</div>`+ordersAll(q);
+  return `<div class="ph"><div><h1>${inv?"Investment properties":"Jobs"}</h1></div></div>`+
+  `<div class="toolbar jtools">${srch}${inv?`<div class="chips jfrow" role="group" aria-label="Filter">${fBtn}</div>`:stageChips.replace(/<\/div>$/,fBtn+"</div>")}${fMore}${scopeChips}</div>${inv?"":stgNote}
+  <section class="kpis jhero" aria-label="Totals">${tiles.join("")}</section><p class="jline" aria-label="Totals">${line.join('<span aria-hidden="true"> · </span>')}</p>
   ${S.need?`<div class="note fnote" role="status"><span>Showing ${plural(list.length,"job")} with ${S.need==="sort"?"items to sort, whatever stage, PM or chip is picked above (open a job: they're on its Overview)":"selections to approve"}.</span> <button type="button" class="act" data-need="">Show all</button></div>`:""}
   ${inv?"":archNote("all",null)}${(()=>{const m=S.jobs.reduce((c,j)=>c+manualArch(j).length,0);return m?`<div class="note">${plural(m,"file")} need${m===1?"s":""} saving by hand (too large or not shared with us). They're marked "Save by hand" on each job's Plans &amp; docs tab.</div>`:""})()}
   <h2 class="vh">${inv?"Properties":"Projects"}</h2>
-  <div class="jobs">${list.map(j=>{const c=costOf(j);const bpct=c.b?Math.min(100,c.a/c.b*100):0;const ib=inboxOf(j).length;
+  <div class="jobs">${list.map(j=>{const ib=inboxOf(j).length;
     const sel=rows(j,"selections"),ap=sel.filter(s=>["approved","ordered","installed"].includes(s.status)).length;
-    const docs=rows(j,"documents").length,ords=rows(j,"orders").length;const ao=asOfOf(j);
+    const docs=rows(j,"documents").length;
     return `<article class="jcard"><h2><a class="jlink" href="${esc(hubHref(j))}" data-raw>${esc(j.customer)}</a></h2><span class="addr">${esc(j.address)}</span>${pmTag(j)}
     <div class="foot">${(j.jobs||[]).map(x=>`<span class="jobno">#${esc(x.number)}</span>`).join("")}${(()=>{const sp=inv?"":stagePill(j);return sp||(j.phase?`<span class="pill acc">${esc(j.phase)}</span>`:"")})()}${j.designer?`<span class="pill">${esc(j.designer)}</span>`:""}${ib?`<span class="pill crit">${ib} to sort</span>`:""}${(()=>{const o=window.DPX&&window.DPX.openFor(j.slug);const n=o?o.items.length:0;const li=((window.__listItems&&window.__listItems())||[]).filter(x=>x.job===j.slug);const ln=li.filter(x=>!x.done).length,dn=li.length-ln,late=li.filter(x=>!x.done&&x.due&&x.due<CORE.day(0)).length;return (n?`<span class="pill acc">${plural(n,"open item")}</span>`:"")+(li.length?`<span class="pill">${ln} on lists · ${dn} of ${li.length} done</span>`:"")+(late?`<span class="pill crit">${late} past due</span>`:"")})()}</div>
     <div class="small">${sel.length?`${ap}/${sel.length} selections approved`:"No selections yet"} · ${plural(docs,"doc")}</div>
-    ${c.b?`<div class="bar${c.a>c.b?" over":""}"><i style="width:${bpct.toFixed(1)}%"></i></div><div class="mrow"><span class="small">${money(c.a)} spent of ${money(c.b)} budget</span>${c.p?mBadge(mOf(j)):""}</div>${c.p?`<div class="small">Approved price ${money(c.p)} incl. change orders</div>`:""}<div class="src">JobTread job costing${ao?" · "+esc(nice(ao)):""}</div>`:`<div class="small">${j.syncedAt?"No approved budget yet":"Waiting for first sync"}</div>`}</article>`}).join("")||`<div class="empty">${q?(others?"No project record matches that search. The matches below have none yet.":"No job matches that search."):stgOn&&pool0.some(j=>(scope!=="mine"||isMine(j))&&!stageShown(j))&&!pool.length?`No jobs at the checked stages. <button type="button" class="act" data-stgall="1">Show every stage</button>`:scope==="mine"&&S.filter==="all"&&!S.need?`None of the jobs list you as PM. <button type="button" class="act" data-scope="all">Show all jobs</button>`:"No projects match."}</div>`}</div>
+    ${j.syncedAt?"":`<div class="small">Waiting for first sync</div>`}</article>`}).join("")||`<div class="empty">${q?(others?"No project record matches that search. The matches below have none yet.":"No job matches that search."):stgOn&&pool0.some(j=>(scope!=="mine"||isMine(j))&&!stageShown(j))&&!pool.length?`No jobs at the checked stages. <button type="button" class="act" data-stgall="1">Show every stage</button>`:scope==="mine"&&S.filter==="all"&&!S.need?`None of the jobs list you as PM. <button type="button" class="act" data-scope="all">Show all jobs</button>`:"No projects match."}</div>`}</div>
   ${others}`;
 }
 function otherJobs(q){
@@ -6302,7 +6351,7 @@ function logView(js,global){
   return `<div class="toolbar"><input class="search" id="logq" type="search" placeholder="Search the log: countertop, plans, a name…" value="${esc(S.logQ)}" aria-label="Search the source log"><div class="chips">${types.map(t=>`<button class="chip" data-logtype="${t}" aria-pressed="${lt===t}">${t==="all"?"All":t+"s"}</button>`).join("")}</div></div>`+
   (all.length?`<div class="box tscroll"><table><thead><tr><th>Date</th>${global?"<th>Project</th>":""}<th>Type</th><th>What</th><th>Who</th><th>Source</th></tr></thead><tbody>${all.map(x=>`<tr><td style="white-space:nowrap">${esc(nice(x.date))}</td>${global?`<td><a href="${esc(hubHref(x.j,"timeline"))}" data-raw>${esc(x.j.customer)}</a></td>`:""}<td>${esc(x.type)}${x.change?' <span class="pill warn">changed</span>':""}</td><td><b>${esc(x.what)}</b> ${stPill(x.status)}${x.note?`<div class="small">${esc(x.note)}</div>`:""}</td><td>${esc(x.who||"")}</td><td style="white-space:nowrap"><span class="src">${esc(SRC[x.source]||x.source||"")}</span>${x.link?`<br>${srcLink(x)}`:x.source==="text"?'<br><span class="small">Text message</span>':""}${CORE.safeUrl(x.copy)?`<br>${lnk(x.copy,"Our Drive copy")}`:""}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Nothing in the log yet.</div>`);
 }
-function viewLog(){return head("Source log","Every selection, change, document, permit and order, with the date and a link back to the email, meeting or JobTread record it came from.")+logView(S.jobs,true)}
+function viewLog(){return head("Source log","")+logView(S.jobs,true)}
 
 const aKey=(j,r)=>safe(j.slug+"__"+r.id);
 function archivable(r){return !!((r.attachment&&r.attachment.messageId&&r.attachment.filename)||r.driveFileId)}
@@ -6508,8 +6557,9 @@ function viewCosting(){
   const catRows=Object.entries(cats).filter(([,v])=>v.a&&v.b).sort((x,y)=>Math.abs(y[1].a-y[1].b)-Math.abs(x[1].a-x[1].b)).slice(0,15);
   const priced=js.filter(j=>!mOf(j).na);const tp=priced.reduce((s,j)=>s+costOf(j).p,0),tbud=priced.reduce((s,j)=>s+costOf(j).b,0),tsp=priced.reduce((s,j)=>s+costOf(j).a,0);
   const texp=priced.reduce((s,j)=>s+Math.max(costOf(j).b,costOf(j).a),0);const blended=tp?(tp-texp)/tp*100:null;const under=priced.filter(j=>mOf(j).fc<MTG().good).length;
-  return head("Job costing","Approved price (proposals plus change orders), expected budget and current spend for every project, with the profit margin each one is on track for. Target 35%, 30% still good.")+
-  (priced.length?`<section class="kpis"><div class="kpi"><b>${money(tp)}</b><span>Approved price, ${priced.length} client jobs</span></div><div class="kpi"><b>${money(tbud)}</b><span>Expected budget</span></div><div class="kpi"><b>${money(tsp)}</b><span>Spent so far</span></div><div class="kpi ${blended>=MTG().target?"ok":blended<MTG().good?"crit":""}"><b>${pct(blended)}</b><span>Blended margin</span></div><div class="kpi${under?" crit":""}"><b>${under}</b><span>Jobs below 30%</span></div></section>`:"")+
+  return head("Job costing","")+
+  (priced.length?`<section class="kpis ckpis"><div class="kpi ${blended>=MTG().target?"ok":blended<MTG().good?"crit":""}"><b>${pct(blended)}</b><span>Blended margin</span></div><div class="kpi${under?" crit":""}"><b>${under}</b><span>Jobs below ${MTG().good}%</span></div></section>
+  <p class="ctot" aria-label="Totals"><b>${plural(priced.length,"client job")}</b><span>Approved ${money(tp)}</span><span>Budget ${money(tbud)}</span><span>Spent ${money(tsp)}</span></p>`:"")+
   (js.length?`<div class="box tscroll"><table><thead><tr><th>Project</th><th class="num">Approved price</th><th class="num">Expected budget</th><th class="num">Current spend</th><th class="num">Spent</th><th class="num">Budget left</th><th>Margin</th></tr></thead><tbody>${js.sort((a,b)=>{const x=mOf(a),y=mOf(b);return (x.na-y.na)||((x.fc??0)-(y.fc??0))||(costOf(b).b-costOf(a).b)}).map(j=>{const c=costOf(j);const m=mOf(j);return `<tr><td><a href="${esc(hubHref(j,"costing"))}" data-raw>${esc(j.customer)}</a><div class="small">${esc(j.address)}</div>${pmTag(j)}</td><td class="num">${c.p?money(c.p):"—"}</td><td class="num">${money(c.b)}</td><td class="num" style="color:${c.b&&c.a>c.b?"var(--crit)":"inherit"}">${money(c.a)}</td><td class="num">${c.b?Math.round(c.a/c.b*100)+"%":"—"}</td><td class="num" style="color:${c.b&&c.a>c.b?"var(--crit)":"inherit"}">${c.b?money(c.b-c.a):"—"}</td><td>${mBadge(m,true)}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty">Costs fill in after the first sync.</div>`)+
   (catRows.length?`<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Where we run over or under, by category</b><span class="small">Across projects with both budget and actuals</span></div><div class="tscroll"><table><thead><tr><th>Category</th><th class="num">Jobs</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Variance</th></tr></thead><tbody>${catRows.map(([k,v])=>{const d=v.a-v.b;return `<tr><td>${esc(k)}</td><td class="num">${v.n}</td><td class="num">${money(v.b)}</td><td class="num">${money(v.a)}</td><td class="num" style="color:${d>0?"var(--crit)":"var(--ok)"}">${d>0?"+":""}${money(d)} (${Math.round(d/v.b*100)}%)</td></tr>`}).join("")}</tbody></table></div></section>`:"");
 }
@@ -6568,6 +6618,7 @@ HROOT.addEventListener("click",async e=>{
     const f=d.selclear?HROOT.querySelector("[data-selq]"):[...HROOT.querySelectorAll("[data-seltype]")].find(b=>b.dataset.seltype===st.type);if(f&&f.offsetParent)f.focus({preventScroll:true});
     if(window.DPAnnounce){const n=HROOT.querySelectorAll(".sellist li[data-rid]").length;DPAnnounce(`Showing ${plural(n,"selection")}${st.type?": "+st.type:""}`)}return}
   if(d.jumpto){const el=HROOT.getElementById(d.jumpto);if(el){const h=el.querySelector("h2");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true})}const top=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--chrome-top"))||0;if(window.DPReleaseTap)setTimeout(()=>DPReleaseTap(),0);if(window.DPReleaseTap)DPReleaseTap();if(window.DPHoldHeader)DPHoldHeader();scrollTo(0,Math.max(0,scrollY+el.getBoundingClientRect().top-top-12))}return}
+  if(d.jfilt){S.jfilt=t.getAttribute("aria-expanded")!=="true";render();const f=HROOT.querySelector("[data-jfilt]");if(f&&f.offsetParent)f.focus({preventScroll:true});return}
   if(d.inv||d.xorders){if(d.inv){S.inv=!S.inv;S.xorders=false}else{S.xorders=!S.xorders;S.inv=false}S.need="";render();
     const f=HROOT.querySelector(d.inv?"[data-inv]":"[data-xorders]");if(f&&f.offsetParent)f.focus({preventScroll:true});
     if(window.DPAnnounce)DPAnnounce(S.xorders?"Showing open orders across every job":S.inv?"Showing investment properties":"Showing client jobs");return}
@@ -7037,7 +7088,8 @@ R.openSetup=async function(first,at){W.opener=first?null:document.activeElement;
   if(at){const i=steps().indexOf(at);if(i>0){W.step=i;enter()}}
   paint();
   try{const me=await jtMe();if(gen!==W.gen||!W.open)return;W.jtRole=me.jtRole;W.sugg=suggest(me.jtRole);paint()}catch(e){}};
-document.addEventListener("click",e=>{if(e.target.closest("[data-setup]")){e.preventDefault();R.openSetup(false)}});
+document.addEventListener("click",e=>{if(e.target.closest("[data-setup]")){e.preventDefault();R.openSetup(false)}
+  if(e.target.closest("[data-setupcc]")){e.preventDefault();R.openSetup(false,"cc")}});
 document.addEventListener("keydown",e=>{if(!W.open)return;if(e.key==="Escape"&&!W.first&&!W.busy){e.preventDefault();close();return}
   if(e.key==="Tab"){const f=[...host().querySelectorAll("button:not([disabled]),input,summary,a[href]")].filter(x=>x.offsetParent!==null);if(!f.length)return;const i=f.indexOf(document.activeElement);
     if(e.shiftKey&&(i<=0)){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}});
@@ -7177,7 +7229,7 @@ function vOffice(){const chipOk=k=>k==="util"?!!UT():k==="rocks"?!!RK():true;if(
   const body=tab==="util"?u.body():tab==="permits"?permitsBody():tab==="rocks"?rocksBody():
     (state("office","Loading to-dos from JobTread…")||CORE.staleNote(KEYS.office,JT)+capNote(d,"300 open to-dos")+(noTeam?noTeamHtml:(ts.length?`<div class="rows">${ts.map(oqRow).join("")}</div>`:`<div class="empty">${esc(empty)}</div>`)));
   const key=tab==="util"?(u&&u.key):tab==="permits"?KEYS.jobs:tab==="rocks"?(k&&k.key):KEYS.office;
-  return head("Office to-dos",`The office team's open JobTread to-dos${d.who.length?" ("+esc(d.who.map(w=>first(w.name)).join(", "))+")":""}, plus utilities, permits and Rocks.${ME.owner&&has&&!noTeam?` <button type="button" class="dpc-link" data-opsoffice>Change office team</button>`:""}${key?updLine(key):""}`)+
+  return head("Office to-dos",`${ME.owner&&has&&!noTeam?`<button type="button" class="dpc-link" data-opsoffice>Change office team</button>`:""}${key?updLine(key):""}`)+
     `<div class="opstools">${chipsHtml("oq",CH,"Show",tab)}${person}</div>`+body}
 
 const findTask=id=>((CORE.get(KEYS.office).data||{}).tasks||[]).find(t=>t.id===id);
@@ -7546,7 +7598,7 @@ details.tm-clr ul{margin:0 0 12px;padding-left:18px;color:var(--muted);font-size
 .tm-row .r.ok,.tm-row .r.ok small{color:var(--ok)}
 .tm-tag.kind{background:var(--info-soft);color:var(--navy)}
 .tm-sec>h2 .tm-tag{font-family:var(--body)}
-.tm-link{margin:0}.tm-link .opsb{display:inline-flex;align-items:center;text-decoration:none}
+.tm-link{margin:0;display:flex;flex-wrap:wrap;gap:8px}.tm-link .opsb{display:inline-flex;align-items:center;text-decoration:none}
 .tm-notes .notes{border-top:0;border-radius:14px;box-shadow:var(--shadow);background:var(--surface)}
 .co-checks{grid-column:1/-1;list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;min-width:0}
 .co-checks li{display:grid;gap:3px;min-width:0}
@@ -7810,42 +7862,42 @@ function vTeamPage(){EQ=[];needRoll();needTodos();needMeta();opsJobs();
   if(T.wantAdmin&&CORE.get(KMETA).data!==undefined&&names.length){T.pm=adminPick(names);T.wantAdmin=false}
   if(T.pm!=="All"&&names.length&&!names.includes(T.pm))T.pm="All";
   const pm=T.pm!=="All"?T.pm:"";
-  const head=window.DPPageHead("Team",(pm?esc(pm)+"'s money, open asks, site visits, jobs and to-dos.":"Money, open asks, who's on site and every job, by project manager.")+stamp());
+  const head=window.DPPageHead("Team",stamp());
   if(T.wantAdmin)return head+(CORE.box(KMETA,{loading:"Loading…",rows:2,label:"your page"})||`<div class="empty" role="status">Loading…</div>`);
   if(!names.length)return head+offNote()+((P()&&P().jobsBox&&P().jobsBox())||CORE.box(KEY,{loading:"Loading the team roll-up…",rows:3})||`<div class="empty">No project managers found yet. They show up here once the pipeline or JobTread's active jobs have loaded, or someone starts sharing to the team roll-up.</div>`);
   return head+pmChips(names,T.pm)+offNote()+lockBar(roll())+(pm?pmView(pm):everyone(names))}
 
 function everyone(names){const s=PS("All");const ro=roll(),has=CORE.get(KEY).data!==undefined&&!ro.off&&ro.people.length>0;const t=window.DPOrg.margin().target;
-  const who=x=>` · <b>${esc(first(x.pm))}</b>`;
-  const per=names.map(n=>{const x=PS(n);return{n,w:x.openValue,wn:x.pend.length,o:x.arOverdue,on:x.overdue.length}}).filter(r=>r.wn||r.on);
-  const noPm=x=>!pmsOf(x).some(pmOk),A=(window.__dpPipe&&window.__dpPipe.amt)||num;const np={wn:s.pend.filter(noPm).length,on:s.overdue.filter(noPm).length};
+  const noPm=x=>!pmsOf(x).some(pmOk),A=(window.__dpPipe&&window.__dpPipe.amt)||num;const np={n:"No PM",wn:s.pend.filter(noPm).length,on:s.overdue.filter(noPm).length};
   np.w=s.pend.filter(noPm).reduce((a,x)=>a+A(x.amount),0);np.o=s.overdue.filter(noPm).reduce((a,x)=>a+owed(x),0);
-  const rowIn=r=>`<span class="m"><b class="t">${esc(r.n)}</b><span class="s">${r.wn||r.n!=="No PM"?`${r.wn} ${plural(r.wn,"proposal")} waiting · ${money(r.w)||"$0"}`:"No project manager on JobTread or QuickBooks"}</span></span><span class="r${r.o>0?" crit":""}">${r.on?money(r.o):"None"}<small>overdue</small></span>`;
-  const moneyS=`<section class="tm-sec" data-tmsec="money"><h2>Money</h2>${src("Pipeline, from your morning update",pipeAt())}
+  const rows=has?ro.rows:[];const mine=n=>rows.filter(r=>same(r.pm,n));
+  const waitN=n=>has?waitingOf(mine(n)).n:null;
+  const siteN=n=>has?mine(n).filter(x=>x.kind==="site"&&x.date===today()&&!/cancel/i.test(x.status)).length:null;
+  const J=opsJobs(),jl=J.data!==undefined;
+  const jobW=n=>{const js=jobsFor(n)||[];if(n!=="No PM")needLive(n);const w={tot:js.length,under:0,priced:0,checking:n!=="No PM"&&!liveOk(n),failed:n!=="No PM"&&!liveOk(n)&&CORE.get(KLIVE+n).status==="error"&&!CORE.get(KLIVE+n).busy};
+    js.forEach(j=>{if(j.margin!=null){w.priced++;if(j.margin<t)w.under++}});return w};
+  const jobWho=jl?[...new Set((J.data||[]).flatMap(j=>jobPms(j).length?jobPms(j):["No PM"]))]:[];
+  const who=[...new Set(names.concat(jobWho.filter(n=>n!=="No PM")))];
+  const per=who.map(n=>{const x=PS(n);return{n,w:x.openValue,wn:x.pend.length,o:x.arOverdue,on:x.overdue.length,wait:waitN(n),site:siteN(n),jw:jl&&jobWho.includes(n)?jobW(n):null}})
+    .filter(r=>r.wn||r.on||r.wait||r.site||(r.jw&&r.jw.tot)||names.includes(r.n)&&(r.wait!=null));
+  if(jl&&jobWho.includes("No PM"))np.jw=jobW("No PM");
+  const jobBits=w=>!w?"":w.tot?`${w.tot} active ${plural(w.tot,"job")}${w.failed?", margins didn't load: open to try again":w.checking?", checking margins…":w.under?`, ${w.under} under ${t}%`:w.priced?`, all at ${t}%+`:""}`:"";
+  const rowIn=r=>{const bits=[r.wn?`${r.wn} ${plural(r.wn,"proposal")} · ${money(r.w)||"$0"}`:r.n==="No PM"?"No project manager on JobTread or QuickBooks":"No proposals waiting",
+      r.wait!=null?`${r.wait} waiting`:"",r.site?`${r.site} on site today`:"",jobBits(r.jw)].filter(Boolean);
+    return `<span class="m"><b class="t">${esc(r.n)}</b><span class="s">${esc(bits.join(" · "))}</span></span><span class="r${r.o>0?" crit":""}">${r.on?money(r.o):"None"}<small>overdue</small></span>`};
+  const att=r=>` data-tmjobs="${r.jw?r.jw.tot:0}" data-tmunder="${r.jw?r.jw.under:0}"${r.wait!=null?` data-tmwait="${r.wait}"`:""}${r.site!=null?` data-tmsite="${r.site}"`:""}`;
+  const totWait=has?per.filter(r=>names.includes(r.n)).reduce((a,r)=>a+(r.wait||0),0):null;
+  const showNp=np.wn||np.on||(np.jw&&np.jw.tot);
+  const list=per.map(r=>names.includes(r.n)?`<button type="button" class="tm-row tm-rowb" data-tmpm="${esc(r.n)}"${att(r)}>${rowIn(r)}</button>`:`<div class="tm-row"${att(r)}>${rowIn(r)}</div>`).join("")+(showNp?`<div class="tm-row" data-tmnopm${att(np)}>${rowIn(np)}</div>`:"");
+  const at=[pipeAt(),has?rollAt():"",jl?loadAt("ops:jobs"):""].filter(Boolean).sort().pop()||"";
+  const from=["Proposals and overdue: Pipeline, from your morning update",has?"waiting and on site: team roll-up":"",jl?`jobs: JobTread, margin: Job costing (target ${t}%)`:""].filter(Boolean).join(" · ");
+  const wk=has?rows.filter(x=>x.kind==="site"&&x.date>=today()&&x.date<=CORE.day(6)&&!/cancel/i.test(x.status)).length:0;
+  const note=!has&&CORE.get(KEY).data!==undefined&&!ro.off?`<div class="tm-note" role="status">Team roll-up is on. Open asks and site visits fill in after each person's next scheduled update.</div>`:"";
+  const jobsLoading=!jl?`<div class="tm-jobsload">${(P()&&P().jobsBox&&P().jobsBox())||""}</div>`:"";
+  return `<section class="tm-sec" data-tmsec="money" data-tmsum${totWait!=null?` data-tmwait="${totWait}"`:""}${jl?` data-tmjobsall="${(J.data||[]).length}"`:""}><h2>By project manager</h2>
     <div class="kpis">${kpi(money(s.openValue)||"$0",`Proposals waiting (${s.pend.length})`)}${kpi(money(s.arOverdue)||"$0",`Overdue invoices (${s.overdue.length})`,s.arOverdue>0?"crit":"")}</div>
-    ${per.length||np.wn||np.on?`<div class="tm-list">${per.map(r=>`<button type="button" class="tm-row tm-rowb" data-tmpm="${esc(r.n)}">${rowIn(r)}</button>`).join("")}${np.wn||np.on?`<div class="tm-row" data-tmnopm>${rowIn(Object.assign({n:"No PM"},np))}</div>`:""}</div>`:""}
-    <p class="tm-link"><a class="opsb" href="#pipeline">Open Pipeline</a></p></section>`;
-  let waiting="",site="";
-  if(has){const rows=ro.rows;const of=k=>rows.filter(r=>r.kind===k);
-    const W=waitingOf(rows.filter(r=>names.some(n=>same(n,r.pm))));const asks=W.asks,sels=W.sels,orders=W.orders;
-    waiting=`<section class="tm-sec" data-tmsec="waiting" data-tmwait="${W.n}"><h2>Waiting${W.n?`<span class="cnt">${W.n}</span>`:""}</h2><p class="opsmeta tm-def">${esc(WAIT_DEF)}</p>${src("Team roll-up, from each person's updates",rollAt())}
-      ${asks.length?`<div class="tm-list">${asks.map(x=>askRow(x,who)).join("")}</div>`:`<div class="empty">${W.n?"No open client asks.":"Nothing is waiting right now."}</div>`}
-      ${fold("Selections not settled",sels.length,sels.map(x=>selRow(x,who)).join(""),"sels")}${fold("Open orders",orders.length,orders.map(x=>ordRow(x,who)).join(""),"orders")}</section>`;
-    const sv=of("site").filter(x=>x.date>=today()&&x.date<=CORE.day(6)&&!/cancel/i.test(x.status)).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.pm).localeCompare(String(b.pm)));
-    let last="";site=`<section class="tm-sec" data-tmsec="site"><h2>On site this week${sv.length?`<span class="cnt">${sv.length}</span>`:""}</h2>${src("Team roll-up",rollAt())}
-      ${sv.length?`<div class="tm-list">${sv.map(x=>{const h=x.date!==last?`<h3 class="tm-day">${esc(x.date===today()?"Today, "+fmtD(x.date):fmtDow(x.date))}</h3>`:"";last=x.date;return h+siteRow(x,who)}).join("")}</div>`:`<div class="empty">Nothing is scheduled on site in the next 7 days.</div>`}</section>`}
-  else if(CORE.get(KEY).data!==undefined&&!ro.off)waiting=`<div class="tm-note" role="status">Team roll-up is on. Open asks and site visits fill in after each person's next scheduled update.</div>`;
-  const J=opsJobs();let jobs;
-  if(J.data===undefined)jobs=`<section class="tm-sec" data-tmsec="jobs"><h2>Jobs</h2>${(P()&&P().jobsBox&&P().jobsBox())||""}</section>`;
-  else{
-    const who=[...new Set((J.data||[]).flatMap(j=>jobPms(j).length?jobPms(j):["No PM"]))];
-    const ws=who.map(n=>{const js=jobsFor(n)||[];if(n!=="No PM")needLive(n);const w={n,plan:0,wip:0,fin:0,under:0,priced:0,checking:n!=="No PM"&&!liveOk(n),failed:n!=="No PM"&&!liveOk(n)&&CORE.get(KLIVE+n).status==="error"&&!CORE.get(KLIVE+n).busy};
-      js.forEach(j=>{w[stageOf(j.flow)]++;if(j.margin!=null){w.priced++;if(j.margin<t)w.under++}});return w})
-      .sort((a,b)=>(a.n==="No PM")-(b.n==="No PM")||(b.plan+b.wip+b.fin)-(a.plan+a.wip+a.fin)||a.n.localeCompare(b.n));
-    jobs=`<section class="tm-sec" data-tmsec="jobs"><h2>Jobs${ws.length?`<span class="cnt">${(J.data||[]).length}</span>`:""}</h2>${src(`Active jobs: JobTread · margin: Job costing, target ${t}%`,loadAt("ops:jobs"))}
-      ${ws.length?`<div class="tm-list">${ws.map(w=>{const tot=w.plan+w.wip+w.fin;const tag=w.n!=="No PM"&&names.includes(w.n);const inner=`<span class="m"><b class="t">${esc(w.n)}</b><span class="s">${w.plan} planning · ${w.wip} in progress · ${w.fin} final stage</span></span><span class="r${w.under?" crit":""}" data-tmjobs="${tot}" data-tmunder="${w.under}">${tot} active<small>${w.failed?"margins didn't load: open to try again":w.checking?"checking margins…":w.under?w.under+" under "+t+"% margin":w.priced?"all at "+t+"%+":"no margin yet"}</small></span>`;
-        return tag?`<button type="button" class="tm-row tm-rowb" data-tmpm="${esc(w.n)}">${inner}</button>`:`<div class="tm-row">${inner}</div>`}).join("")}</div>`:`<div class="empty">No active jobs in JobTread right now.</div>`}</section>`}
-  return moneyS+waiting+site+jobs+(CORE.get(KEY).data!==undefined&&!ro.off?whoSharing(ro):"")}
+    ${list?`<div class="tm-list">${list}</div>`:""}${note}${jobsLoading}${src(from,at)}
+    <p class="tm-link"><a class="opsb" href="#pipeline">Open Pipeline</a>${has?`<a class="opsb" href="#sites">On site this week${wk?` (${wk})`:""}: Site schedule</a>`:""}</p></section>`+(CORE.get(KEY).data!==undefined&&!ro.off?whoSharing(ro):"")}
 function whoSharing(ro){const tm=[...new Set(pmNames().concat((CFG.office||[]).map(o=>o&&o[0])).concat(CFG.name?[CFG.name]:[]).filter(Boolean))].map(n=>({name:n}));
   const seen=new Set(ro.people.map(p=>norm(p.name)));const missing=tm.filter(t=>!seen.has(norm(t.name)));
   const cards=ro.people.map(p=>{const late=p.at&&Date.now()-Date.parse(p.at)>36*3600e3;return `<div class="${p.err?"off":late?"late":""}"><b>${esc(p.name)}</b><small>${p.err?"Couldn't read their page of the roll-up":`${esc(fmtAt(p.at)||"No time recorded")} · ${p.n} ${plural(p.n,"line")}${late?" · not updated in over a day":""}`}</small></div>`}).join("")+
@@ -8370,7 +8422,16 @@ function demoRoll(){return DEMO.roll?DEMO.roll(CORE.day):{people:[],rows:[],note
 })();
 </script>
 <style id="dpleads-css">.ld-off{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 18px;margin:12px 0;font-size:var(--fs-body);color:var(--fg)}
-.ld-bar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.ld-bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px;align-items:center}
+.ld-bar .ld-q{flex:1 1 160px;min-width:0;display:flex}
+.ld-bar .ld-q input{flex:1 1 auto;min-width:0;border:1px solid var(--field-border);border-radius:var(--r-sm);min-height:44px;box-sizing:border-box;padding:8px 10px;font:inherit;font-size:var(--fs-body);background:var(--surface);color:var(--fg)}
+.ld-kpis{display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;margin:0;font-size:var(--fs-footnote);color:var(--muted)}
+.ld-k{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:var(--r-pill);background:none;font:inherit;color:inherit;white-space:nowrap}
+.ld-k b{color:var(--fg);font-weight:700}
+.ld-k.crit b{color:var(--crit)}
+button.ld-k{cursor:pointer;border-color:var(--line);background:var(--surface)}
+button.ld-k[aria-pressed="true"]{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy);color:var(--fg)}
+.ld-filters[hidden]{display:none}
 button.kpi{font:inherit;text-align:left;cursor:pointer;border:1px solid var(--line);min-height:44px}
 button.kpi[aria-pressed="true"]{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
 .ld-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:14px 0 6px}
@@ -8426,7 +8487,7 @@ const KEY="leads:sheet";
 const DEF_COLS=["Lead Type","PC or DP Lead?","Lead Source","Referral Name","Client Name","Address","Lead Rcvd Date","Estimate Appt Date","Quote Sent Date","LAG","Estimated $ Amount","Estimator","Manager","Status","Notes"];
 const DEF_DONE=["Won","Lost","Sold","Dead","Closed"];
 const DAYS=["sun","mon","tue","wed","thu","fri","sat"];
-const L={f:{status:"open",pcdp:"",est:"",q:"",sort:"desc"},form:null,cj:{},msg:"",at:0};
+const L={f:{status:null,pcdp:"",est:"",q:"",sort:"desc"},form:null,cj:{},msg:"",at:0,more:null};
 const rr=()=>CORE.render();
 const mod=()=>{try{return ORG.mod("leads")}catch(e){return null}};
 const strs=v=>Array.isArray(v)?v.map(x=>String(x==null?"":x).trim()).filter(Boolean):[];
@@ -8623,26 +8684,27 @@ function card(r){const now=today();const lg=lagRow(r,now);const fu=follow(r,now)
     <div class="ld-acts"><button type="button" class="act" data-ldedit="${r.n}" aria-label="Edit lead: ${esc(label(r))}"${editing?' aria-expanded="true"':""}>Edit</button>${canJob(r)?`<button type="button" class="act primary" data-ldjob="${r.n}" aria-label="Create job in JobTread: ${esc(label(r))}">Create job in JobTread</button>`:""}</div>
     ${jobPanel(r)}</li>${editing?`<li class="ld-formli">${formHtml()}</li>`:""}`}
 function view(){const s=S();
-  const head=window.DPPageHead("Leads","Your team's lead tracker, read live from the shared Google Sheet. Changes you save here go straight into the Sheet, so everyone sees the same list.");
+  const head=window.DPPageHead("Leads","");
   if(!s.sheetId)return head+`<p class="ld-off" role="status">Your team's lead tracker isn't connected yet. Ask ${esc(ORG.support)} to connect the leads Sheet.</p>`;
   load();const g=data();const has=!!L.rows;
   if(!has)return head+CORE.box(KEY,{loading:"Loading leads from the Sheet…",rows:4,label:"Google Sheets"});
   if(L.ix.client==null&&L.ix.address==null)return head+`<p class="ld-off" role="status">The ${esc(s.tab)} tab doesn't have the columns the page looks for (Client Name, Address). Ask ${esc(ORG.support)} to check the leads Sheet.</p>`;
   const all=L.rows,open=all.filter(r=>!isDone(r)),fu=open.filter(r=>follow(r)),quotes=open.filter(r=>iso(val(r,"quote")));
   const lags=open.map(r=>lagRow(r)).filter(n=>n!=null);const avg=lags.length?Math.round(lags.reduce((a,b)=>a+b,0)/lags.length):null;
-  const kpi=(v,l,cls,k)=>k?`<button type="button" class="kpi${cls?" "+cls:""}" data-ldk="${k}" aria-pressed="${L.f.status===k}"><b>${v}</b><span>${esc(l)}</span></button>`:`<div class="kpi${cls?" "+cls:""}"><b>${v}</b><span>${esc(l)}</span></div>`;
+  if(L.f.status==null)L.f.status=fu.length?"follow":"open";
+  const kpi=(v,l,cls,k)=>k?`<button type="button" class="ld-k${cls?" "+cls:""}" data-ldk="${k}" aria-pressed="${L.f.status===k}"><b>${v}</b> ${esc(l)}</button>`:`<span class="ld-k"><b>${v}</b> ${esc(l)}</span>`;
   const rs=filtered();const f=L.f;
   const used=new Set(all.map(r=>val(r,"status").toLowerCase()).filter(Boolean));
   const stOpts=opts("status").filter(o=>used.has(o.toLowerCase())||o===f.status),pd=opts("pcdp"),es=opts("est");
   const sel=(k,lab,list,all)=>`<label class="ld-f"><span class="ld-l">${esc(lab)}</span><select data-ldflt="${k}">${all}${list.map(o=>`<option value="${esc(o)}"${f[k]===o?" selected":""}>${esc(o)}</option>`).join("")}</select></label>`;
   const statusSel=`<label class="ld-f"><span class="ld-l">Status</span><select data-ldflt="status"><option value="open"${f.status==="open"?" selected":""}>Open leads</option><option value="follow"${f.status==="follow"?" selected":""}>To follow up</option><option value="quotes"${f.status==="quotes"?" selected":""}>Quotes out</option><option value=""${!f.status?" selected":""}>All leads</option>${stOpts.map(o=>`<option value="${esc(o)}"${f.status===o?" selected":""}>${esc(o)}</option>`).join("")}</select></label>`;
   const adding=L.form&&L.form.mode==="add";
-  return head+`<section class="kpis ld-kpis" aria-label="Lead counts">${kpi(open.length,"Open leads","","open")}${kpi(fu.length,"To follow up",fu.length?"crit":"","follow")}${kpi(quotes.length,"Quotes out","","quotes")}${kpi(avg==null?"–":avg+"d","Average LAG, open","","")}</section>
+  const fUsed=!!(f.pcdp||f.est||f.sort==="asc"||!["open","follow","quotes"].includes(f.status));const fOpen=L.more==null?fUsed:L.more;
+  return head+`<p class="ld-kpis" aria-label="Lead counts">${kpi(open.length,"open","","open")}${kpi(fu.length,"to follow up",fu.length?"crit":"","follow")}${kpi(quotes.length,"quotes out","","quotes")}${kpi(avg==null?"–":avg+"d","average LAG","","")}</p>
   ${CORE.staleNote(KEY,{label:"Google Sheets"})}
-  <div class="ld-bar"><button type="button" class="act primary" data-ldadd aria-expanded="${!!adding}">Add a lead</button></div>
+  <div class="ld-bar"><label class="ld-q"><span class="vh">Search leads</span><input type="search" data-ldq value="${esc(f.q)}" placeholder="Search leads" autocomplete="off"></label><button type="button" class="act ghost" data-ldmore aria-expanded="${fOpen}" aria-controls="ldflt">Filter</button><button type="button" class="act primary" data-ldadd aria-expanded="${!!adding}">Add a lead</button></div>
   ${adding?formHtml():""}
-  <div class="ld-filters" role="search" aria-label="Filter leads">${statusSel}${pd.length?sel("pcdp",(L.hdr[L.ix.pcdp]||"PC or DP"),pd,`<option value="">All</option>`):""}${es.length?sel("est","Estimator",es,`<option value="">Everyone</option>`):""}
-    <label class="ld-f ld-q"><span class="ld-l">Search</span><input type="search" data-ldq value="${esc(f.q)}" placeholder="Name, address, notes" autocomplete="off"></label>
+  <div class="ld-filters" id="ldflt" role="search" aria-label="Filter leads"${fOpen?"":" hidden"}>${statusSel}${pd.length?sel("pcdp",(L.hdr[L.ix.pcdp]||"PC or DP"),pd,`<option value="">All</option>`):""}${es.length?sel("est","Estimator",es,`<option value="">Everyone</option>`):""}
     <button type="button" class="act ghost ld-sort" data-ldsort aria-label="Sort by received date, ${f.sort==="asc"?"oldest":"newest"} first">${f.sort==="asc"?"Oldest first":"Newest first"}</button></div>
   <p class="ld-count" role="status">Showing ${rs.length} of ${all.length} lead${all.length===1?"":"s"}.</p>
   ${rs.length?`<ul class="ld-list">${rs.map(card).join("")}</ul>`:`<div class="empty">No leads match. Change the filters or search to see more.</div>`}`}
@@ -8667,7 +8729,8 @@ async function askMail(btn){const fu=(L.rows||[]).filter(r=>follow(r));if(!fu.le
 window.__dpLeads={lag,lagRow,wdays,headerAt,iso,cols,state:L,follow:(cells,hdr,now)=>{const keep=L.ix;L.ix=cols(hdr);try{return follow({cells},now)}finally{L.ix=keep}}};
 CORE.render();
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#refresh");if(!b||!/^#?leads/.test(location.hash.slice(1))||!on())return;e.preventDefault();e.stopImmediatePropagation();load(true);rr()},true);
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-ldadd],[data-ldcancel],[data-ldsave],[data-ldedit],[data-ldjob],[data-ldjobx],[data-ldlink],[data-ldnew],[data-ldcreate],[data-ldsort],[data-ldk],[data-ldmail]");if(!t)return;const d=t.dataset;
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-ldadd],[data-ldcancel],[data-ldsave],[data-ldedit],[data-ldjob],[data-ldjobx],[data-ldlink],[data-ldnew],[data-ldcreate],[data-ldsort],[data-ldk],[data-ldmail],[data-ldmore]");if(!t)return;const d=t.dataset;
+  if(d.ldmore!=null){L.more=t.getAttribute("aria-expanded")!=="true";rr();requestAnimationFrame(()=>{const n=document.querySelector("#view [data-ldmore]");if(n)n.focus({preventScroll:true})});return}
   if(d.ldadd!=null){if(L.form&&L.form.mode==="add"){L.form=null;CORE.cancelConfirm("leads:save",true);rr()}else openForm("add");return}
   if(d.ldcancel!=null){const n=L.form&&L.form.n;L.form=null;CORE.cancelConfirm("leads:save",true);rr();setTimeout(()=>{const b=document.querySelector(n?`[data-ldedit="${n}"]`:"[data-ldadd]");if(b)try{b.focus({preventScroll:true})}catch(x){}},60);return}
   if(d.ldsave!=null){askSave(t);return}
@@ -8746,7 +8809,8 @@ const LAB={requested:"Requested",approved:"Approved",sent:"Sent to office",paid:
 const PILL={requested:"warn",approved:"",sent:"",paid:"ok"};
 const SRC={email:"Email",text:"Text",whatsapp:"WhatsApp",jobtread:"JobTread bill",hand:"Added by hand"};
 const SRCLINK={email:"Open the email",text:"Open the text",whatsapp:"Open the WhatsApp chat",jobtread:"Open the bill in JobTread"};
-const FILTERS=[["open","Open"],["requested","Requested"],["approved","Approved"],["sent","Sent to office"],["paid","Paid"]];
+const FILTERS=[["open","Open"],["mine","Needs my approval"],["paid","Paid"]];
+const inF=(r,f)=>f==="open"?OPEN.includes(st(r)):f==="mine"?st(r)==="requested"&&canApprove(r):st(r)===f;
 const P={rows:null,pend:{},f:"open",open:{},form:null,req:{},err:"",started:false,db:null};
 const rr=()=>CORE.render();
 const R=()=>window.DPR||{role:"owner"};
@@ -8866,9 +8930,9 @@ async function formSave(){readForm();const F=P.form;if(!F)return;const v=F.v;con
     pm:jpm,amount:Math.round(amt*100)/100,invoice:String(v.invoice||"").trim().slice(0,60),src:v.src in SRC?v.src:"hand",link,
     said:String(v.said||"").trim().slice(0,400),requestedAt:at,status:"requested",addedBy:me(),addedAt:nowIso(),history:[]};
   const id="hand-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  F.msg="";try{await save(id,doc);P.form=null;if(P.f!=="open"&&P.f!=="requested")P.f="open";CORE.toast(`Added ${doc.sub}'s request.`);rr()}
+  F.msg="";try{await save(id,doc);P.form=null;if(P.f!=="open"&&P.f!=="mine")P.f="open";CORE.toast(`Added ${doc.sub}'s request.`);rr()}
   catch(e){F.msg="Couldn't save it. "+CORE.errMsg(e,"the page's database");rr()}}
-function filtered(){const f=P.f;const rs=rows().filter(r=>f==="open"?OPEN.includes(st(r)):st(r)===f);
+function filtered(){const f=P.f;const rs=rows().filter(r=>inF(r,f));
   const k=r=>Date.parse(f==="paid"?r.paidAt||r.requestedAt:r.requestedAt)||0;
   return rs.sort((a,b)=>f==="paid"?k(b)-k(a):k(a)-k(b))}
 function whyLine(r){const L=r.last;if(!L||!L.why)return"";const can=!L.undone&&LAB[L.from]&&LAB[L.to];
@@ -8902,13 +8966,13 @@ function row(r){const s=st(r);
     ${whyLine(r)}${open?body(r):""}</li>`}
 function view(){watch();
   const pmNote=seesAll()?"":" You see the requests on your own jobs.";
-  const head=window.DPPageHead("Sub payments",esc("Payments your subs have asked for, from email, texts and JobTread bills. Approve, send to the office as a JobTread to-do, and it closes itself once paid."+pmNote),"",
+  const head=window.DPPageHead("Sub payments",esc(pmNote.trim()),"",
     `<button type="button" class="act" data-spadd aria-expanded="${!!P.form}">Add a request</button>`);
   if(P.rows===null)return head+`<p class="sp-empty" role="status">Loading payment requests…</p>`;
-  const all=rows();const cnt=k=>all.filter(r=>k==="open"?OPEN.includes(st(r)):st(r)===k).length;
+  const all=rows();const cnt=k=>all.filter(r=>inF(r,k)).length;
   const chips=`<div class="chips sp-chips" role="group" aria-label="Show requests">${FILTERS.map(([k,l])=>`<button type="button" data-spf="${k}" aria-pressed="${P.f===k}">${esc(l)} <span class="n">${cnt(k)}</span></button>`).join("")}</div>`;
   const rs=filtered();
-  const empty=P.f==="open"?"No open payment requests. New ones show up here after your next update.":`No requests are ${esc(LAB[P.f].toLowerCase())} right now.`;
+  const empty=P.f==="open"?"No open payment requests. New ones show up here after your next update.":P.f==="mine"?"Nothing is waiting for your approval.":`No requests are ${esc((LAB[P.f]||P.f).toLowerCase())} right now.`;
   return head+(P.err?`<p class="sp-msg" role="alert">${esc(P.err)}</p>`:"")+(P.form?formHtml():"")+chips+
     (rs.length?`<ul class="sp-list" aria-label="Payment requests">${rs.map(row).join("")}</ul>`:`<div class="empty">${empty}</div>`)}
 (window.DPMODS=window.DPMODS||[]).push({k:"subpay",l:"Sub payments",ic:"dollar-sign",sec:"money",show:()=>true,owns:h=>/^subpay(\/|$)/.test(h),
@@ -9418,6 +9482,12 @@ div.ph .ph-main{min-width:0;flex:1 1 280px}
 div.ph h1{font:var(--ph-title);letter-spacing:var(--ph-track);text-transform:none;color:var(--fg);margin:0;text-wrap:balance;overflow-wrap:anywhere}
 div.ph h1::after{content:"";display:block;width:40px;height:4px;border-radius:0;background:var(--ph-rule);margin-top:10px}
 div.ph p{margin:8px 0 0;font:var(--ph-sub);color:var(--muted);max-width:62ch}
+body.subpg #view div.ph h1{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}
+:host(.subpg) div.ph h1{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}
+body.subpg #view div.ph:not(:has(.ph-acts,p,a,button,nav)),body.subpg #view div.ph:not(:has(.ph-acts,p,a,button,nav))>div{display:contents}
+:host(.subpg) div.ph:not(:has(.ph-acts,p:not(.vh),a,button,nav)),:host(.subpg) div.ph:not(:has(.ph-acts,p:not(.vh),a,button,nav))>div{display:contents}
+@media (max-width:760px){body.subpg main>.wrap{padding-top:12px}}
+.chips.pkinds[hidden]{display:none}
 div.ph .ph-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .band div.ph h1{color:var(--white)}
 .band div.ph p{color:var(--navy-muted)}
@@ -9483,6 +9553,7 @@ td .act{white-space:nowrap}
 .tsub2{margin:0;font-size:var(--fs-subhead);color:var(--muted);display:flex;flex-wrap:wrap;gap:0 8px}
 .tsub2 .tfresh::before{content:"·";margin-right:8px;color:var(--text-faint)}
 .thero.old .tfresh{color:var(--warn);font-weight:600}
+@media (min-width:600px) and (pointer:fine),(min-width:1001px){.thero.tline:not(.old) .tfresh{display:none}.thero.tline .tsub2{min-height:1.5em}}
 .tchips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
 .tchip{display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);text-decoration:none;min-width:0}
 .tchip:hover{border-color:var(--line-strong);background:var(--surface-2)}
@@ -9516,7 +9587,8 @@ td .act{white-space:nowrap}
 .wx.nonow .wx-row{grid-template-columns:minmax(0,1fr)}
 .wx .wxi{display:block;flex:none}
 .wx-nowv{display:flex;align-items:center;gap:10px;min-width:0}
-.wx-big{width:36px;height:36px;color:var(--fg)}
+.wx{position:relative}.wx-hd.vh{top:0;left:0}
+.wx-big{width:28px;height:28px;color:var(--fg)}
 .wx-nowt{display:flex;flex-wrap:wrap;align-items:baseline;flex:1 1 auto;min-width:0}
 .wx-t{font:700 var(--fs-title2)/1.1 var(--display);letter-spacing:-.01em;color:var(--fg);font-variant-numeric:tabular-nums}
 .wx-lo{font:500 var(--fs-subhead)/1.1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
@@ -9966,7 +10038,11 @@ body{box-sizing:border-box}
 .ss-arrow:hover:not(:disabled){border-color:var(--fg)}
 .ss-arrow:disabled{opacity:.3;cursor:default}
 .ss-tnav{display:flex;margin:2px 0 8px}
-.ss-tday{flex:1 1 auto;min-width:0;text-align:center;font:600 var(--fs-subhead)/1.3 var(--body);color:var(--fg)}
+.ss-dayrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex:1 1 100%;min-width:0}
+.ss-dayrow .ss-stamp{margin:0 0 0 auto;font-size:var(--fs-footnote);color:var(--muted)}
+.ss-more{display:flex;flex-direction:column;gap:10px}.ss-more[hidden]{display:none}
+.ss-fbtn .n{font-size:var(--fs-caption);color:var(--count)}
+.ss-tday{margin:0 0 6px;min-width:0;font:500 var(--fs-footnote)/1.3 var(--body);color:var(--muted)}
 @media (pointer:coarse){.ss-arrow{width:var(--hit);height:var(--hit)}}
 @media (pointer:coarse){.ss-pick input[type=date],.ss-back{min-height:var(--hit)}}
 .ss-pick select{min-width:0;max-width:200px;min-height:var(--ctl-h);padding:0 30px 0 14px;border:1px solid var(--field-border);border-radius:var(--r-pill);background-color:var(--surface);color:var(--fg);font:500 var(--fs-footnote)/1.2 var(--body);cursor:pointer;text-overflow:ellipsis}
@@ -10050,6 +10126,15 @@ ul.dig.ss-today li.st-cancelled em.ss-tag{text-decoration:none;display:inline-bl
 .is-warn>.sysdot{background:var(--warn-soft);color:var(--warn)}
 .is-bad>.sysdot{background:var(--crit-soft);color:var(--crit)}
 .sysm{flex:1;min-width:0}
+.sysd>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:2px var(--sp-2);min-height:44px;margin:-8px 0}
+.sysd>summary::-webkit-details-marker{display:none}
+.sysd>summary::after{content:"›";margin-left:auto;color:var(--muted);font-size:var(--fs-headline);line-height:1;transition:transform .15s ease}
+.sysd[open]>summary::after{transform:rotate(90deg)}
+.sysd>summary .syshd{flex:1 1 auto;min-height:0}
+.sysd[open]>summary{margin-bottom:0}
+.sysmore{margin-top:var(--sp-3)}
+.sysd.sysfold>summary h3{margin:0}.sysd.sysfold>summary .hconn-hd{flex:1 1 auto;margin:0}
+.syslite .sysfold>summary h3{font:600 var(--fs-body)/1.35 var(--body);letter-spacing:0;text-transform:none;color:var(--fg)}
 .syshd{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px var(--sp-2);min-height:28px}
 .syshd h3{margin:0;font:600 var(--fs-body)/1.35 var(--body);letter-spacing:0;text-transform:none;color:var(--fg)}
 .sysw{font:600 var(--fs-footnote)/1.35 var(--body);color:var(--muted)}
@@ -10321,6 +10406,11 @@ function apply(){
       const kids=all.filter(el=>!el.classList.contains("dpd-sub"));const grouped=c.classList.contains("stack")||c.classList.contains("ppl");
       const lim=+card.dataset.dlim||(c.matches("ol.prio")?5:grouped?2:3);
       const old=card.querySelector(":scope>.dpd-more");if(old)old.remove();
+      const lnk=card.hasAttribute("data-dmore")?card.querySelector(":scope>a.dmore"):null;
+      if(lnk){if(card.classList.contains("dpd")||head.querySelector(".dpd-b")){card.classList.remove("dpd","open");unwrapHead(head)}
+        const n=Math.max(0,kids.length-lim);if(n){kids.slice(lim).forEach(el=>el.classList.add("dpd-x"));
+          all.forEach((el,ix)=>{if(!el.classList.contains("dpd-sub"))return;let any=false;for(let k=ix+1;k<all.length&&!all[k].classList.contains("dpd-sub");k++)if(!all[k].classList.contains("dpd-x")){any=true;break}if(!any)el.classList.add("dpd-x")})}
+        const m=lnk.querySelector(".dmore-n");const t=n?` (${n} more)`:"";if(m&&m.textContent!==t)m.textContent=t;continue}
       if(kids.length<=lim){if(card.classList.contains("dpd")||head.querySelector(".dpd-b")){card.classList.remove("dpd","open");unwrapHead(head)}continue}
       const title=head.dataset.dpdTitle||titleOf(head);
       const key=card.dataset.dkey||(r.kind+"|"+H().replace(/--.*$/,"").replace(/^(job-|hub\/job-|lists\/).*/,"$1")+"|"+title.replace(/[0-9$,.·()]+/g,"").trim().slice(0,40));
@@ -10468,6 +10558,13 @@ function keepNow(fine){const k=K;if(!k)return;if(Date.now()-k.at>1800||k.hash!==
   let row=k.el.isConnected&&k.el.getClientRects().length?k.el:null;if(!row&&/[#\[]/.test(k.sel)){try{row=k.root.querySelector(k.sel)}catch(e){}}if(!row||!row.getClientRects().length)return;
   const d=row.getBoundingClientRect().top-k.top;if(Math.abs(d)>(fine===true?1:6)){holdHdr();scrollBy(0,d);if(fine!==true){clearTimeout(keepNow.t);keepNow.t=setTimeout(()=>keepNow(true),320)}}}
 window.DPReleaseTap=()=>{K=null};
+const FILT="[data-pkmore],[data-ssmore],[data-ldmore],[data-jfilt]";
+document.addEventListener("keydown",e=>{if(e.key!=="Escape"||e.defaultPrevented)return;const ae=deepActive();if(!ae||!ae.closest)return;
+  const root=rootOf(ae);let b=ae.matches(FILT)?ae:null;
+  if(!b)for(const x of root.querySelectorAll(FILT)){const p=x.getAttribute("aria-controls");const pn=p&&(root.getElementById?root.getElementById(p):root.querySelector("#"+p));if(pn&&pn.contains(ae)){b=x;break}}
+  if(!b||b.getAttribute("aria-expanded")!=="true")return;e.preventDefault();
+  const sel=FILT.split(",").find(s=>b.matches(s));b.click();
+  requestAnimationFrame(()=>{const n=root.querySelector(sel);if(n)try{n.focus({preventScroll:true})}catch(x){}})});
 function findItem(root,selStr){try{return root.querySelector(selStr)}catch(e){return null}}
 let NUDGE=null;
 function nudgeBack(){const n=NUDGE;if(!n)return;const item=n.item.isConnected?n.item:/[#\[]/.test(n.isel)?findItem(n.root,n.isel):null;
@@ -10489,10 +10586,10 @@ function focusSettle(){keepTapped();nudgeBack();
   if(R&&Date.now()-R.at<2500&&R.hash===location.hash){const it=R.el&&R.el.isConnected?R.el:/[#\[]/.test(R.item)?findItem(R.root,R.item):null;if(!it)return;
     const now=[...it.querySelectorAll(FOCUSABLE)].filter(x=>x.offsetParent!==null&&!R.before.has(sig(x))&&!x.matches("[data-selq],[data-selsort],[data-seltype]"));if(!now.length)return;
     const pick=now.find(x=>x.matches("textarea,input[type=text],input[type=email],input[type=search],input:not([type]),select"))
-      ||now.find(x=>/^\s*confirm/i.test(x.textContent||""))||now.find(x=>x.closest(".menu,[role=menu]"));
-    if(pick){const R0=R;R=null;const pn=pick.closest(".panel,.menu,[role=menu],.fslot,.tpanel,.dpc-cf")||pick;const r=pn.getBoundingClientRect();
+      ||now.find(x=>/^\s*confirm/i.test(x.textContent||""))||now.find(x=>x.closest(".menu,[role=menu]"))||(/data-verb="acts"/.test(R.bsel||"")?now.find(x=>x.closest(".topitem")&&x.matches("button")):null);
+    if(pick){const R0=R;R=null;const pn=pick.closest(".panel,.menu,[role=menu],.fslot,.tpanel,.dpc-cf,.topitem")||pick;const r=pn.getBoundingClientRect();
       const lo=chromeTop(),hi=innerHeight-((document.getElementById("btabs")||{}).offsetHeight||0);
-      const ib=it.getBoundingClientRect(),ot=(R0.bb!=null?R0.bb-scrollY:ib.top);const shown=Math.min(ib.bottom,hi)-Math.max(ot,lo)>8||(r.bottom>lo&&r.top<hi);
+      const ib=it.getBoundingClientRect(),ot=(R0.bb!=null?R0.bb-scrollY:ib.top);const pr0=pick.getBoundingClientRect();const shown=pick.matches("textarea")?(pr0.top<hi-8&&pr0.bottom>lo+8):(Math.min(ib.bottom,hi)-Math.max(ot,lo)>8||(r.bottom>lo&&r.top<hi));
       if(!shown)openedBelow(pr=>pr.top>=hi-8?"below":"above",pick);
       {const pr=pick.getBoundingClientRect();if(pr.top<hi-8&&pr.bottom>lo+8)pick.focus({preventScroll:true})}
       if(/^\s*confirm/i.test(pick.textContent||"")&&window.DPAnnounce)DPAnnounce("Check the details, then confirm.")}}}
