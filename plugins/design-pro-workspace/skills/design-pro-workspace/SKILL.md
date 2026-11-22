@@ -5,7 +5,7 @@ description: Sets up, checks, updates or removes a personal Design Pro Workspace
 
 # Design Pro Workspace
 
-Skill version: 2026-11-22a
+Skill version: 2026-11-22b
 
 One private page per person (title exactly "Design Pro Workspace") plus the scheduled tasks that keep it current. The core runs in the cloud; texts are an optional Mac extra that never holds up anything else.
 
@@ -97,7 +97,7 @@ Needs the Mac tools (section A) and an iPhone. Stop at the first problem, say th
 3. Otherwise: Full Disk Access on for both "Claude" and lowercase "claude"; ask the same way for `/Users/<their Mac user name>/Library/Messages` (they click Allow); write `assets/claude-texts-export.py` into it with device_bash. It only reads chat.db.
 4. Test: `python3 "$HOME/mnt/Messages/claude-texts-export.py" 48 "<timeZone>"` must print JSON with threads. If it fails, show the real error line; for "unable to open database", "authorization denied" or "not permitted": open the pane with device_bash (`open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"`) and say: "I opened Full Disk Access. Switch on Claude and claude, quit and reopen Claude, then in a new task say: Add texts to my Design Pro Workspace".
 5. Set `texts` = "enabled", run fill_prompts.py, and create "Daily Review - Texts" (out/texts_relay.txt, `CRON_TZ=<timeZone> <the texts_relay schedule in out/schedules.json>`, `requires_local_device` true, `folders` = [the texts folder's absolute path], no notifications) unless it already exists. Update the cloud tasks' instructions, rebuild and republish to the same url without capabilities, save `setup/config`.
-6. Tell them: texts are read hourly in work hours while the Mac is awake with Claude open; missed ones catch up later.
+6. Tell them: texts are read before each update (Mon–Sat) while the Mac is awake with Claude open; missed ones catch up later.
 
 Requests:
 - **"Add texts to my Design Pro Workspace"**: steps 1–6.
@@ -108,8 +108,8 @@ Requests:
 Verify, fix what needs no click, write the result to the page, and end with one summary.
 1. Gather exactly as steps 1–4 of the `updater` instructions in prompts.json (settings, team settings, tasks, freshness, Kit), plus: only one page titled "Design Pro Workspace"; `setup/config` has every value fill_prompts.py needs; each connector answers one read (Granola optional); the Drive folder exists; the JobTread membership and project-manager field are still valid; when the Mac is reachable and texts are on, the texts folder works (helper: its status is ok and under 2 hours old; else the script's test export, a Full Disk Access error → as in E4).
 2. Fix without asking: a missing cloud task → create it (C7), only when list_triggers answered and showed no task of that name; a task on older instructions, `tasksThin` not true or "instructions-missing" → install the instructions; a stale or empty page → fire "Daily Review" once; a missing `capsId`, `kitVersion` or `tasksVersion` → fill it in; team settings → refresh (D4); a key added → rebuild, republish (same url), update the cloud tasks' instructions; an unfinished setup → continue it (C); `texts/today` says "isn't attached", "mnt/Messages" or "could not reach the Mac or its texts folder", and the Mac tools are here → ask "Reconnect texts on this Mac?"; on yes, "Move texts to this Mac" (E). Never delete, and never turn a task back on that the person turned off without asking.
-3. Write `system/health` (ArtifactData set) in exactly the shape, problem keys and fix sentences of step 6 of the `updater` instructions.
-4. Reply with one summary: a line per area marked "OK" or "Needs you", and for each "Needs you" the exact fix sentence. If everything is fine: "Everything is working."
+3. Write `system/health` (ArtifactData set) in exactly the shape, problem keys and params of step 6 of the `updater` instructions.
+4. Reply with one summary: a line per area marked "OK" or "Needs you", and for each "Needs you" the fix as System status words it (template: `sysWord`). If everything is fine: "Everything is working."
 
 ## G. Updates
 - **Automatic**: the Updater task installs new versions daily when `autoUpdate` is true, and only when the page's permissions don't change.
@@ -124,7 +124,7 @@ Verify, fix what needs no click, write the result to the page, and end with one 
 - **"Update my scheduled tasks"** (also "finish the update"):
   1. Read `setup/config`; list_triggers; match tasks by the ids in the config, then by name.
   2. Run fill_prompts.py. Before changing anything, check it printed no "STILL UNFILLED" line and that morning.txt starts with "PROMPTS VERSION <the version in prompts.json>".
-  3. Install the instructions (name, schedule, notifications and on/off stay). The texts task gets only the out/schedules.json schedule if it still has the old `8 4-21 * * *` (needs_device_approval → they approve it from a task started on that Mac).
+  3. Install the instructions (name, schedule, notifications and on/off stay). A schedule still on an old default gets out/schedules.json's: light `23 7-10,12-16 * * 1-6`; texts `8 4-21 * * *` or `8 4,7-17 * * *` (needs_device_approval → approve it from a task started on that Mac).
   4. Never delete or recreate a task. Save `config.tasks`.
   Whenever `setup/config` has `tasksPending: true` and the scheduled-task tools are available, offer once to finish.
 

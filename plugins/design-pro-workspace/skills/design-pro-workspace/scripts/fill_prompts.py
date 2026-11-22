@@ -10,7 +10,12 @@ Needs in config.json (besides the build_page.py keys):
   texts ("enabled" | "disabled"), exclusions (optional free text), servers.ccr (the scheduled-task tools' server name),
   org (the franchise's team settings: companyName, region, suppliers, vendors, engineers, utilities, jtFields,
   emailDomains, and statusSheet: the shared beta status sheet's id, or empty to share no status)
+  runMods (optional, written by the Updater): {"quo", "quickbooks", "companycam", "subpay", "rollup": true|false}; an optional
+  module that is false here is left out of the instructions; a missing one counts as on
 Every value is checked first (dpw_config.py); nothing is written when one is wrong.
+Shared pieces of the instructions live once in prompts.json "fragments" ({{DAILY_RULES}} and the like); each is put into the
+instructions that name it, and a fragment tied to an optional module ("modules") only when that module is on for this person.
+An older copy of this script leaves those names unfilled and stops ("STILL UNFILLED"), so it never writes half instructions.
 Writes out_dir/<task>.txt for hub_sync, morning, midday, eod, light, texts_relay and updater, and out_dir/schedules.json.
 For the six cloud tasks (THIN_KEYS) it also writes:
   out_dir/tasks/<key>.json  the doc saved on the page as setup/task-<key>: {"version", "kit", "updatedAt", "text"}
@@ -188,6 +193,62 @@ def boot_spec(kit):
             stop('prompts.json "boot" has no entry for "%s"; nothing was written.' % k)
     return b
 
+FRAG = re.compile(r'\{\{([A-Z][A-Z0-9_]*)\}\}')
+
+def module_on(name, cfg, org, vals):
+    """An optional module's fragments go in only when it is on. Leads comes from the team settings (on, a sheet, and this
+    person named as its owner); the others from config.runMods, which the Updater keeps current. Missing = on."""
+    if name == 'leads':
+        mods = org.get('modules') if isinstance(org.get('modules'), dict) else {}
+        m = mods.get('leads')
+        if not isinstance(m, dict) or m.get('on') is False or not m.get('sheetId'):
+            return False
+        owner = clean(m.get('owner') or '').lower()
+        return bool(owner) and (owner == vals['NAME'].lower() or (' ' not in owner and owner == vals['FIRST'].lower()))
+    if name == 'subpay':
+        return True  # always on: the updates are what find a sub's first request (owner decision, 2026-11-22)
+    rm = cfg.get('runMods')
+    return not (isinstance(rm, dict) and rm.get(name) is False)
+
+def fragments(kit, cfg, org, vals):
+    """{name: text} for every shared fragment, with optional modules that are off as "" (prompts.json "fragments")."""
+    fr = kit.get('fragments')
+    if fr is None:
+        return {}, []
+    if not isinstance(fr, dict):
+        stop('prompts.json "fragments" must be an object; nothing was written.')
+    known = kit.get('modules') if isinstance(kit.get('modules'), dict) else {}
+    out, on = {}, []
+    for name, f in fr.items():
+        if name.startswith('_'):
+            continue
+        if not FRAG.fullmatch('{{%s}}' % name):
+            stop('prompts.json fragment "%s" needs an UPPER_CASE name; nothing was written.' % name[:40])
+        if isinstance(f, str):
+            out[name] = f
+        elif isinstance(f, dict) and isinstance(f.get('text'), str) and f.get('module') in known:
+            ok = module_on(f['module'], cfg, org, vals)
+            out[name] = f['text'] if ok else ''
+            if ok and f['module'] not in on:
+                on.append(f['module'])
+        else:
+            stop('prompts.json fragment "%s" is neither text nor {"module", "text"} with a known module; nothing was written.' % name[:40])
+    return out, on
+
+def expand(s, frags, key):
+    """Put the shared fragments into one task's instructions (fragments may hold fragments). A fragment that is left out
+    (an optional module that is off) takes its whole line with it."""
+    for _ in range(5):
+        names = [n for n in FRAG.findall(s) if n in frags]
+        if not names:
+            break
+        for n in set(names):
+            if frags[n] == '':
+                s = re.sub(r'(?m)^[ \t]*\{\{%s\}\}[ \t]*\n' % n, '', s)
+                s = re.sub(r'\n[ \t]*\{\{%s\}\}[ \t]*$' % n, '', s)
+            s = s.replace('{{%s}}' % n, frags[n])
+    return s.replace('{{TASK_KEY}}', key)
+
 def task_doc(key, text, version, kit_version, now):
     """setup/task-<key>: what the task's bootstrap reads. Its text must start with "PROMPTS VERSION" (the bootstrap checks);
     an older Kit's text that doesn't gets the line added, so a rollback still works."""
@@ -235,9 +296,10 @@ def main(cfg_path, out_dir):
         for k, val in vals.items():
             s = s.replace('{{%s}}' % k, val)
         return s
+    frags, mods_on = fragments(kit, cfg, org, vals)
     filled, left = {}, {}
     for name, tpl in kit['prompts'].items():
-        s = fill(tpl)
+        s = fill(expand(tpl, frags, name))
         rest = set(re.findall(r'\{\{[A-Z_]+\}\}', s))
         if rest:
             left[name] = sorted(rest)
@@ -277,6 +339,8 @@ def main(cfg_path, out_dir):
         open(os.path.join(out_dir, 'boot', k + '.txt'), 'w', encoding='utf-8').write(boots[k])
     json.dump(kit['schedules'], open(os.path.join(out_dir, 'schedules.json'), 'w'), indent=1)
     print('wrote', ', '.join(n + '.txt' for n in kit['prompts']) + '; tasks/ and boot/ for ' + ', '.join(keys))
+    if isinstance(kit.get('modules'), dict):
+        print('optional modules on: ' + (', '.join(mods_on) or 'none'))
     if left:
         print('STILL UNFILLED:', json.dumps(left))
 

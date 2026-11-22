@@ -881,7 +881,7 @@ const LOG=[];
 const SEEN={};
 
 let queued=false;
-function render(){if(queued)return;queued=true;setTimeout(()=>{queued=false;try{window.__dpApply&&window.__dpApply()}catch(e){}},0)}
+function render(){if(queued)return;queued=true;setTimeout(()=>{queued=false;try{window.__dpApply&&window.__dpApply()}catch(e){}try{dispatchEvent(new Event("dp:render"))}catch(e){}},0)}
 
 let mcpP=null,dbP=null;
 function mcp(){if(!mcpP)mcpP=(async()=>{try{return window.claude&&window.claude.use?await window.claude.use("mcp"):null}catch(e){return null}})();return mcpP}
@@ -1451,7 +1451,7 @@ function renderTabs(){
   const ops=window.DPOPS?DPOPS.tabs():[];
   const pipeN=(state.review&&state.review.pipeline)?pipeStats(state.review.pipeline,window.DPR&&DPR.role==="ops"?"All":ME).openCount:0;
   const listsN=window.__listItems?window.__listItems().filter(i=>!i.done).length:0;
-  const OPS_ORDER=["adminday","teamview","officeq","permits","utilities","workload"];
+  const OPS_ORDER=["team","officeq","closeout"];
   const opsKids=ops.slice().sort((a,b)=>{const ia=OPS_ORDER.indexOf(a[0]),ib=OPS_ORDER.indexOf(b[0]);return (ia<0?99:ia)-(ib<0?99:ib)});
   const opsOver=opsOverdue();const S0=startState();
   let SYSN=0;try{SYSN=sysProblems().filter(p=>p.sev==="bad").length}catch(e){}
@@ -1463,7 +1463,7 @@ function renderTabs(){
     {k:"pipeline",l:"Pipeline",ic:"trending-up",kids:[["pipeline","Pipeline",pipeN]]},
     {k:"money",l:"Money",ic:"dollar-sign",kids:[["hub/costing","Job costing",0]].concat(modKids("money"))},
     ...MODS.filter(m=>!m.sec).map(m=>({k:m.k,l:m.l,ic:m.ic,kids:m.kids()})),
-   {k:"ops",l:"Operations",ic:"clipboard-check",n:opsOver,kids:opsKids.map(([h,l,n])=>[h,h==="workload"?"Team workload":l,n,n?"hot":""])},
+   {k:"ops",l:"Operations",ic:"clipboard-check",n:opsOver,kids:opsKids.map(([h,l,n])=>[h,l,n,n?"hot":""])},
    {k:"more",l:"More",ic:"ellipsis",kids:(S0.all?[]:[["start","Getting started",S0.left]]).concat([["feedback","Feedback",0],["history","Past reviews",0],["hub/log","Source log",0]]).concat(S0.all?[["start","Help",0]]:[]).concat([["system","System status",SYSN,SYSN?"hot":""],["setup","Setup",0]])}].filter(s=>s.kids.length);
   const secOf=h=>{const mo=MODS.find(m=>m.owns(h));if(mo)return mo.sec||mo.k;if(/^(today|people|calendar|later|assigned)$/.test(h))return"today";if(h==="email"||h==="inbox"||KINDS.some(x=>x[2]===h))return"inbox";
     if(h==="jobs"||h.startsWith("job-")||h.startsWith("lists")||/^sites(\/|$)/.test(h)||/^hub\/(jobs|job-|investment|inbox|orders)/.test(h))return"jobs";
@@ -1504,11 +1504,12 @@ function paintHd(){const b=$("#hd");if(!b)return;b.removeAttribute("aria-pressed
 
 function opsOverdue(){let n=0;try{const tabs=window.DPOPS?DPOPS.tabs():[];const has=k=>tabs.some(x=>x[0]===k);
   if(!window.DPCore)return 0;
-  const need=[has("officeq")?"ops:office":"",has("utilities")?"ops:utilities":""].filter(Boolean);
+  const U=window.__dpUtil&&window.__dpUtil.on()?window.__dpUtil:null;
+  const need=[has("officeq")?"ops:office":"",U?"ops:utilities":""].filter(Boolean);
   if(need.some(k=>{const g=DPCore.get(k);return !g||g.data===undefined}))return 0;
   const o=DPCore.get("ops:office");const t=ymd(new Date());
   if(o&&o.data&&Array.isArray(o.data.tasks))n+=o.data.tasks.filter(x=>x.due&&String(x.due).slice(0,10)<t).length;
-  const u=tabs.find(x=>x[0]==="utilities");if(u)n+=+u[2]||0}catch(e){}return n}
+  if(U)n+=U.overdue()}catch(e){}return n}
 
 const START_KEY=()=>state.owner?"settings/start_"+safeId(state.me||"me"):"data/users/"+safeId(state.me||"me")+"/start";
 state.start={};try{state.start=JSON.parse(localStorage.getItem("dp_start")||"{}")||{}}catch(e){state.start={}}
@@ -1535,12 +1536,14 @@ function viewStart(){const {xs,left,all}=startState();
    ["Jobs","Every job: its selections, plans, permits, orders, costing and punch lists, on one page per job. Site schedule shows who is at which job each day."],
    ["Pipeline","Proposals and change orders waiting on clients, and invoices due, with comments and follow-ups."],
    ["Money","Job costing."],
-   ...(window.DPOPS&&DPOPS.tabs().length?[["Operations","Office to-dos, permits and inspections, utilities and each project manager's workload, live from JobTread."]]:[]),
+   ...(window.DPOPS&&DPOPS.tabs().length?[["Operations › Team","One page for everyone or one project manager. Money comes from the pipeline (the same rows and totals as Pipeline and Today's money card), open asks and site visits from the team roll-up, jobs from JobTread, and each job's margin from Job costing against your one margin target. Pick a project manager for Admin day: Mark reviewed after you meet, and next time you see what's new, what's still open and what got done. Who can see everyone's rows, and follow-up notes in JobTread, are in Setup."],
+     ...(window.DPOrg&&DPOrg.mod&&DPOrg.mod("closeout")?[["Operations › Weekly closeout","Jobs ready to close, from your team's closeout Sheet, so everyone sees the same list. Tick the checks with the project manager (the hints under each check come from JobTread; you tick the boxes), send the job to the person who does the final check in accounting, then close it out once they're done. Nothing changes in JobTread or QuickBooks."]]:[]),
+     ["Operations › Office to-dos","The office team's open JobTread to-dos, with chips for overdue ones, utilities (electric, gas and water steps as JobTread to-dos, with Start utilities on each new build), permits and inspections (dates from each job location in JobTread, with Request inspection), and Rocks (Quarterly planning suggests next quarter's). Mark done is on every row; Change due date, +1 week and Reassign are under More."]]:[]),
    ["More","Feedback, past reviews, where each item came from, this page and Setup."]];
   const SRC=[["Today, Inbox, Calendar and Pipeline","The daily review, every morning. Refresh runs it again in about 5–10 minutes."],
    ["Email","Your live inbox, checked every 2 minutes while this page is open."],
    ["Jobs","The Project Hub sync, which reads JobTread, email and meetings for each job."],
-   ["Operations","Read live from JobTread each time you open a board."]];
+   ["Operations","Read live from JobTread each time you open a page; the Team page says under each section where its figures come from and as of when."]];
   const row=x=>`<li class="st${x.done?" done":""}"><span class="stck" aria-hidden="true">${x.done?"✓":""}</span><div class="stb"><b>${esc(x.t)}</b><span>${esc(x.d)}</span>${x.done?"":(x.manual?`<button type="button" class="act" data-stmark="${x.k}">Mark as done</button>`:(x.act||""))}</div><span class="vh">${x.done?", done":", not done yet"}</span></li>`;
   const list=`<section class="dcard stcard" data-nodpd><h2>Your checklist${all?"":`<span class="cnt" aria-hidden="true">${xs.length-left} of ${xs.length}</span><span class="vh">, ${xs.length-left} of ${xs.length} done</span>`}</h2>${all?`<p class="stall">${ic("check")} You're all set. This page stays here as Help.</p>`:""}${all?"":`<ul class="stl">${xs.map(row).join("")}</ul>`}</section>`;
   return pageHead(all?"Help":"Getting started",all?"How the Workspace is organized and where each page gets its information.":"A few steps to set up the Workspace, and how it's organized.")+
@@ -3034,51 +3037,53 @@ function pipeStats(p,pm){
   const appr=props.filter(pipeAppr);
   return{openValue:rowsOr(pend,pend.reduce((a,x)=>a+amt(x.amount),0),"openValue"),openCount:rowsOr(pend,pend.length,"openCount"),
     approved30Value:rowsOr(appr,appr.reduce((a,x)=>a+amt(x.amount),0),"approved30Value"),
-    arOverdue:rowsOr(inv,inv.filter(x=>amt(x.daysOverdue)>0).reduce((a,x)=>a+pipeDue(x),0),"arOverdue"),winRate,props,inv};
+    arOverdue:rowsOr(inv,inv.filter(x=>amt(x.daysOverdue)>0).reduce((a,x)=>a+pipeDue(x),0),"arOverdue"),winRate,props,inv,
+    pend,overdue:inv.filter(x=>amt(x.daysOverdue)>0)};
 }
-window.__dpPipe={stats:pipeStats,winFrac:winFrac,amt:amt,due:pipeDue};
+window.__dpPipe={stats:pipeStats,winFrac:winFrac,amt:amt,due:pipeDue,notes:(x,inv)=>pipeAll(!!inv,x,pipeKey(inv?"inv":"prop",x)).all};
 function pipeHref(x){if(pipeQB(x))return null;const sl=hubSlug({job:String(x.job||x.number||"").split("-")[0],address:x.address||"",customer:x.customer||""});return sl?{h:"#hub/job-"+(window.DPJob?DPJob.id(sl):sl),ext:false}:x.link?{h:x.link,ext:true}:null}
 function pipeIdxJid(no){if(!no)return "";const j=(DPCore.jobIndex()||state.hubIdx||[]).find(j=>j&&(j.jobNumbers||[]).map(String).includes(no));return j&&(j.jobIds||[])[0]?String(j.jobIds[0]):""}
 const pipeJid=x=>x.jobId||((String(x.link||"").match(/app\.jobtread\.com\/jobs\/([A-Za-z0-9_-]+)/)||[])[1])||pipeIdxJid(pipeJobNo(x))||PIPE.jid[pipeJobNo(x)]||"";
 function pipeJTUrl(x){if(pipeQB(x))return "";const jid=pipeJid(x);
   if(x.docId&&jid)return `https://app.jobtread.com/jobs/${jid}/documents/${x.docId}`;return /^https:\/\/\S+$/i.test(String(x.link||"").trim())?String(x.link).trim():jid?`https://app.jobtread.com/jobs/${jid}`:""}
 function pipeKey(kind,x){return safeId(kind+"-"+(x.docId||x.number||x.customer||""))}
-const PIPE={kind:"all",open:{},box:{},text:{},posted:{},did:{},err:{},depErr:{},dep:"",jid:{}};
+const PIPE={kind:"all",row:{},box:{},text:{},posted:{},did:{},err:{},depErr:{},dep:"",jid:{}};
 function pipeResolveJobs(rows){if(!state.mcp||!ORG)return;const nums=[...new Set(rows.filter(x=>!pipeQB(x)&&!pipeJid(x)).map(pipeJobNo).filter(n=>/^\d{3,6}$/.test(n)&&PIPE.jid[n]===undefined))].slice(0,25);
   if(!nums.length)return;nums.forEach(n=>PIPE.jid[n]="");
   jtq({organization:{$:{id:ORG},jobs:{$:{where:["number","in",nums],size:25},nodes:{id:{},number:{}}}}}).then(p=>{const n=(((p||{}).organization||{}).jobs||{}).nodes||[];
     n.forEach(j=>{if(j&&j.id&&j.number)PIPE.jid[String(j.number)]=String(j.id)});render()}).catch(()=>{})}
 try{PIPE.dep=localStorage.getItem("dp_check_depositor")||""}catch(e){}
 const pfmt=v=>{const t=Date.parse(v);return t?new Date(t).toLocaleDateString([],{month:"short",day:"numeric"}):String(v||"")};
-function pipeRow(kind,x,amt,when,sub,crit){const l=pipeHref(x);
+function pipeCmLoad(docId,force){return DPCore.load("pipecm:"+docId,()=>jtDocComments(docId),{empty:d=>!d.length,ttl:5*60e3,force:!!force,label:"JobTread"})}
+function pipeAll(inv,x,k){const mine=PIPE.posted[k]||[];if(inv&&x.docId&&state.mcp&&!pipeQB(x))pipeCmLoad(x.docId);const live=inv&&x.docId&&state.mcp?DPCore.get("pipecm:"+x.docId):null;const liveC=live&&Array.isArray(live.data)?live.data:[];
+  const seen=new Set();return{live,liveC,mine,all:[...mine,...liveC,...pipeCmts(x)].filter(c=>{const sig=String(c.text||"").trim().toLowerCase().slice(0,80);if(seen.has(sig))return false;seen.add(sig);return true}).sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0))}}
+function pipeRow(kind,x,amt,when,sub,crit){const inv=/invoice/i.test(kind),k=pipeKey(inv?"inv":"prop",x),open=!!PIPE.row[k];
   const say=[kind+(x.number?" "+x.number:""),x.customer,amt,when].filter(Boolean).join(", ");
-  const inner=`<b>${esc(x.customer)}</b><span class="psub">${esc(sub)}</span><span class="pamt${crit?" crit":""}" aria-hidden="true"><em>${esc(amt)}</em>${when?`<small>${esc(when)}</small>`:""}</span>`;
-  return `<li class="prow">${l?`<a href="${esc(DPCore.safeUrl(l.h))}"${l.ext?' target="_blank" rel="noopener"':""} aria-label="${esc(say)}">${inner}<i class="go" aria-hidden="true">›</i></a>`:`<div class="pnolink" role="group" aria-label="${esc(say)}">${inner}</div>`}${pipeExtra(/invoice/i.test(kind),x)}</li>`}
+  const last=pipeAll(inv,x,k).all[0];const note=last?"Last note"+(pfmt(last.at)?" "+pfmt(last.at):"")+": "+String(last.text).replace(/\s+/g," ").slice(0,160):"";
+  const pre=[pipeQB(x)?"QuickBooks":"",!inv&&pipeKind(x)==="Change Order"?"Change order":""].filter(Boolean).join(" · ");
+  const inner=`<b>${esc(x.customer)}</b><span class="psub">${esc([pre,sub].filter(Boolean).join(" · "))}</span>${note?`<span class="plast">${esc(note)}</span>`:""}<span class="pamt${crit?" crit":""}" aria-hidden="true"><em>${esc(amt)}</em>${when?`<small>${esc(when)}</small>`:""}</span>`;
+  const gone=!inv&&!pipeQB(x)&&x.docId&&(state.stale[x.docId]||{}).status==="denied";const cl=gone&&!open?pipeCloseUi(x):null;
+  return `<li class="prow${open?" on":""}"><button type="button" class="prow-b" data-prow="${esc(k)}" aria-expanded="${open}" aria-label="${esc(say)}">${inner}<i class="go" aria-hidden="true">›</i></button>${cl?`<div class="pext pgone"><div class="pacts2">${cl.btn}</div>${cl.extra}</div>`:""}${open?pipeExtra(inv,x):""}</li>`}
 function pipeExtra(inv,x){
   const qb=pipeQB(x),k=pipeKey(inv?"inv":"prop",x),docLabel=(inv?"invoice":pipeKind(x).toLowerCase())+(x.number?" "+x.number:"");
-  const chips=[!inv?`<span class="pchip${pipeKind(x)==="Change Order"?" co":""}">${pipeKind(x)}</span>`:"",qb?`<span class="pchip qb">QuickBooks</span>`:""];
-  const mine=PIPE.posted[k]||[];
-  const live=inv&&x.docId&&state.mcp?DPCore.get("pipecm:"+x.docId):null;
-  const liveC=live&&Array.isArray(live.data)?live.data:[];
-  const seen=new Set();const all=[...mine,...liveC,...pipeCmts(x)].filter(c=>{const sig=String(c.text||"").trim().toLowerCase().slice(0,80);if(seen.has(sig))return false;seen.add(sig);return true}).sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0));
-  const chk=inv&&pipeCheck(x,mine.concat(liveC));if(chk)chips.push(`<span class="pchip chk">Check expected</span>`);
-  const open=!!PIPE.open[k];const show=open?all:all.slice(0,2);
+  const {live,liveC,mine,all}=pipeAll(inv,x,k);
+  const chk=inv&&pipeCheck(x,mine.concat(liveC));const chips=chk?`<div class="pchips"><span class="pchip chk">Check expected</span></div>`:"";
   const cm=c=>`<li><span class="pcm-t">${esc(c.text)}</span><small>${esc([c.by,pfmt(c.at)].filter(Boolean).join(" · "))}</small></li>`;
-  const st=live?live.status:"",hidden=open?0:all.length-show.length,stored=all.length>liveC.length;
-  const cmts=inv&&!qb?(show.length?`<ul class="pcm" aria-label="Comments, newest first">${show.map(cm).join("")}</ul>`:"")+
-    (open&&x.docId&&live?(st==="loading"&&!live.data?`<p class="pcm-s" role="status">Checking JobTread for newer comments…</p>`:st==="error"?`<p class="pcm-s err" role="status">Couldn't read the comments from JobTread. <button type="button" class="act ghost" data-dpretry="pipecm:${esc(x.docId)}">Try again</button></p>`:st==="ready"||st==="empty"?`<p class="pcm-s" role="status">${liveC.length?"Up to date with JobTread.":stored?"Nothing newer in JobTread.":"No comments on it in JobTread yet."}</p>`:""):"")+
-    (open&&x.docId&&!state.mcp?`<p class="pcm-s">Open the page signed in to claude.ai to read the latest comments from JobTread.</p>`:"")+
-    (open&&!x.docId?`<p class="pcm-s">This row has no JobTread document yet, so only the comments from your updates show here.</p>`:""):"";
-  const url=pipeJTUrl(x);
+  const st=live?live.status:"",stored=all.length>liveC.length;
+  const cmts=qb?"":(all.length?`<ul class="pcm" aria-label="Comments, newest first">${all.map(cm).join("")}</ul>`:"")+
+    (inv&&x.docId&&live?(st==="loading"&&!live.data?`<p class="pcm-s" role="status">Checking JobTread for newer comments…</p>`:st==="error"?`<p class="pcm-s err" role="status">Couldn't read the comments from JobTread. <button type="button" class="act ghost" data-dpretry="pipecm:${esc(x.docId)}">Try again</button></p>`:st==="ready"||st==="empty"?`<p class="pcm-s" role="status">${liveC.length?"Up to date with JobTread.":stored?"Nothing newer in JobTread.":"No comments on it in JobTread yet."}</p>`:""):"")+
+    (inv&&x.docId&&!state.mcp?`<p class="pcm-s">Open the page signed in to claude.ai to read the latest comments from JobTread.</p>`:"")+
+    (inv&&!x.docId?`<p class="pcm-s">This row has no JobTread document yet, so only the comments from your updates show here.</p>`:"");
+  const url=pipeJTUrl(x),job=pipeHref(x);
   const closable=!inv&&!qb&&!!x.docId&&!pipeAppr(x),cl=closable?pipeCloseUi(x):null;
-  const acts=qb?`<p class="pcm-s">In QuickBooks only, so there are no JobTread actions for it.</p>`:`<div class="pacts2">`+
-    (inv?`<button type="button" class="act ghost" data-pcm-open="${esc(k)}" aria-expanded="${open}" aria-label="${open?"Fewer comments":"Comments"}: ${esc(docLabel)}, ${esc(x.customer||"")}">${open?"Fewer comments":hidden?"More comments ("+hidden+")":"Comments"}</button>`:"")+
+  const jobA=job&&!job.ext?`<a class="act ghost" href="${esc(DPCore.safeUrl(job.h))}">Open job page</a>`:"";
+  const acts=qb?`<p class="pcm-s">In QuickBooks only, so there are no JobTread actions for it.</p>`:`<div class="pacts2">`+jobA+
     (url?`<a class="act ghost" href="${esc(DPCore.safeUrl(url))}" target="_blank" rel="noopener" aria-label="Open in JobTread (new tab): ${esc(docLabel)}, ${esc(x.customer||"")}">Open in JobTread</a>`:"")+
     `<button type="button" class="act ghost" data-pcm-box="${esc(k)}" aria-expanded="${!!PIPE.box[k]}" aria-label="Add comment: ${esc(docLabel)}, ${esc(x.customer||"")}">Add comment</button>`+(closable?cl.btn:"")+`</div>`+(closable?cl.extra:"");
   const box=PIPE.box[k]&&!qb?`<div class="pcbox"><label class="vh" for="pcm-${esc(k)}">Comment on ${esc(docLabel)}</label><textarea id="pcm-${esc(k)}" data-pcm-t="${esc(k)}" rows="2" placeholder="Write a comment for your team">${esc(PIPE.text[k]||"")}</textarea>
     <div class="acts"><button type="button" class="act primary" data-pcm-post="${esc(k)}">Post comment</button><button type="button" class="act ghost" data-pcm-x="${esc(k)}">Cancel</button></div></div>`:"";
   const err=PIPE.err[k]?`<p class="pcm-s err" role="alert">${esc(PIPE.err[k])}</p>`:"";
-  return `<div class="pext" data-pk="${esc(k)}"${closable?` data-doc="${esc(x.docId)}"`:""}>${chips.filter(Boolean).length?`<div class="pchips">${chips.join("")}</div>`:""}${cmts}${acts}${box}${err}${DPCore.confirmHtml("pipe:cm:"+k)}${chk?pipeFollowUps(k,x):""}</div>`;
+  return `<div class="pext" data-pk="${esc(k)}"${closable?` data-doc="${esc(x.docId)}"`:""}>${chips}${cmts}${acts}${box}${err}${DPCore.confirmHtml("pipe:cm:"+k)}${chk?pipeFollowUps(k,x):""}</div>`;
 }
 function pipeTeam(){const seen=new Set(),out=[];const add=(n,id)=>{n=String(n||"").trim();if(!n||!id||seen.has(id))return;seen.add(id);out.push([n,id])};
   (window.DP_OFFICE||DPC.office||[]).forEach(x=>Array.isArray(x)&&add(x[0],x[1]));TEAM.forEach(x=>Array.isArray(x)&&add(x[0],x[1]));if(state.jtMem)add(ME+" (you)",state.jtMem);return out}
@@ -3104,8 +3109,8 @@ async function jtComment(x,message){
 async function jtDocComments(docId){const p=await jtq({document:{$:{id:docId},id:{},comments:{$:{size:10,sortBy:[{field:"createdAt",order:"desc"}]},nodes:{id:{},message:{},createdAt:{},createdByUser:{name:{}}}}}});
   const n=(((p||{}).document||{}).comments||{}).nodes;if(!Array.isArray(n))throw DPCore.error("bad_reply","JobTread",'reply has no "document.comments"');
   return n.filter(c=>c&&c.message).map(c=>({text:String(c.message),at:c.createdAt||"",by:(c.createdByUser||{}).name||""}))}
-function pipeOpen(k){PIPE.open[k]=!PIPE.open[k];const f=pipeFind(k);
-  if(PIPE.open[k]&&f&&f.x.docId&&state.mcp)DPCore.load("pipecm:"+f.x.docId,()=>jtDocComments(f.x.docId),{empty:d=>!d.length,force:true}).then(render,render);render()}
+function pipeOpen(k){PIPE.row[k]=!PIPE.row[k];const f=pipeFind(k);
+  if(PIPE.row[k]&&f&&f.inv&&f.x.docId&&state.mcp)pipeCmLoad(f.x.docId,true).then(render,render);render()}
 function pipeFocus(sel){setTimeout(()=>{const el=document.querySelector(sel);if(el)try{el.focus({preventScroll:true})}catch(e){}},40)}
 function pipeBox(k,open){PIPE.box[k]=open;DPCore.cancelConfirm("pipe:cm:"+k,true);delete PIPE.err[k];render();
   pipeFocus(open?`[data-pcm-t="${CSS.escape(k)}"]`:`[data-pcm-box="${CSS.escape(k)}"]`)}
@@ -3137,9 +3142,9 @@ function pipeFU(k,what,from){const f=pipeFind(k);if(!f)return;delete PIPE.err[k]
     DPCore.confirm({key:"pipe:dep:"+k,what:`Create a JobTread to-do asking ${who.replace(/ \(you\)$/,"")} if the check for ${lab} was deposited`,to:who,target:"JobTread · job #"+job,note:"Due tomorrow. Only your team sees it.",label:"Create to-do",busy:"Creating…",done:"To-do created in JobTread",from,
       sig:()=>{const s=document.querySelector(`[data-pdep="${CSS.escape(k)}"]`);return s?s.value:id},
       onConfirm:async()=>{await pipeTodo(x,`Was the check for ${lab} (${x.customer||""}) deposited?`,desc,id);PIPE.did[k+":dep"]="To-do created";render()}})}}
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pcm-open],[data-pcm-box],[data-pcm-x],[data-pcm-post],[data-pfu],[data-pkind]");if(!b)return;e.preventDefault();const d=b.dataset;
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-prow],[data-pcm-box],[data-pcm-x],[data-pcm-post],[data-pfu],[data-pkind]");if(!b)return;e.preventDefault();const d=b.dataset;
   if(d.pkind!==undefined){PIPE.kind=d.pkind;return render()}
-  if(d.pcmOpen!==undefined)return pipeOpen(d.pcmOpen);if(d.pcmBox!==undefined)return pipeBox(d.pcmBox,!PIPE.box[d.pcmBox]);if(d.pcmX!==undefined)return pipeBox(d.pcmX,false);
+  if(d.prow!==undefined)return pipeOpen(d.prow);if(d.pcmBox!==undefined)return pipeBox(d.pcmBox,!PIPE.box[d.pcmBox]);if(d.pcmX!==undefined)return pipeBox(d.pcmX,false);
   if(d.pcmPost!==undefined)return pipePost(d.pcmPost,b);if(d.pfu)return pipeFU(d.pk2,d.pfu,b)});
 document.addEventListener("input",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pcmT!==undefined){PIPE.text[t.dataset.pcmT]=t.value;DPCore.cancelConfirm("pipe:cm:"+t.dataset.pcmT,true)}});
 document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pdep!==undefined){PIPE.dep=t.value;if(t.value&&PIPE.depErr[t.dataset.pdep]){delete PIPE.depErr[t.dataset.pdep];render()}try{localStorage.setItem("dp_check_depositor",t.value)}catch(x){}DPCore.cancelConfirm("pipe:dep:"+t.dataset.pdep,true)}});
@@ -3477,7 +3482,36 @@ const SYS_SAY={check:"Check my Design Pro Workspace",tasks:"Update my scheduled 
 const SYS_WHERE="Start a new task in the Claude desktop app and say: ";
 const SYS_PLAIN={"tasks-convert":{text:"Your scheduled tasks need a one-time switch. After it, every update installs on its own.",fix:"One time only: start a new task in the Claude desktop app and say: "+SYS_SAY.update},
   "instructions-missing":{text:"A scheduled task couldn't find its instructions on your page, so it did nothing.",fix:SYS_WHERE+SYS_SAY.update}};
-const sysPlain=p=>{const d=SYS_PLAIN[p.key];return d?{...p,text:p.text||d.text,fix:p.fix||d.fix}:p};
+const sysPlain=p=>{const d=SYS_PLAIN[p.key]||sysWord(p.key,p.params);const own=!!d&&p.params!=null&&typeof p.params==="object";return d?{...p,text:own?d.text:p.text||d.text,fix:own?d.fix:p.fix||d.fix}:p};
+const SYS_TASK_NAME={morning:"Daily Review",midday:"Daily Review - Midday",eod:"Daily Review - EOD",hubSync:"Project Hub Sync",light:"Daily Review - Light check",texts:"Daily Review - Texts",updater:"Design Pro Workspace – Updater"};
+const SYS_CONN_NAME={gmail:"Gmail",calendar:"Google Calendar",drive:"Google Drive",sheets:"Google Sheets",jobtread:"JobTread",granola:"Granola"};
+function sysCheckTextsFix(e){e=String(e||"");
+  if(/Texts helper hasn't exported|could not reach the Mac or its texts folder|Claude Texts/.test(e))return "Make sure your Mac is on and awake, with the Claude desktop app open. If texts still don't arrive, start a new task in the Claude desktop app on your Mac and say: "+SYS_SAY.check;
+  if(/unable to open database|authorization denied|not permitted/.test(e))return "On your Mac open System Settings › Privacy & Security › Full Disk Access, switch on both Claude entries (Claude and claude), then quit and reopen Claude";
+  if(/isn't attached|mnt\/Messages|cannot create directory/.test(e))return "Start a new task in the Claude desktop app on your Mac and say: Move texts to this Mac";
+  return "Open the Claude desktop app on your Mac, start a new task and say: "+SYS_SAY.check}
+function sysWord(key,params){const q=params&&typeof params==="object"&&!Array.isArray(params)?params:{};const v=n=>sysTxt(q[n],200);const k=String(key||"");const check=SYS_WHERE+SYS_SAY.check;let m;
+  const task=id=>v("task")||SYS_TASK_NAME[id]||"scheduled";const ver=v("version")||"A new version";
+  const when=n=>{const t=sysMs(q[n]);return t?sysWhen(t):""};
+  if(k==="setup")return{text:"Setup isn't finished.",fix:SYS_WHERE+SYS_SAY.setup};
+  if(k==="tasks-unreadable")return{text:"This check couldn't see your scheduled tasks.",fix:check};
+  if((m=/^task-missing-(\w+)$/.exec(k)))return{text:"The "+task(m[1])+" scheduled task is missing.",fix:check};
+  if((m=/^task-off-(\w+)$/.exec(k)))return{text:"The "+task(m[1])+" scheduled task is turned off.",fix:check};
+  if(k==="task-duplicate")return{text:v("task")?"There is more than one "+v("task")+" scheduled task.":"There is more than one copy of a scheduled task.",fix:check};
+  if((m=/^task-failed-(\w+)$/.exec(k)))return{text:"The last "+task(m[1])+" run didn't finish.",fix:check};
+  if(k==="task-approval")return{text:"Your scheduled updates wait for your approval before each run, so they stall overnight.",fix:"In Claude, open Scheduled, open each Design Pro task and switch on Automatically approve"};
+  if(k==="schedule-old")return{text:"Some of your scheduled checks still run at the old, more frequent times, which uses more of your Claude usage than needed.",fix:v("texts")==="yes"?"Start a new task in the Claude desktop app on your Mac and say: "+SYS_SAY.tasks:SYS_WHERE+SYS_SAY.tasks};
+  if(k==="review-old"){const w=when("since");return{text:w?"Your page hasn't had an update since "+w+".":"Your page hasn't had an update yet.",fix:check}}
+  if(k==="texts-error"){const e=v("error");return{text:"Texts weren't read: "+(e||"the Mac reported a problem"),fix:sysCheckTextsFix(e)}}
+  if(k==="texts-old"){const w=when("since");return{text:(w?"Texts haven't been read since "+w+".":"Texts haven't been read yet.")+" Your Mac may have been asleep or the Claude app closed.",fix:"Open the Claude desktop app on your Mac and leave it open; if texts are still missing in an hour, start a new task there and say: "+SYS_SAY.check}}
+  if(k==="conn-quo")return{text:"Quo was connected before but didn't answer today, so your Quo texts and calls aren't being read.",fix:"In Claude, open Settings, then Connectors, and connect Quo again"};
+  if((m=/^conn-(\w+)$/.exec(k))){const n=SYS_CONN_NAME[m[1]]||m[1];return{text:n+" didn't answer the daily check.",fix:"In Claude, open Settings, then Connectors, and connect "+n+" again"}}
+  if(k==="tasks-behind")return{text:"Your scheduled tasks are on older instructions.",fix:SYS_WHERE+SYS_SAY.tasks};
+  if(k==="update-available")return{text:(v("version")?"Version "+v("version"):ver)+" is available and automatic updates are off.",fix:"Say to Claude: "+SYS_SAY.update};
+  if(k==="update-needs-ok")return{text:"An update needs your OK.",fix:"Say: "+SYS_SAY.update};
+  if(k==="plugin-old")return{text:(v("version")?"Version "+v("version"):ver)+" needs a newer Design Pro Workspace plugin, so it wasn't installed.",fix:"Ask your company's Claude owner to update the Design Pro Workspace plugin"};
+  if(k==="update-failed")return{text:(v("version")?"Version "+v("version"):ver)+" couldn't be installed automatically"+(v("reason")?" ("+v("reason")+")":"")+". Nothing else was changed.",fix:"Say to Claude: "+SYS_SAY.update};
+  return null}
 const SYS_WORD={ok:"Working",warn:"Needs a look",bad:"Needs attention",off:"Off",wait:"Starting",unknown:"Not checked yet"};
 const SYS_RANK={bad:5,warn:4,wait:3,unknown:2,off:1,ok:0};
 const SYS_SVG={ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',warn:'<path d="M12 6v7"/><path d="M12 17.5v.5"/>',bad:'<path d="M7 7l10 10M17 7 7 17"/>',off:'<path d="M7 12h10"/>',wait:'<circle cx="12" cy="12" r="7"/><path d="M12 8.5V12l2.5 1.5"/>',unknown:'<path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8"/><path d="M12 17v.5"/>'};
@@ -3492,7 +3526,7 @@ function sysSay(fix){const m=/\bsay:\s*["“]?([^"”]+?)["”]?\.?\s*$/i.exec(S
 function sysTaskIds(){const t=sysObj(DPC.tasks);return{morning:t.morning||"",midday:t.midday||DPC.middayTask||"",eod:t.eod||"",hubSync:t.hubSync||DPC.hubSyncTask||"",light:t.light||"",texts:t.texts||"",updater:t.updater||""}}
 function sysHasTasks(){return Object.values(sysTaskIds()).some(Boolean)}
 function sysHealth(){const h=state.health;if(!h||typeof h!=="object"||Array.isArray(h))return null;return{at:sysMs(h.at),kit:sysTxt(h.kit,40),page:sysTxt(h.page,40),autoUpdate:typeof h.autoUpdate==="boolean"?h.autoUpdate:null,tasks:sysObj(h.tasks),
-  problems:(Array.isArray(h.problems)?h.problems:[]).filter(p=>p&&typeof p==="object"&&(sysTxt(p.text)||SYS_PLAIN[sysTxt(p.key,60)])).map(p=>sysPlain({key:sysTxt(p.key,60)||"other",text:sysTxt(p.text),fix:sysTxt(p.fix),sev:p.sev==="warn"?"warn":"bad",src:"check"})),
+  problems:(Array.isArray(h.problems)?h.problems:[]).filter(p=>p&&typeof p==="object"&&(sysTxt(p.text)||SYS_PLAIN[sysTxt(p.key,60)]||sysWord(sysTxt(p.key,60),p.params))).map(p=>sysPlain({key:sysTxt(p.key,60)||"other",text:sysTxt(p.text),fix:sysTxt(p.fix),params:p.params,sev:p.sev==="warn"?"warn":"bad",src:"check"})),
   lastUpdate:h.lastUpdate&&typeof h.lastUpdate==="object"?{at:sysMs(h.lastUpdate.at),from:sysTxt(h.lastUpdate.from,40),to:sysTxt(h.lastUpdate.to,40),result:sysTxt(h.lastUpdate.result,200)}:null}}
 const sysTextsOn=()=>DPC.texts==="enabled";
 function sysTextsFix(err){
@@ -3525,14 +3559,14 @@ function sysOverdue(k,run,ref){if(!run||k==="hubSync")return false;ref=ref||Date
   return sysOld(run,lim,ref)}
 function sysTask(t,k,ref){if(!t||typeof t!=="object")return null;const run=sysMs(t.lastRun);
   if(t.enabled===false&&sysPaused().has(k))return{st:"off",note:"is paused to save usage"};
-  if(k==="light"&&t.found===false)return{st:"off",note:"isn't set up yet. It's optional; to add it, say: Update my Design Pro Workspace"};if(k==="light"&&t.enabled===false)return{st:"off",note:"is turned off"};if(k==="light"&&t.lastOk===false)return{st:"warn",note:"didn't finish its last run; the next one tries again within the hour"};
+  if(k==="light"&&t.found===false)return{st:"off",note:"isn't set up yet. It's optional; to add it, say: Update my Design Pro Workspace"};if(k==="light"&&t.enabled===false)return{st:"off",note:"is turned off"};if(k==="light"&&t.lastOk===false)return{st:"warn",note:"didn't finish its last run; the next one tries again in a couple of hours"};
   if(t.found===false)return{st:"bad",note:"is missing"};if(t.enabled===false)return{st:"bad",note:"is turned off"};
   if(t.lastOk===false)return{st:"bad",note:"didn't finish its last run"+(run?" ("+sysWhen(run)+")":"")};
   if(t.auto===false)return{st:"warn",note:"waits for your OK each time, so it can't run on its own"};
   if(!run)return{st:"wait",note:"hasn't run yet"};
   if(sysOverdue(k,run,ref))return{st:"warn",stale:true,note:"hasn't run since "+sysWhen(run)};
   return{st:"ok",note:"last ran "+sysWhen(run)}}
-const SYS_TASKS=[["morning","Morning update"],["midday","Midday update"],["eod","End-of-day update"],["hubSync","Project Hub sync"],["light","Hourly light check"],["texts","Texts, on your Mac"],["updater","Daily check"]];
+const SYS_TASKS=[["morning","Morning update"],["midday","Midday update"],["eod","End-of-day update"],["hubSync","Project Hub sync"],["light","Light check"],["texts","Texts, on your Mac"],["updater","Daily check"]];
 function sysProblems(){const local=sysLocal();const h=sysHealth();const out=local.slice();
   if(h){const tAt=state.texts?sysMs(state.texts.generatedAt):0,rAt=state.review?sysMs(state.review.generatedAt):0;
     h.problems.forEach(p=>{const row=sysRowOf(p.key);if(local.some(l=>l.key===p.key))return;
@@ -3547,6 +3581,7 @@ function sysProblems(){const local=sysLocal();const h=sysHealth();const out=loca
     if(sysOld(h.at,48*3600e3))out.push({key:"updater",sev:"warn",stale:true,src:"page",text:"The daily check hasn't run since "+sysWhen(h.at)+".",fix:SYS_WHERE+SYS_SAY.check})}
   return out.sort((a,b)=>SYS_RANK[b.sev]-SYS_RANK[a.sev])}
 window.__dpSysProblems=()=>sysProblems();
+window.__dpSysWord=(k,p)=>sysWord(k,p);
 function sysRows(){const h=sysHealth();const r=state.review;const now=Date.now();const ids=sysTaskIds();const probs=sysProblems();const rows=[];
   const worst=(a,b)=>SYS_RANK[b]>SYS_RANK[a]?b:a;const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
   const row=(k,label,st,line,fix)=>{const mine=probs.filter(p=>sysRowOf(p.key)===k);
@@ -3556,7 +3591,7 @@ function sysRows(){const h=sysHealth();const r=state.review;const now=Date.now()
   const chan=(state.health&&state.health.channel)==="beta"||DPC.channel==="beta"?" (beta)":"";const hold=sysTxt((state.health&&state.health.holdVersion)||DPC.holdVersion||"",40);
   const pv=sysTxt(DPC.kitVersion||"",40)||(h?h.page:"");
   if(h&&pv&&h.kit){const held=hold&&h.kit<=hold;const cur=pv>=h.kit||held;const auto=(h.autoUpdate==null?DPC.autoUpdate!==false:h.autoUpdate);
-    row("page","Page version",cur?"ok":"warn",(cur?"Version "+pv+chan+". "+(held?"Rolled back; version "+hold+" is skipped until a newer one is out.":"Up to date."):"Version "+pv+chan+". Version "+h.kit+" is ready"+(auto?" and installs on its own within the hour on work days, or overnight.":".")),cur||auto?"":SYS_WHERE+SYS_SAY.update)}
+    row("page","Page version",cur?"ok":"warn",(cur?"Version "+pv+chan+". "+(held?"Rolled back; version "+hold+" is skipped until a newer one is out.":"Up to date."):"Version "+pv+chan+". Version "+h.kit+" is ready"+(auto?" and installs on its own: the same day if it came out by early afternoon on a work day, otherwise overnight.":".")),cur||auto?"":SYS_WHERE+SYS_SAY.update)}
   else row("page","Page version","unknown",pv?"Version "+pv+chan+".":"The daily check fills this in.");
   const g=r?sysMs(r.generatedAt):0;
   if(!state.reviewLoaded)row("review","Daily updates","unknown","Loading…");
@@ -3740,7 +3775,7 @@ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest
   const s=document.querySelector("#view [data-lstrip] summary")||document.querySelector("#view [data-lslink]");if(s)s.focus({preventScroll:true})});
 (function(){const go=()=>window.DPCore&&DPCore.poll?DPCore.poll(lsFetch,{every:5*60e3,first:window.__DP_DEMO?500:4000,when:()=>route()==="today"&&!!lsSince()}):null;
   if(window.DPCore)go();else addEventListener("load",go)})();
-window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]},{"version":"2026-11-17a","highlights":["If your texts stop because the Messages folder on your Mac isn't connected to the texts task, System status now tells you to say \"Move texts to this Mac\" from a new task on your Mac, instead of only pointing to Full Disk Access.","Other texts problems, such as Full Disk Access being off or your Mac being asleep, keep their usual fix.","No new permissions: installs on its own."]},{"version":"2026-11-15b","highlights":["Every open item has a Note button: write what happened, for example \"Talked to Sonia on site, she is mailing a check\", without closing the item. The note shows on the item, on Today and on the job.","After you save a note, Claude suggests what should follow, already filled in: a selection for the job's Selections tab, a Punch list, To order, To do or Waiting on item, or a JobTread to-do such as writing a change order. Edit it, tap Add, or tap Not needed.","You can also add any of those yourself from the note. Nothing is added until you tap, and a JobTread to-do asks you to confirm first.","Your scheduled updates read notes on open items too, so they won't draft a reply that the note already handled.","No new permissions: installs on its own."]}];
+window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]},{"version":"2026-11-17a","highlights":["If your texts stop because the Messages folder on your Mac isn't connected to the texts task, System status now tells you to say \"Move texts to this Mac\" from a new task on your Mac, instead of only pointing to Full Disk Access.","Other texts problems, such as Full Disk Access being off or your Mac being asleep, keep their usual fix.","No new permissions: installs on its own."]}];
 const updTask=()=>(DPC.tasks&&DPC.tasks.updater)||(window.__DP_DEMO?"demo-updater":"");
 const UPD={open:false,confirm:false,busy:false,msg:""};
 const updTxt=(v,n)=>String(v==null?"":v).replace(/[\u0000-\u001f<>]/g," ").trim().slice(0,n||200);
@@ -6614,6 +6649,7 @@ function sub(name,what,fn){try{if(unsubs[name])unsubs[name]()}catch(e){}
 function loadBox(){return CORE?CORE.box("hub:jobs",{label:"Project Hub",loading:"Loading your projects…",rows:4})||`<div class="empty">Loading your projects…</div>`:`<div class="empty">Loading your projects…</div>`}
 function hubJobsChanged(){try{window.dispatchEvent(new CustomEvent("dp:hubjobs"))}catch(e){}}
 window.__hubLoaded=()=>!!S.loaded;
+window.__hubJobList=()=>S.jobs.slice();window.__hubMargin=j=>mOf(j);
 function applyMoved(){S.entries.filter(e=>e.kind==="inbox_moved").forEach(e=>{const j=job(e.job);if(!j)return;j.inbox=(j.inbox||[]).filter(x=>x.id!=="m-"+e.id).concat([{...e.data,id:"m-"+e.id}])})}
 window.__hubRender=()=>{if((location.hash||"").startsWith("#hub/"))render()};
 render();
@@ -6809,17 +6845,18 @@ async function officeTeam(){const tm=await team();const saved=await officeSaved(
   return{who:tm.filter(t=>ids.has(t.membershipId)),ids:[...ids],src}}
 
 const W={gen:0,open:false,step:0,role:"",sugg:"",jtRole:"",cc:null,ccLoaded:false,team:null,teamErr:null,busy:false,err:null,first:false,opener:null,conn:{},connAt:0,office:null,officeLoaded:false};
-const ROLES=[["owner","Owner","The whole company's pipeline with a filter for each PM, operations boards, overdue-invoice emails, plus your own jobs and your day."],
+const ROLES=[["owner","Owner","The whole company's pipeline with a filter for each PM, the Team page and office to-dos, overdue-invoice emails, plus your own jobs and your day."],
   ["pm","Project Manager","Your pipeline, your jobs and your day. Any job you've been added to in JobTread shows up too, so you can build punch lists on jobs you help manage."],
-  ["ops","Operations","Every PM's pipeline and every active job, plus permits & inspections, the office to-do queue and team workload. Jobsite tools like Talk it in are tucked away."]];
-const SEE={owner:["The pipeline for the whole company, with a filter for each project manager","Your own jobs in Project Hub and Job Lists (where you're the "+window.DPOrg.jt().pm.name+" or added to the job in JobTread)","Operations boards: permits & inspections, the office to-do queue and team workload","Email PMs about overdue invoices, with your chosen cc list","Your Daily Review: email, meetings, texts and to-dos"],
+  ["ops","Operations","Every PM's pipeline and every active job, plus the Team page and office to-dos (with permits, utilities and Rocks). Jobsite tools like Talk it in are tucked away."]];
+const SEE={owner:["The pipeline for the whole company, with a filter for each project manager","Your own jobs in Project Hub and Job Lists (where you're the "+window.DPOrg.jt().pm.name+" or added to the job in JobTread)","Team: money, open asks, site visits and jobs for everyone or one project manager","Office to-dos, with permits and inspections, utilities and Rocks","Email PMs about overdue invoices, with your chosen cc list","Your Daily Review: email, meetings, texts and to-dos"],
   pm:["Your pipeline: proposals, invoices and follow-ups on your jobs only","Your jobs in Project Hub and Job Lists: jobs where you're the "+window.DPOrg.jt().pm.name+", plus any job you've been added to in JobTread","Your Daily Review: email, meetings, texts and to-dos"],
-  ops:["Pipeline and money for every project manager","Every active job in Project Hub and Job Lists","Permits & inspections, the office to-do queue and team workload","Email PMs about overdue invoices, with your chosen cc list","Your Daily Review: email, meetings, texts and to-dos","Talk it in and walkthrough sync are hidden (you can still add and check off list items)"]};
+  ops:["Pipeline and money for every project manager","Every active job in Project Hub and Job Lists","Team: money, open asks, site visits and jobs for every project manager","Office to-dos, with permits and inspections, utilities and Rocks","Email PMs about overdue invoices, with your chosen cc list","Your Daily Review: email, meetings, texts and to-dos","Talk it in and walkthrough sync are hidden (you can still add and check off list items)"]};
 function featList(){return (window.DPFEATS||[]).filter(f=>!f.roles||f.roles.includes(W.role)||(W.role==="pm"&&W.alsoOps&&f.roles.includes("ops")))}
 const opsView=()=>W.role==="owner"||W.role==="ops"||(W.role==="pm"&&!!W.alsoOps);
 const ccStep=()=>ME.owner&&!(W.role==="pm"&&!W.alsoOps);
 const officeStep=()=>ME.owner&&opsView();
-function steps(){return ["hi","role","conn","see",...(featList().length?["feat"]:[]),...(ccStep()?["cc"]:[]),...(officeStep()?["office"]:[]),"done"]}
+const shareStep=()=>opsView()&&!!window.__dpTeamSettings;
+function steps(){return ["hi","role","conn","see",...(featList().length?["feat"]:[]),...(ccStep()?["cc"]:[]),...(officeStep()?["office"]:[]),...(shareStep()?["share"]:[]),"done"]}
 const X_ICON=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
 function host(){let h=$("#wz");if(!h){h=document.createElement("div");h.id="wz";h.className="wz";h.setAttribute("role","dialog");h.setAttribute("aria-modal","true");h.setAttribute("aria-labelledby","wzh");document.body.appendChild(h);h.addEventListener("click",onClick)}return h}
 function connDetails(){const f=CORE.failures();if(!f.length)return "";
@@ -6860,7 +6897,7 @@ function paint(){const h=host();h.hidden=!W.open;h.classList.toggle("wz-first",W
   let body="",btns="";
   if(s==="hi"){body=`<h2 id="wzh">${W.first?"Let's set up your Workspace":"Workspace setup"}</h2><p>${W.first?"A few quick choices so the Workspace shows what you need for your job. Takes about a minute, and you can change it anytime from Setup in the menu.":"Change your role, optional features"+(ME.owner?", your overdue-invoice cc list or your office team":"")+". Your lists, notes and history stay as they are. Nothing changes until you finish."}</p>${W.first?"":connDetails()}`;btns=`${left}<button class="go" type="button" data-wz="next">${W.first?"Get started":"Continue"}</button>`}
   if(s==="role"){body=`<h2 id="wzh">What's your role?</h2><p>${W.sugg?`Your JobTread role${W.jtRole?" ("+esc(W.jtRole)+")":""} suggests <b>${esc(LABEL[W.sugg])}</b>. Tap the one that fits.`:"This decides what the Workspace shows you. Tap the one that fits."}</p>
-    <div class="wzr" role="radiogroup" aria-labelledby="wzh">${ROLES.map(([k,l,d])=>`<button type="button" role="radio" data-wzr="${k}" aria-checked="${W.role===k}"><span class="rd"></span><b>${l}${W.sugg===k?"<em>Suggested from JobTread</em>":""}</b><span class="d">${d}</span></button>${k==="pm"&&W.role==="pm"?`<button type="button" role="checkbox" class="wzsub" data-wzops aria-checked="${!!W.alsoOps}"><span class="rd sq"></span><b>I also handle operations</b><span class="d">Adds the company-wide pipeline, the Operations boards (permits, office to-dos, team workload, utilities) and overdue-invoice emails. Your Project Hub, Job Lists and jobsite tools stay as a PM's.</span></button>`:""}`).join("")}</div>
+    <div class="wzr" role="radiogroup" aria-labelledby="wzh">${ROLES.map(([k,l,d])=>`<button type="button" role="radio" data-wzr="${k}" aria-checked="${W.role===k}"><span class="rd"></span><b>${l}${W.sugg===k?"<em>Suggested from JobTread</em>":""}</b><span class="d">${d}</span></button>${k==="pm"&&W.role==="pm"?`<button type="button" role="checkbox" class="wzsub" data-wzops aria-checked="${!!W.alsoOps}"><span class="rd sq"></span><b>I also handle operations</b><span class="d">Adds the company-wide pipeline, the Team page, office to-dos (permits, utilities, Rocks) and overdue-invoice emails. Your Project Hub, Job Lists and jobsite tools stay as a PM's.</span></button>`:""}`).join("")}</div>
     ${W.role?"":`<p class="wzhint" id="wzhint">Pick a role to continue.</p>`}`;
     btns=`${left}<button class="go" type="button" data-wz="next"${W.role?"":` disabled aria-describedby="wzhint"`}>Continue</button>`}
   if(s==="conn"){const vals=Object.values(W.conn);const checking=vals.some(c=>c.st==="checking");
@@ -6881,6 +6918,8 @@ function paint(){const h=host();h.hidden=!W.open;h.classList.toggle("wz-first",W
     body=`<h2 id="wzh">Who's on your office team?</h2><p>Their open JobTread to-dos fill the Office to-do queue, and Request inspection on the Permits board sends to-dos to them. ${W.officeSrc==="saved"?"These are the people you picked before.":"We checked the JobTread members with an Operations or Admin role."}</p>
     ${W.teamErr?teamErrHtml("choose them later"):W.team===null?`<p role="status">Loading your team from JobTread…</p>`:tm.length?`<div class="wzcc">${tm.map(t=>`<label><input type="checkbox" data-wzof="${esc(t.membershipId)}"${W.office&&W.office.has(t.membershipId)?" checked":""}><span><b>${esc(t.name)}</b> <small>${esc(t.role||"No JobTread role")}</small></span></label>`).join("")}</div>`:`<p>We didn't find any teammates in JobTread yet.</p>`}`;
     btns=`${left}<span class="wzbr"><button class="bk" type="button" data-wz="skipoffice">Skip for now</button><button class="go" type="button" data-wz="saveoffice">Continue</button></span>`}
+  if(s==="share"){body=`<h2 id="wzh">Team roll-up</h2><p>Who can see each project manager's job-level summaries on the Team page, and whether follow-ups post team-only notes in JobTread. Each change asks you to confirm first.</p><div class="wzshare">${window.__dpTeamSettings.html()}</div>`;
+    btns=`${left}<button class="go" type="button" data-wz="next">Continue</button>`}
   if(s==="done"){const canRun=W.first&&!!(CFG.middayTask||CORE.demo);
     body=`<h2 id="wzh">You're all set</h2><p>Your Workspace will be set up for <b>${esc(R.label(W.role))}${W.role==="pm"&&W.alsoOps?" + Operations":""}</b>. You can change this anytime from <b>Setup</b> in the menu.</p>${W.first?`<p>${canRun?"Run your first review now to fill in Today, or open Getting started to see what's already working.":"Getting started shows what already works while your first review is on its way."}</p>`:""}`;
     btns=W.first?`${left}<span class="wzbr">${canRun?`<button class="bk" type="button" data-wz="finish" data-after="start"${W.busy?" disabled":""}>Open Getting started</button><button class="go" type="button" data-wz="finish" data-after="review"${W.busy?" disabled":""}>${W.busy?"Saving…":"Run my first review now"}</button>`:`<button class="go" type="button" data-wz="finish" data-after="start"${W.busy?" disabled":""}>${W.busy?"Saving…":"Open Getting started"}</button>`}</span>`
@@ -6946,6 +6985,7 @@ async function quickRole(role,btn){if(roleBusy||!LABEL[role])return;if(role===R.
   finally{roleBusy=false;paintRoleMenu();const b=document.querySelector(`[data-quickrole="${role}"]`)||btn;if(b&&b.isConnected)try{b.focus({preventScroll:true})}catch(x){}}}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-quickrole]");if(!b)return;e.preventDefault();quickRole(b.dataset.quickrole,b)});
 paintRoleMenu();
+addEventListener("dp:render",()=>{if(W.open&&steps()[W.step]==="share")paint()});
 R.openSetup=async function(first,at){W.opener=first?null:document.activeElement;const gen=++W.gen;
   Object.assign(W,{open:true,step:0,first:!!first,role:first?"":R.role,alsoOps:first?false:R.alsoOps,feats:Object.assign({},R.feats),sugg:"",jtRole:"",cc:null,ccLoaded:false,ccDirty:false,team:null,teamErr:null,busy:false,err:null,conn:{},connAt:0,office:null,officeLoaded:false,officeDirty:false,officeSrc:""});
   if(at){const i=steps().indexOf(at);if(i>0){W.step=i;enter()}}
@@ -6974,7 +7014,7 @@ const addDays=n=>CORE.day(n);
 const plural=(n,a,b)=>n===1?a:(b||a+"s");
 const first=n=>String(n||"").split(" ")[0];
 const time=at=>new Date(at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
-const KEYS={jobs:"ops:jobs",office:"ops:office",work:"ops:work",officeteam:"ops:officeteam"};
+const KEYS={jobs:"ops:jobs",office:"ops:office",officeteam:"ops:officeteam"};
 const opsStale={};
 function need(k){const force=!!opsStale[k];if(force&&CORE.get(KEYS[k]).busy)return CORE.get(KEYS[k]).p;opsStale[k]=false;return CORE.load(KEYS[k],FETCH[k],Object.assign({ttl:TTL,force},JT))}
 const JTF=window.DPOrg.jt(),PMF=JTF.pm.name,FLOWF=JTF.flow.name,pmOk=v=>v&&!JTF.pm.ignore.includes(v);
@@ -7001,7 +7041,7 @@ function updLine(key){const s=CORE.get(key);const src=CORE.demo?"demo data":"Job
   const t=s.busy&&s.data!==undefined?`Updating from ${src}…`:s.at?`Updated ${time(s.at)} · ${CORE.demo?"fictional demo data":"live from JobTread"}`:"";
   return `<span class="opsupd" role="status">${esc(t)}</span>`}
 const capNote=(d,what)=>d&&d.capped?`<p class="opsmeta opscap" role="status">Showing the first ${esc(what)} from JobTread. There are more; this board stops there to stay quick.</p>`:"";
-const F={permits:null,pm:"all",officeq:"All",oqdue:"all"};
+const F={oq:"all",officeq:"All",plan:false,rest:false};
 function chipsHtml(k,list,label,cur){if(cur===undefined)cur=F[k];return `<div class="chips opschips" role="group" aria-label="${esc(label||"Filter")}">${list.map(([v,l,n])=>`<button type="button" data-opsf="${k}" data-v="${esc(v)}" aria-pressed="${cur===v}">${esc(l)}${n!=null?`<span class="n">${n}</span>`:""}</button>`).join("")}</div>`}
 const state=(k,loading)=>CORE.box(KEYS[k],Object.assign({loading,rows:4},JT));
 const IDX={byId:{},byNo:{}};let idxOn=false;
@@ -7016,28 +7056,20 @@ function jobLink(j,label){const sl=slugOf(j);return sl?`<a href="#hub/job-${esc(
 function jtLink(j,sub){return slugOf(j)?CORE.link(jtUrl(j.id,sub),"JobTread"+EXT,'class="opsjt" aria-label="Open job #'+esc(j.number)+' in JobTread"'):""}
 const WARN=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>`;
 
-const PTABS=[["wait","Waiting on permit"],["late","Waiting 30+ days"],["insp","Inspections"],["done","Final / CO"],["other","No dates"],["all","All active"]];
-const inTab=(j,t)=>t==="all"?true:t==="other"?(j.p.st==="none"||j.p.st==="num"):t==="late"?(j.p.st==="wait"&&j.p.slow):j.p.st===t;
-const PEMPTY={wait:"No jobs waiting on a permit.",late:"No jobs have waited 30+ days for a permit.",insp:"No jobs in inspections right now.",done:"No jobs have passed final or CO yet.",other:"Every job has permit dates recorded.",all:"No active jobs (Planning, Work in progress or Final stage) in JobTread."};
-const PELSE={wait:["is waiting on a permit","are waiting on a permit"],insp:["is in inspections","are in inspections"],done:["has passed final or CO","have passed final or CO"],other:["has no permit dates","have no permit dates"]};
-function vPermits(){need("jobs");watchIdx();const c=CORE.get(KEYS.jobs);const all=(c.data||[]).map(j=>({...j,p:permitOf(j)}));
-  const pms=[...new Set(all.flatMap(j=>j.pm))].sort();if(F.pm!=="all"&&!pms.includes(F.pm))F.pm="all";
-  const js=all.filter(j=>F.pm==="all"||j.pm.includes(F.pm));
-  const n={};PTABS.forEach(([t])=>n[t]=js.filter(j=>inTab(j,t)).length);
-  const tab=F.permits||(["wait","insp","done","other"].find(t=>n[t])||"all");
-  const sel=js.filter(j=>inTab(j,tab)).sort((a,b)=>(b.p.days||0)-(a.p.days||0)||String(a.number).localeCompare(b.number));
-  const rows=sel.map(j=>{const key="permit:insp:"+j.id;const label=`#${esc(j.number)} ${esc(street(j.address))}`;
+function permitsBody(){need("jobs");watchIdx();const c=CORE.get(KEYS.jobs);const all=(c.data||[]).map(j=>({...j,p:permitOf(j)}));
+  const rank=j=>j.p.st==="wait"?(j.p.slow?0:1):j.p.st==="insp"?2:3;
+  const att=all.filter(j=>rank(j)<3).sort((a,b)=>rank(a)-rank(b)||(b.p.days||0)-(a.p.days||0)||String(a.number).localeCompare(b.number));
+  const rest=all.filter(j=>rank(j)===3).sort((a,b)=>String(a.number).localeCompare(b.number));
+  const late=all.filter(j=>j.p.st==="wait"&&j.p.slow).length;
+  const row=j=>{const key="permit:insp:"+j.id;const label=`#${esc(j.number)} ${esc(street(j.address))}`;
     return `<div class="opsrow opsrow-tap"${rowAttr(j)}><div class="opsmain"><b class="opst">${jobLink(j,label)}</b><div class="sub">${esc([j.pm.join(" / ")||"No PM",flowShort(j.flow),j.f["Building Permit Number"]?String(j.f["Building Permit Number"]).split("\n")[0]:""].filter(Boolean).join(" · "))}${slugOf(j)?" · "+jtLink(j):""}</div>${j.p.st==="insp"||j.p.st==="done"?`<div class="insp" aria-label="Inspections">${INSP.map(([k,l])=>`<span class="${j.f[k]?"ok":""}">${esc(l)}<span class="vh">${j.f[k]?", passed "+esc(fmtD(j.f[k])):", not recorded"}</span></span>`).join("")}</div>`:""}</div>
     <div class="st${j.p.slow?" warn":""}">${j.p.st==="none"?"Nothing recorded":esc(j.p.label)}${j.p.next?`<small>Next: ${esc(j.p.next)}</small>`:""}</div>
-    ${j.p.st==="insp"&&j.p.next?`<div class="opsacts"><button type="button" class="opsb" data-opsinsp="${esc(j.id)}"${CORE.confirmOpen(key)?' aria-expanded="true"':""}>Request ${esc(j.p.next.toLowerCase())} inspection</button></div>`:""}${CORE.confirmHtml(key)}</div>`}).join("");
-  const has=c.data!==undefined;const late=n.late;
-  const elseLine=()=>{const o=["wait","insp","done","other"].filter(t=>t!==tab&&n[t]).map(t=>`${n[t]} ${PELSE[t][n[t]===1?0:1]}`);return o.length?" "+o.join(", ")+".":""};
-  const emptyMsg=!js.length&&all.length?`No active jobs for ${F.pm}.`:(PEMPTY[tab]||"Nothing here.")+(tab==="all"?"":elseLine());
-  return head("Permits & inspections","Every active job (Planning, Work in progress or Final stage) with the permit and inspection dates recorded on its JobTread location."+updLine(KEYS.jobs))+
-    (has&&late?`<button type="button" class="opsalert" data-opsf="permits" data-v="late" aria-pressed="${tab==="late"}">${WARN}<span><b>${late} ${plural(late,"job")}</b> waiting 30+ days for a permit</span><span class="opsgo">${tab==="late"?"Showing":"Show"}</span></button>`:"")+
-    (has&&all.length?`<div class="opstools">${chipsHtml("permits",PTABS.filter(([t])=>t!=="late"||n.late).map(([t,l])=>[t,l,n[t]]),"Permit stage",tab)}${pms.length>1?`<label class="opspm"><span>Project manager</span><select data-opspm aria-label="Filter by project manager"><option value="all">Everyone</option>${pms.map(p=>`<option value="${esc(p)}"${F.pm===p?" selected":""}>${esc(p)}</option>`).join("")}</select></label>`:""}</div>`:"")+
-    (state("jobs","Loading active jobs from JobTread…")||CORE.staleNote(KEYS.jobs,JT)+capNote(c.data,"300 active jobs")+(sel.length?`<div class="rows">${rows}</div>`:`<div class="empty">${esc(emptyMsg)}</div>`))+
-    `<p class="opsmeta opsfoot">Dates come from each job location's custom fields in JobTread (building and LDA permit submittal and approval, inspections, CO). Update them there, then tap Refresh at the top.</p>`}
+    ${j.p.st==="insp"&&j.p.next?`<div class="opsacts"><button type="button" class="opsb" data-opsinsp="${esc(j.id)}"${CORE.confirmOpen(key)?' aria-expanded="true"':""}>Request ${esc(j.p.next.toLowerCase())} inspection</button></div>`:""}${CORE.confirmHtml(key)}</div>`};
+  return (state("jobs","Loading active jobs from JobTread…")||CORE.staleNote(KEYS.jobs,JT)+capNote(c.data,"300 active jobs")+
+    (late?`<p class="opsalert" role="status">${WARN}<span><b>${late} ${plural(late,"job")}</b> waiting 30+ days for a permit</span></p>`:"")+
+    (att.length?`<div class="rows">${att.map(row).join("")}</div>`:`<div class="empty">${all.length?"No job is waiting on a permit or an inspection.":"No active jobs (Planning, Work in progress or Final stage) in JobTread."}</div>`)+
+    (rest.length?`<details class="tm-clr opsrest"${F.rest?" open":""} data-opsrest><summary>Final, CO or no permit dates (${rest.length})</summary><div class="rows">${rest.map(row).join("")}</div></details>`:"")+
+    `<p class="opsmeta opsfoot">From each job location's permit and inspection dates in JobTread.</p>`)}
 async function askInspect(id,btn){const c=CORE.get(KEYS.jobs);const j=(c.data||[]).find(x=>x.id===id);if(!j)return;const p=permitOf(j);if(!p.next)return;
   const key="permit:insp:"+id;if(CORE.confirmOpen(key)){CORE.cancelConfirm(key);return}
   let ot=null;try{await CORE.load(KEYS.officeteam,officeTeam,Object.assign({ttl:TTL,force:!!opsStale.officeteam},JT));opsStale.officeteam=false;ot=CORE.get(KEYS.officeteam).data}catch(e){}
@@ -7061,35 +7093,48 @@ async function officeTasks(){const ot=await officeTeam();const ids=new Set(ot.id
   const tasks=nodes.map(t=>({id:t.id,name:t.name,due:t.endDate||"",created:String(t.createdAt||"").slice(0,10),job:t.job?{id:t.job.id,number:t.job.number,address:((t.job.location||{}).address||"")}:null,people:((t.assignedMemberships||{}).nodes||[]).map(m=>({id:m.id,name:(m.user||{}).name||""}))}))
     .filter(t=>!(t.job&&excluded(t.job)));return{who,tasks,src:ot.src,capped:nodes.capped}}
 function taskTitle(n){const m=String(n||"").match(/^Utilities · (Electric|Gas|Water)(?: \(([^)]*)\))?: (.+)$/);return m?{t:m[3],tag:[m[1],m[2]].filter(Boolean).join(" · ")}:{t:String(n||""),tag:""}}
-const OE={id:"",mode:"",val:""};
+const OE={id:"",mode:"",val:"",more:""};
 const dueOf=t=>t.due?String(t.due).slice(0,10):"";
-function oqBucket(t,t0,wk){const d=dueOf(t);return !d?"nodate":d<t0?"late":d<=wk?"soon":"later"}
-function vOffice(){need("office");watchIdx();const c=CORE.get(KEYS.office);const d=c.data||{who:[],tasks:[]};const t0=today();const wk=addDays(7);
-  const has=c.data!==undefined;
+const UT=()=>window.__dpUtil&&window.__dpUtil.on()?window.__dpUtil:null;
+const RK=()=>window.__dpRocks&&window.__dpRocks.on()?window.__dpRocks:null;
+const isRock=t=>!!(window.DPRocks&&DPRocks.is(t.name));
+function oqRow(t){const t0=today();const due=dueOf(t);const late=due&&due<t0;const tt=taskTitle(t.name);const ed=OE.id===t.id?OE.mode:"";const tm=_team||[];const more=OE.more===t.id;
+  const jl=t.job?jobLink(t.job,`#${esc(t.job.number)} ${esc(street(t.job.address))}`):"No job";
+  const sub=[jl,esc(t.people.map(p=>p.name).join(", ")||"Unassigned"),t.created?"added "+esc(fmtD(t.created)):""].filter(Boolean).join(" · ");
+  const editor=ed==="due"?`<div class="opsedit"><label><span>New due date</span><input type="date" data-oqduev="${esc(t.id)}" value="${esc(OE.val||due)}"></label><button type="button" class="opsb pri" data-oqduego="${esc(t.id)}">Continue</button><button type="button" class="opsb ghost" data-oqx>Cancel</button></div>`
+    :ed==="who"?`<div class="opsedit"><span class="opsedl" id="oqw-${esc(t.id)}">Reassign to</span><div class="opswho" role="radiogroup" aria-labelledby="oqw-${esc(t.id)}">${tm.slice().sort((a,b)=>(OFFICE_RE.test(b.role)-OFFICE_RE.test(a.role))||a.name.localeCompare(b.name)).map(p=>`<button type="button" role="radio" data-oqwhov="${esc(t.id)}|${esc(p.membershipId)}" aria-checked="${OE.val===p.membershipId}">${esc(p.name)}<small>${esc(p.role||"")}</small></button>`).join("")||"<span class=\"opsmeta\">Loading your team…</span>"}</div><button type="button" class="opsb ghost" data-oqx>Cancel</button></div>`:"";
+  const menu=more?`<div class="opsmenu" role="group" aria-label="More for ${esc(tt.t)}"><button type="button" class="opsb" data-oqdue="${esc(t.id)}" aria-expanded="${ed==="due"}">Change due date</button><button type="button" class="opsb opsb-wk" data-oqweek="${esc(t.id)}" aria-label="Move due date a week later: ${esc(tt.t)}"${CORE.confirmOpen("office:week:"+t.id)?' aria-expanded="true"':""}>+1 week</button><button type="button" class="opsb" data-oqwho="${esc(t.id)}" aria-expanded="${ed==="who"}">Reassign</button>${t.job?jtLink(t.job,"schedule"):""}</div>`:"";
+  return `<div class="opsrow${t.job?" opsrow-tap":""}"${t.job?rowAttr(t.job):""}><div class="opsmain"><b class="opst">${esc(tt.t)}</b>${tt.tag?`<span class="opstag">${esc(tt.tag)}</span>`:""}<div class="sub">${sub}</div></div>
+  <div class="st${late?" crit":""}">${due?(late?"Overdue":"Due")+" "+esc(fmtD(due)):"No due date"}${late?`<small>${daysSince(due)} ${plural(daysSince(due),"day")} late</small>`:""}</div>
+  <div class="opsacts"><button type="button" class="opsb" data-oqdone="${esc(t.id)}" aria-label="Mark done: ${esc(tt.t)}"${CORE.confirmOpen("office:done:"+t.id)?' aria-expanded="true"':""}>Mark done</button><button type="button" class="opsb opsmore" data-oqmore="${esc(t.id)}" aria-label="More for: ${esc(tt.t)}" aria-expanded="${more}">More</button></div>
+  ${menu}${editor}${CORE.confirmHtml("office:done:"+t.id)}${CORE.confirmHtml("office:due:"+t.id)}${CORE.confirmHtml("office:week:"+t.id)}${CORE.confirmHtml("office:who:"+t.id)}</div>`}
+function rocksBody(){const K=RK();if(!K)return "";K.need();const s=CORE.get(K.key);const office=(CORE.get(KEYS.office).data||{}).tasks||[];
+  const seen=new Set((s.data||[]).map(t=>t.id));const extra=office.filter(t=>isRock(t)&&!seen.has(t.id)).map(t=>({id:t.id,name:t.name,due:dueOf(t),job:t.job,people:t.people.map(p=>p.name)}));
+  const list=(s.data||[]).concat(s.data?extra:[]).sort((a,b)=>String(a.due||"9").localeCompare(String(b.due||"9")));
+  const row=t=>{const o=office.find(x=>x.id===t.id);if(o)return oqRow(o);const late=t.due&&t.due<today();
+    return `<div class="opsrow"><div class="opsmain"><b class="opst">${esc(String(t.name).replace(/^rock:\s*/i,""))}</b><div class="sub">${esc([t.people.join(", ")||"Company Rock",t.job?"Job "+t.job.number:""].filter(Boolean).join(" · "))}</div></div><div class="st${late?" crit":""}">${t.due?(late?"Overdue":"Due")+" "+esc(fmtD(t.due)):"No due date"}</div></div>`};
+  const plan=K.canSuggest()?`<p class="opsmeta"><button type="button" class="dpc-link" data-oqplan aria-expanded="${!!F.plan}">Quarterly planning</button></p>${F.plan?`<div class="opsplan">${K.planning()}</div>`:""}`:"";
+  return (s.data===undefined?(CORE.box(K.key,{loading:"Loading Rocks from JobTread…",rows:2,label:"JobTread"})||""):list.length?`<div class="rows">${list.map(row).join("")}</div>`:`<div class="empty">No open Rocks. Rocks are JobTread to-dos with “${esc(window.DPOrg.mod("rocks").match||"rock")}” in the name.</div>`)+plan}
+function vOffice(){const chipOk=k=>k==="util"?!!UT():k==="rocks"?!!RK():true;if(!chipOk(F.oq))F.oq="all";
+  if(F.oq!=="util"&&F.oq!=="permits")need("office");watchIdx();const c=CORE.get(KEYS.office);const d=c.data||{who:[],tasks:[]};const t0=today();
+  const has=c.data!==undefined;const noTeam=d.noOffice;
   if(F.officeq!=="All"&&has&&!d.who.some(w=>w.membershipId===F.officeq))F.officeq="All";
-  const isRock=t=>!!(window.DPRocks&&DPRocks.is(t.name));
-  const mine0=d.tasks.filter(t=>F.officeq==="All"||t.people.some(p=>p.id===F.officeq));const mine=mine0.filter(t=>!isRock(t));
-  const rocks=mine0.filter(isRock).sort((a,b)=>(dueOf(a)||"9999").localeCompare(dueOf(b)||"9999"));
-  const cnt={all:mine.length,late:0,soon:0,nodate:0};mine.forEach(t=>{const b=oqBucket(t,t0,wk);if(cnt[b]!=null)cnt[b]++});
-  const ts=mine.filter(t=>F.oqdue==="all"||oqBucket(t,t0,wk)===F.oqdue).sort((a,b)=>(dueOf(a)||"9999").localeCompare(dueOf(b)||"9999"));
-  const tm=_team||[];
-  const rowHtml=t=>{const due=dueOf(t);const late=due&&due<t0;const tt=taskTitle(t.name);const ed=OE.id===t.id?OE.mode:"";
-    const jl=t.job?jobLink(t.job,`#${esc(t.job.number)} ${esc(street(t.job.address))}`):"No job";
-    const sub=[jl,esc(t.people.map(p=>p.name).join(", ")||"Unassigned"),t.created?"added "+esc(fmtD(t.created)):""].filter(Boolean).join(" · ");
-    const editor=ed==="due"?`<div class="opsedit"><label><span>New due date</span><input type="date" data-oqduev="${esc(t.id)}" value="${esc(OE.val||due)}"></label><button type="button" class="opsb pri" data-oqduego="${esc(t.id)}">Continue</button><button type="button" class="opsb ghost" data-oqx>Cancel</button></div>`
-      :ed==="who"?`<div class="opsedit"><span class="opsedl" id="oqw-${esc(t.id)}">Reassign to</span><div class="opswho" role="radiogroup" aria-labelledby="oqw-${esc(t.id)}">${tm.slice().sort((a,b)=>(OFFICE_RE.test(b.role)-OFFICE_RE.test(a.role))||a.name.localeCompare(b.name)).map(p=>`<button type="button" role="radio" data-oqwhov="${esc(t.id)}|${esc(p.membershipId)}" aria-checked="${OE.val===p.membershipId}">${esc(p.name)}<small>${esc(p.role||"")}</small></button>`).join("")||"<span class=\"opsmeta\">Loading your team…</span>"}</div><button type="button" class="opsb ghost" data-oqx>Cancel</button></div>`:"";
-    return `<div class="opsrow${t.job?" opsrow-tap":""}"${t.job?rowAttr(t.job):""}><div class="opsmain"><b class="opst">${esc(tt.t)}</b>${tt.tag?`<span class="opstag">${esc(tt.tag)}</span>`:""}<div class="sub">${sub}</div></div>
-    <div class="st${late?" crit":""}">${due?(late?"Overdue":"Due")+" "+esc(fmtD(due)):"No due date"}${late?`<small>${daysSince(due)} ${plural(daysSince(due),"day")} late</small>`:""}</div>
-    <div class="opsacts"><button type="button" class="opsb" data-oqdone="${esc(t.id)}" aria-label="Mark done: ${esc(tt.t)}"${CORE.confirmOpen("office:done:"+t.id)?' aria-expanded="true"':""}>Mark done</button><button type="button" class="opsb" data-oqdue="${esc(t.id)}" aria-label="Change due date: ${esc(tt.t)}" aria-expanded="${ed==="due"}">Change due date</button><button type="button" class="opsb opsb-wk" data-oqweek="${esc(t.id)}" aria-label="Move due date a week later: ${esc(tt.t)}"${CORE.confirmOpen("office:week:"+t.id)?' aria-expanded="true"':""}>+1 week</button><button type="button" class="opsb" data-oqwho="${esc(t.id)}" aria-label="Reassign: ${esc(tt.t)}" aria-expanded="${ed==="who"}">Reassign</button>${t.job?jtLink(t.job,"schedule"):""}</div>
-    ${editor}${CORE.confirmHtml("office:done:"+t.id)}${CORE.confirmHtml("office:due:"+t.id)}${CORE.confirmHtml("office:week:"+t.id)}${CORE.confirmHtml("office:who:"+t.id)}</div>`};
-  const rows=ts.map(rowHtml).join("");
-  const rockHtml=rocks.length?`<section class="opsrocks" aria-labelledby="oq-rocks"><h2 id="oq-rocks">Rocks <span class="opsmeta">${rocks.length}</span></h2><div class="rows">${rocks.map(rowHtml).join("")}</div></section>`:"";
-  const noTeam=d.noOffice;
-  const empty=F.oqdue!=="all"?{late:"Nothing overdue.",soon:"Nothing due in the next 7 days.",nodate:"Every open to-do has a due date."}[F.oqdue]:F.officeq==="All"?"No open office to-dos. The queue is clear.":"No open to-dos for this person.";
+  const mine=d.tasks.filter(t=>F.officeq==="All"||t.people.some(p=>p.id===F.officeq)).filter(t=>!isRock(t));
+  const late=mine.filter(t=>dueOf(t)&&dueOf(t)<t0);
+  const pj=CORE.get(KEYS.jobs).data;const permN=pj?pj.map(permitOf).filter(p=>p.st==="wait"||(p.st==="insp"&&p.next)).length:null;
+  const u=UT(),k=RK();const uN=u&&u.loaded()?u.overdue():null;const rN=k&&CORE.get(k.key).data?CORE.get(k.key).data.length:null;
+  const CH=[["all","All",has?mine.length:null],["late","Overdue",has?late.length:null],...(u?[["util","Utilities",uN]]:[]),["permits","Permits",permN],...(k?[["rocks","Rocks",rN]]:[])];
+  const tab=F.oq;
+  const person=(tab==="all"||tab==="late")&&has&&d.who.length>1?`<label class="opspm"><span>Person</span><select data-oqp aria-label="Show to-dos for">${[["All","Everyone"]].concat(d.who.map(w=>[w.membershipId,w.name])).map(([v,l])=>`<option value="${esc(v)}"${F.officeq===v?" selected":""}>${esc(l)}</option>`).join("")}</select></label>`:"";
+  const ts=(tab==="late"?late:mine).slice().sort((a,b)=>(dueOf(a)||"9999").localeCompare(dueOf(b)||"9999"));
   const noTeamHtml=`<div class="opsempty" role="status"><p><b>No office team found.</b> We look for JobTread members with an Operations or Admin role, and none matched, so this queue can't show anyone's to-dos yet.</p>${ME.owner?`<button type="button" class="opsb pri" data-opsoffice>Choose office team</button>`:`<p>Ask the page owner to choose the office team in Setup.</p>`}</div>`;
-  return head("Office to-do queue",`Open JobTread to-dos assigned to the office team${d.who.length?" ("+esc(d.who.map(w=>w.name).join(", "))+")":""}, across every job.${d.src==="saved"?" You chose the office team in Setup.":" Office team = JobTread members with an Operations or Admin role"+(R.role==="ops"?", plus you.":".")}${ME.owner&&has&&!noTeam?` <button type="button" class="dpc-link" data-opsoffice>Change office team</button>`:""}${updLine(KEYS.office)}`)+
-    (has&&!noTeam?`<div class="opstools">${chipsHtml("oqdue",[["all","All open",cnt.all],["late","Overdue",cnt.late],["soon","Due in 7 days",cnt.soon],["nodate","No due date",cnt.nodate]],"Due date")}${d.who.length>1?chipsHtml("officeq",[["All","Everyone",d.tasks.length],...d.who.map(w=>[w.membershipId,first(w.name),d.tasks.filter(t=>t.people.some(p=>p.id===w.membershipId)).length])],"Person"):""}</div>`:"")+
-    (state("office","Loading to-dos from JobTread…")||CORE.staleNote(KEYS.office,JT)+capNote(d,"300 open to-dos")+(noTeam?noTeamHtml:(ts.length?`<div class="rows">${rows}</div>`:`<div class="empty">${esc(empty)}</div>`)+rockHtml))}
+  const empty=tab==="late"?"Nothing overdue.":F.officeq==="All"?"No open office to-dos. The queue is clear.":"No open to-dos for this person.";
+  const body=tab==="util"?u.body():tab==="permits"?permitsBody():tab==="rocks"?rocksBody():
+    (state("office","Loading to-dos from JobTread…")||CORE.staleNote(KEYS.office,JT)+capNote(d,"300 open to-dos")+(noTeam?noTeamHtml:(ts.length?`<div class="rows">${ts.map(oqRow).join("")}</div>`:`<div class="empty">${esc(empty)}</div>`)));
+  const key=tab==="util"?(u&&u.key):tab==="permits"?KEYS.jobs:tab==="rocks"?(k&&k.key):KEYS.office;
+  return head("Office to-dos",`The office team's open JobTread to-dos${d.who.length?" ("+esc(d.who.map(w=>first(w.name)).join(", "))+")":""}, plus utilities, permits and Rocks.${ME.owner&&has&&!noTeam?` <button type="button" class="dpc-link" data-opsoffice>Change office team</button>`:""}${key?updLine(key):""}`)+
+    `<div class="opstools">${chipsHtml("oq",CH,"Show",tab)}${person}</div>`+body}
+
 const findTask=id=>((CORE.get(KEYS.office).data||{}).tasks||[]).find(t=>t.id===id);
 function dropTask(id){const d=CORE.get(KEYS.office).data;if(d)d.tasks=d.tasks.filter(t=>t.id!==id);if(FX)FX.tasks=FX.tasks.filter(t=>t.id!==id)}
 function patchTask(id,fn){const t=findTask(id);if(t)fn(t);if(FX){const f=FX.tasks.find(x=>x.id===id);if(f&&f!==t)fn(f)}}
@@ -7114,44 +7159,19 @@ function askWho(id,mid,btn){const t=findTask(id);if(!t)return;const p=(_team||[]
     label:`Reassign to ${first(p.name)}`,busy:"Saving…",done:`Reassigned to ${p.name}.`,errLabel:"JobTread",sig:()=>OE.id===id?OE.val:"",
     onConfirm:async()=>{await jq({updateTask:{$:{id,assignedMembershipIds:[mid]},task:{id:{}}}});patchTask(id,x=>{x.people=[{id:mid,name:p.name}]});
       const d=CORE.get(KEYS.office).data;if(d&&!d.who.some(w=>w.membershipId===mid))dropTask(id);closeEditor()}})}
-
-async function workload(){if(FX){await wait(120);const W={};const g=n=>W[n]=W[n]||{name:n,plan:0,wip:0,fin:0,props:0,propsV:0,oldest:0,inv:0,invV:0};const jb=id=>FX.jobs.find(j=>j.id===id);
-    FX.jobs.forEach(j=>j.pm.forEach(n=>{const w=g(n);if(/Planning/.test(j.flow))w.plan++;else if(/Progress/.test(j.flow))w.wip++;else w.fin++}));
-    FX.props.forEach(p=>{const w=g(jb(p.job).pm[0]);w.props++;w.propsV+=p.price;w.oldest=Math.max(w.oldest,p.days)});FX.inv.forEach(p=>{const w=g(jb(p.job).pm[0]);w.inv++;w.invV+=p.balance});
-    return Object.values(W).sort((a,b)=>(b.plan+b.wip+b.fin)-(a.plan+a.wip+a.fin)||b.propsV-a.propsV)}
-  const js=CORE.get(KEYS.jobs);const fresh=js.data!==undefined&&js.status!=="error"&&Date.now()-js.at<TTL;
-  const [jobs,docs,inv]=await Promise.all([fresh?js.data:activeJobs(),
-    docPages({and:[["type","customerOrder"],["status","pending"],[["job","closedOn"],null]]},{price:{},issueDate:{}}),
-    docPages({and:[["type","customerInvoice"],["status","pending"],["dueDate","<",today()],["balance",">",0]]},{balance:{}})]);
-  const list=d=>d;
-  const W={};const g=n=>W[n]=W[n]||{name:n,plan:0,wip:0,fin:0,props:0,propsV:0,oldest:0,inv:0,invV:0};
-  jobs.forEach(j=>(j.pm.length?j.pm:["No PM"]).forEach(n=>{const w=g(n);if(/Planning/.test(j.flow))w.plan++;else if(/Progress/.test(j.flow))w.wip++;else w.fin++}));
-  const pmOf=d=>(((d.job||{}).customFieldValues||{}).nodes||[]).map(v=>v.value).filter(pmOk);
-  const jx=d=>excluded({number:(d.job||{}).number,address:(((d.job||{}).location)||{}).address});
-  list(docs).filter(d=>!jx(d)&&Number(d.price)>0).forEach(d=>(pmOf(d).length?pmOf(d):["No PM"]).forEach(n=>{const w=g(n);w.props++;w.propsV+=Number(d.price)||0;w.oldest=Math.max(w.oldest,daysSince(d.issueDate))}));
-  list(inv).filter(d=>!jx(d)).forEach(d=>(pmOf(d).length?pmOf(d):["No PM"]).forEach(n=>{const w=g(n);w.inv++;w.invV+=Number(d.balance)||0}));
-  const res=Object.values(W).sort((a,b)=>(b.plan+b.wip+b.fin)-(a.plan+a.wip+a.fin)||b.propsV-a.propsV);res.capped=!!(jobs.capped||docs.capped||inv.capped);return res}
-const docPages=(where,f)=>CORE.jtPages(async page=>(await jq({organization:{$:{id:window.__dpORG},documents:{$:{size:CORE.JT_PAGE,...(page?{page}:{}),where},nextPage:{},nodes:{...f,job:{number:{},location:{address:{}},customFieldValues:{$:{size:3,where:[["customField","name"],PMF]},nodes:{value:{}}}}}}}})).organization.documents,{max:12});
-function vWorkload(){need("work");const c=CORE.get(KEYS.work);const ws=c.data||[];const has=c.data!==undefined;
-  const tot=k=>ws.reduce((s,w)=>s+w[k],0);
-  const cards=ws.map(w=>`<div class="wlc"><h2>${esc(w.name)}</h2><dl>
-    <dt>Active jobs</dt><dd>${w.plan+w.wip+w.fin}</dd><dt>Planning · In progress · Final stage</dt><dd>${w.plan} · ${w.wip} · ${w.fin}</dd>
-    <dt>Proposals waiting</dt><dd>${w.props?w.props+" · "+money(w.propsV):"None"}</dd>${w.props?`<dt>Oldest proposal</dt><dd${w.oldest>30?' class="crit"':""}>${w.oldest} ${plural(w.oldest,"day")}</dd>`:""}
-    <dt>Overdue invoices</dt><dd${w.inv?' class="crit"':""}>${w.inv?w.inv+" · "+money(w.invV):"None"}</dd></dl></div>`).join("");
-  return head("Team workload","Each project manager's active jobs, proposals waiting on the client and overdue invoices, live from JobTread."+updLine(KEYS.work))+
-    (has&&ws.length?`<section class="kpis">${kpi(tot("plan")+tot("wip")+tot("fin"),"Active jobs")}${kpi(money(tot("propsV")),"Proposals waiting")}${kpi(money(tot("invV")),"Overdue invoices",tot("inv")?"crit":"")}</section>`:"")+
-    (state("work","Loading team workload from JobTread…")||CORE.staleNote(KEYS.work,JT)+capNote(c.data,"300 of each list")+(ws.length?`<div class="wl">${cards}</div>`:`<div class="empty">No active jobs, waiting proposals or overdue invoices in JobTread right now. Jobs show up here once they're Approved/Planning, Work in progress or in their final stage.</div>`))}
-
-const FETCH={jobs:activeJobs,office:officeTasks,work:workload,officeteam:officeTeam};
-const VIEWS={permits:vPermits,officeq:vOffice,workload:vWorkload};
-const BOARD_KEY={permits:"jobs",officeq:"office",workload:"work"};
+const FETCH={jobs:activeJobs,office:officeTasks,officeteam:officeTeam};
+function openOffice(chip){F.oq=chip||"all";const h=location.hash;setTimeout(()=>{if(location.hash===h&&h!=="#officeq")location.replace("#officeq");else CORE.render()},0);return `<div class="empty" role="status">Opening Office to-dos…</div>`}
+const VIEWS={officeq:vOffice,permits:()=>openOffice("permits")};
+const BOARD_KEY={officeq:"office"};
 const EXTRA=window.DPOPS_EXTRA=window.DPOPS_EXTRA||[];const exOn=()=>EXTRA.filter(x=>x.show());
 const route=()=>(location.hash||"").slice(1);
 const onBoard=()=>{const h=route();return (VIEWS[h]&&R.all())?h:exOn().some(x=>x.h===h&&x.refresh)?h:""};
-function boardRefresh(h){const k=BOARD_KEY[h];
+function boardRefresh(h){if(h==="officeq"&&F.oq!=="all"&&F.oq!=="late"){if(F.oq==="permits")CORE.load(KEYS.jobs,FETCH.jobs,Object.assign({ttl:TTL,force:true},JT));else if(F.oq==="util"&&UT())UT().refresh();else if(F.oq==="rocks"&&RK())RK().need(true);return}
+  const k=BOARD_KEY[h];
   if(k){if(k==="office"){_team=null;_office=undefined;opsStale.officeteam=true}CORE.load(KEYS[k],FETCH[k],Object.assign({ttl:TTL,force:true},JT));return}
   const x=exOn().find(x=>x.h===h);if(x&&x.refresh)x.refresh()}
-function boardBusy(h){const k=BOARD_KEY[h];if(k)return !!CORE.get(KEYS[k]).busy;const x=exOn().find(x=>x.h===h);return !!(x&&x.busy&&x.busy())}
+function boardBusy(h){if(h==="officeq"&&F.oq==="permits")return !!CORE.get(KEYS.jobs).busy;if(h==="officeq"&&F.oq==="util"&&UT())return !!UT().busy();
+  const k=BOARD_KEY[h];if(k)return !!CORE.get(KEYS[k]).busy;const x=exOn().find(x=>x.h===h);return !!(x&&x.busy&&x.busy())}
 let hdrObs=null;
 function paintHdr(){const b=$("#refresh");const h=onBoard();if(!b||!h)return;const busy=boardBusy(h);
   const html=busy?'↻<span class="lbl"> Updating…</span>':'↻<span class="lbl"> Refresh</span>';const title=CORE.demo?"Reload this page's demo data":"Reload this page from JobTread";
@@ -7162,15 +7182,26 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 addEventListener("hashchange",()=>{if(!onBoard()&&$("#refresh")&&$("#refresh").getAttribute("aria-label")==="Refresh this page")$("#refresh").setAttribute("aria-label","Refresh")});
 function view(v){setTimeout(paintHdr,0);return VIEWS[v]&&R.all()?VIEWS[v]():(exOn().find(x=>x.h===v)||{view:()=>""}).view()}
 window.DPOPS={has:v=>(R.all()&&!!VIEWS[v])||exOn().some(x=>x.h===v),view,
-  tabs:()=>(R.all()?[["permits","Permits & inspections",0],["officeq","Office to-dos",0],["workload","Team workload",0]]:[]).concat(exOn().map(x=>[x.h,x.label,x.count?x.count():0])),
-  icons:{permits:"clipboard-check",officeq:"inbox",workload:"gauge",setup:"settings"},R,team:()=>team(),officeTeam:()=>officeTeam(),jq,jobLink,jtLink,rowAttr,watchIdx,updLine,paintHdr,demo:FX};
+  tabs:()=>(R.all()?[["officeq","Office to-dos",0]]:[]).concat(exOn().filter(x=>!x.hidden).map(x=>[x.h,x.label,x.count?x.count():0])),
+  icons:{officeq:"inbox",team:"users",setup:"settings"},R,team:()=>team(),officeTeam:()=>officeTeam(),jq,jobLink,jtLink,rowAttr,watchIdx,updLine,paintHdr,demo:FX,openOffice,
+  jobs:()=>{need("jobs");return CORE.get(KEYS.jobs)},jobsBox:()=>state("jobs","Loading active jobs from JobTread…"),jobsRefresh:()=>CORE.load(KEYS.jobs,FETCH.jobs,Object.assign({ttl:TTL,force:true},JT))};
 document.addEventListener("click",e=>{const row=e.target.closest&&e.target.closest("[data-rowhref]");if(!row||e.defaultPrevented)return;
   if(e.target.closest("a,button,input,select,textarea,label,summary,details,.dpc-cf,.opsedit"))return;
   try{if(String(getSelection()||"").trim())return}catch(x){}
   const h=row.dataset.rowhref;if(h.charAt(0)==="#"){location.hash=h;return}const u=CORE.safeUrl(h);if(u)window.open(u,"_blank","noopener")});
 document.addEventListener("click",e=>{const t=e.target.closest("[data-oqweek]");if(t)askWeek(t.dataset.oqweek,t)});
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-oqmore],[data-oqplan],[data-oqgo]");if(!t)return;const d=t.dataset;
+  if(d.oqmore!=null){const id=d.oqmore;const was=OE.more===id;closeEditor();CORE.cancelConfirm("office:week:"+id,true);OE.more=was?"":id;CORE.render();
+    if(!was)setTimeout(()=>{const b=document.querySelector(`.opsmenu [data-oqdue="${CSS.escape(id)}"]`);if(b)try{b.focus({preventScroll:true})}catch(x){}},40);return}
+  if(d.oqplan!=null){F.plan=!F.plan;CORE.render();return}
+  if(d.oqgo!=null){F.oq=d.oqgo;if(d.oqgo==="rocks")F.plan=true;location.hash="#officeq";CORE.render();return}});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape"||!OE.more||OE.id||e.defaultPrevented)return;const id=OE.more;if(CORE.confirmOpen("office:week:"+id))return;
+  e.preventDefault();OE.more="";CORE.render();setTimeout(()=>{const b=document.querySelector(`[data-oqmore="${CSS.escape(id)}"]`);if(b)try{b.focus({preventScroll:true})}catch(x){}},40)});
+document.addEventListener("toggle",e=>{const x=e.target;if(x&&x.matches&&x.matches("[data-opsrest]"))F.rest=x.open},true);
+document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("[data-oqp]");if(!s)return;F.officeq=s.value;s.blur();CORE.render();
+  setTimeout(()=>{const n=document.querySelector("[data-oqp]");if(n)try{n.focus({preventScroll:true})}catch(x){}},60)});
 document.addEventListener("click",e=>{const t=e.target.closest("[data-opsf],[data-opsinsp],[data-oqdone],[data-oqdue],[data-oqduego],[data-oqwho],[data-oqwhov],[data-oqx],[data-opsoffice]");if(!t)return;const d=t.dataset;
-  if(d.opsf){F[d.opsf]=d.v;CORE.render();return}
+  if(d.opsf){F[d.opsf]=d.v;if(d.opsf==="oq")closeEditor();CORE.render();return}
   if(d.opsinsp){askInspect(d.opsinsp,t);return}
   if(d.oqdone){askDone(d.oqdone,t);return}
   if(d.oqdue){if(OE.id===d.oqdue&&OE.mode==="due"){closeEditor()}else{closeEditor();CORE.cancelConfirm("office:done:"+d.oqdue,true);const tk=findTask(d.oqdue);OE.id=d.oqdue;OE.mode="due";OE.val=tk?dueOf(tk)||addDays(1):addDays(1)}CORE.render();
@@ -7181,8 +7212,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-opsf],[dat
   if(d.oqx!=null){const id=OE.id;closeEditor();CORE.render();setTimeout(()=>{const b=document.querySelector(`[data-oqdue="${CSS.escape(id)}"]`);if(b)try{b.focus({preventScroll:true})}catch(x){}},40);return}
   if(d.opsoffice!=null){R.openSetup(false,"office");return}});
 document.addEventListener("input",e=>{const id=e.target.dataset&&e.target.dataset.oqduev;if(id==null)return;OE.val=e.target.value;if(CORE.confirmOpen("office:due:"+id))CORE.cancelConfirm("office:due:"+id,true)});
-document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("[data-opspm]");if(!s)return;F.pm=s.value;s.blur();CORE.render();
-  setTimeout(()=>{const n=document.querySelector("[data-opspm]");if(n)try{n.focus({preventScroll:true})}catch(x){}},60)});
+
 })();
 </script>
 
@@ -7321,21 +7351,26 @@ function logNote(sid,btn){const v=String(U.note[sid]||"").trim();if(!v){CORE.toa
     sig:()=>String(U.note[sid]||"").trim(),
     onConfirm:async()=>{await jq({createComment:{$:{targetType:"task",targetId:sid,message:v,isVisibleToInternalRoles:true,isVisibleToCustomerRoles:false,isVisibleToVendorRoles:false,isVisibleToAll:false},createdComment:{id:{}}}});s.last={message:v,createdAt:new Date().toISOString()};delete U.note[sid];U.noteOpen=null}})}
 const allSteps=()=>(U.data||[]).flatMap(j=>j.steps);
-async function openKick(jid){const j=(U.data||[]).find(x=>x.id===jid);if(!j)return;
+function kickFocus(){const h=document.getElementById("utko-h");if(!h)return;try{h.focus({preventScroll:true})}catch(e){}
+  const r=h.getBoundingClientRect();const vv=window.visualViewport;const H=vv?vv.height:innerHeight;const top=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--hdr"))||0;
+  const bt=document.getElementById("btabs");const bot=H-(bt&&getComputedStyle(bt).display!=="none"?bt.getBoundingClientRect().height:0);
+  if(r.top>=top&&r.bottom<=bot)return;try{window.DPReleaseTap&&DPReleaseTap()}catch(e){}
+  try{h.scrollIntoView({block:r.top<top?"start":"center",behavior:"auto"})}catch(e){h.scrollIntoView(true)}}
+async function openKick(jid,at){const j=(U.data||[]).find(x=>x.id===jid);if(!j)return;
   const team=await P().team().catch(()=>[]);const me=await R().jtMe().catch(()=>({membershipId:""}));const ops=team.filter(t=>/operat|admin|office/i.test(t.role));
   const have=new Set(j.steps.map(s=>s.parsed.kind+"|"+s.parsed.step.toLowerCase()));
   U.ko={jid,team,assign:(R().role==="ops"&&me.membershipId?[me.membershipId]:ops.map(t=>t.membershipId)).slice(0,3),prov:{electric:provOf(j,"electric"),gas:provOf(j,"gas"),water:provOf(j,"water")},
-    on:{electric:true,gas:true,water:true},steps:Object.fromEntries(Object.entries(STEPS).map(([k,l])=>[k,l.map(([n,,d])=>({n,on:!have.has(k+"|"+n.toLowerCase()),due:d?addDays(d):""}))])),busy:false,msg:"",confirm:false};rr()}
+    on:{electric:true,gas:true,water:true},steps:Object.fromEntries(Object.entries(STEPS).map(([k,l])=>[k,l.map(([n,,d])=>({n,on:!have.has(k+"|"+n.toLowerCase()),due:d?addDays(d):""}))])),busy:false,msg:"",confirm:false,at:at||"ready"};rr();setTimeout(kickFocus,40)}
 async function addByNumber(){const n=String(U.addNo||"").trim().replace(/^#/,"");if(!n)return;let j=(U.data||[]).find(x=>String(x.number)===n);
   if(!j){try{const p=await jq({organization:{$:{id:window.__dpORG},jobs:{$:{size:1,where:[["number",n]]},nodes:{id:{},number:{},location:{id:{},address:{},customFieldValues:{$:{size:Math.max(2,INFO_Q.length),where:[["customField","name"],"in",INFO_Q]},nodes:{value:{},customField:{name:{}}}}},customFieldValues:{$:{size:3,where:[["customField","name"],"in",[PMF,FLOWF]]},nodes:{value:{},customField:{name:{}}}}}}}});
     const x=(((p.organization||{}).jobs||{}).nodes||[])[0];if(!x){U.addMsg="There's no open job #"+n+" in JobTread.";rr();return}const cf=(x.customFieldValues||{}).nodes||[];const lf={};(((x.location||{}).customFieldValues||{}).nodes||[]).forEach(v=>{if(v.customField)lf[v.customField.name]=v.value});
     j={id:x.id,number:x.number,locId:(x.location||{}).id,address:(x.location||{}).address||"",pm:cf.filter(v=>v.customField&&v.customField.name===PMF).map(v=>v.value),flow:"",type:[],info:lf,steps:[]};U.data=(U.data||[]).concat([j])}catch(e){U.addMsg=em(e);rr();return}}
-  U.addMsg="";U.addNo="";openKick(j.id)}
+  U.addMsg="";U.addNo="";openKick(j.id,"add")}
 function readKick(){const f=$("#utko");if(!f||!U.ko)return;const k=U.ko;
   f.querySelectorAll("[data-kon]").forEach(i=>k.on[i.dataset.kon]=i.checked);f.querySelectorAll("[data-kprov]").forEach(i=>k.prov[i.dataset.kprov]=i.value);
   f.querySelectorAll("[data-kstep]").forEach(i=>{const [kk,ix]=i.dataset.kstep.split("|");k.steps[kk][ix].on=i.checked});f.querySelectorAll("[data-kdue]").forEach(i=>{const [kk,ix]=i.dataset.kdue.split("|");k.steps[kk][ix].due=i.value});
   k.assign=[...f.querySelectorAll("[data-kas]:checked")].map(i=>i.dataset.kas)}
-async function createKick(){readKick();const k=U.ko;const j=(U.data||[]).find(x=>x.id===k.jid);
+async function createKick(){const k=U.ko;if(!k||k.busy)return;readKick();const j=(U.data||[]).find(x=>x.id===k.jid);if(!j)return;
   const list=[];Object.keys(STEPS).forEach(kk=>{if(!k.on[kk])return;k.steps[kk].forEach(s=>{if(s.on)list.push({kk,s})})});
   if(!list.length){k.msg="Pick at least one step.";rr();return}
   if(!k.confirm){k.confirm=true;k.msg=`Create ${list.length} JobTread to-do${list.length===1?"":"s"} on job #${j.number}?`;rr();return}
@@ -7359,9 +7394,11 @@ function jobCard(j){const ks=kindsOf(j);const prog=ks.map(k=>{const ss=j.steps.f
     ${U.msg[key]?`<div class="ut-msg">${esc(U.msg[key])}</div>`:""}${j.steps.filter(s=>s.parsed.kind===k).map(s=>stepRow(s,j)).join("")}
     ${m&&U.open[key]?`<div class="ut-mail">${m.busy?"Searching Gmail…":m.err?esc(m.err):(m.list||[]).length?(m.list||[]).slice(0,4).map(t=>`<div>${CORE.link(t.link,esc(t.subject))} <span class="when">· ${esc(fmtD(t.date))} · ${t.count} message${t.count===1?"":"s"}</span></div>`).join(""):"No emails with this utility about this job yet."}</div>`:""}</div>`}).join("");
   return `<div class="ut-job"><div class="ut-h opsrow-tap"${P().rowAttr?P().rowAttr(j):""}><div style="min-width:0"><h3>${P().jobLink(j,`#${esc(j.number)} ${esc(street(j.address))}`)}</h3><div class="sub">${esc([j.pm.join(" / ")||"No PM",flowWords(j.flow)].filter(Boolean).join(" · "))}</div></div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="ut-prog">${prog}</div><span class="ut-a">${P().jtLink(j,"schedule")}<button type="button" data-utko="${esc(j.id)}" aria-label="Add steps: job ${esc(j.number)}, ${esc(street(j.address))}">Add steps</button></span></div></div>${units}</div>`}
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="ut-prog">${prog}</div><span class="ut-a">${P().jtLink(j,"schedule")}<button type="button" data-utko="${esc(j.id)}" data-utat="card" aria-label="Add steps: job ${esc(j.number)}, ${esc(street(j.address))}">Add steps</button></span></div></div>${kickAt("card",j.id)}${units}</div>`}
+let KD=false;
+function kickAt(at,jid){if(!U.ko||KD)return "";if(at==="end"||(U.ko.at===at&&U.ko.jid===jid)||(at==="add"&&U.ko.at==="add")){KD=true;return kickForm()}return ""}
 function kickForm(){const k=U.ko;const j=(U.data||[]).find(x=>x.id===k.jid);if(!j)return"";const opsT=k.team.filter(t=>/operat|admin|office/i.test(t.role)||k.assign.includes(t.membershipId));
-  return `<form class="ut-form" id="utko" onsubmit="return false"><h3>Start utilities · #${esc(j.number)} ${esc(street(j.address))}</h3>
+  return `<form class="ut-form" id="utko" onsubmit="return false" aria-labelledby="utko-h"><h3 id="utko-h" tabindex="-1">Start utilities · #${esc(j.number)} ${esc(street(j.address))}</h3>
   <p style="margin:0;color:var(--muted);font-size:var(--fs-footnote,13.5px)">Each checked step becomes a JobTread to-do on this job, assigned to the people below, with its due date. Uncheck anything this job doesn't need. Water company is picked from the address; change it if it's wrong.</p>
   <div class="ut-grid">${Object.keys(STEPS).map(kk=>`<div class="ut-col"><div class="ttl"><label style="font-weight:700"><input type="checkbox" data-kon="${kk}"${k.on[kk]?" checked":""}> ${KIND[kk]}</label><select data-kprov="${kk}" aria-label="${KIND[kk]} company">${(cfg()[kk]||[]).map(p=>`<option${p.name===k.prov[kk]?" selected":""}>${esc(p.name)}</option>`).join("")}</select></div>
     ${k.steps[kk].map((s,i)=>`<label><input type="checkbox" data-kstep="${kk}|${i}"${s.on?" checked":""}><span style="flex:1;min-width:0">${esc(s.n)}</span><input type="date" data-kdue="${kk}|${i}" value="${esc(s.due)}" aria-label="Due date"></label>`).join("")}</div>`).join("")}</div>
@@ -7374,17 +7411,18 @@ function provForm(){const c=cfg();return `<div class="ut-form"><h3>Utility compa
 function view(){load();P().watchIdx();const st=CORE.get(KEY);if(st.data!==undefined&&U.data==null)U.data=st.data;const d=U.data||[];const has=U.data!=null;const tracked=d.filter(j=>j.steps.length).sort((a,b)=>{const late=j=>j.steps.some(s=>!s.done&&s.due&&s.due<today())?0:1;return late(a)-late(b)||String(a.number).localeCompare(String(b.number))});
   const ready=d.filter(j=>!j.steps.length&&j.flow&&(j.type.includes(NBF.value)||hasInfo(j)));
   const open=tracked.flatMap(j=>j.steps).filter(s=>!s.done);const late=open.filter(s=>s.due&&s.due<today()).length;const stale=open.filter(s=>!(s.last)&&s.created&&ago(s.created)>14).length;
-  const kpi=(v,l,c)=>`<div class="kpi${c?" "+c:""}"><b>${v}</b><span>${esc(l)}</span></div>`;
-  return `${window.DPPageHead("Utilities","Electric, gas and water steps for each job, kept as JobTread to-dos so everyone sees the same status. Follow up with the utility in one tap; updates you log are saved on the to-do in JobTread."+P().updLine(KEY))}
-  ${has?`<section class="kpis">${kpi(tracked.length,"Jobs tracking")}${kpi(open.length,"Open steps")}${kpi(late,"Overdue",late?"crit":"")}${kpi(stale,"No update in 14+ days",stale?"crit":"")}</section>`:""}
-  <div class="ut-tools"><button class="opsb" type="button" data-utprov aria-expanded="${!!U.cfgOpen}">Utility companies</button></div>
+  return `${has&&tracked.length?`<p class="opsmeta ut-sum" role="status">${tracked.length} ${tracked.length===1?"job":"jobs"} tracking · ${open.length} open ${open.length===1?"step":"steps"}${late?` · <b class="crit">${late} overdue</b>`:""}${stale?` · ${stale} with no update in 14+ days`:""}</p>`:""}
   ${U.flash?`<div class="note" role="status">${esc(U.flash)}</div>`:""}${has&&U.capped?`<p class="opsmeta opscap" role="status">Showing the first 300 utility to-dos and active jobs from JobTread. There are more; this board stops there to stay quick.</p>`:""}${has?CORE.staleNote(KEY,JT):CORE.box(KEY,Object.assign({loading:"Loading utility steps from JobTread…",rows:3},JT))}
-  ${U.cfgOpen?provForm():""}${U.ko?kickForm():""}
+  ${(KD=false,"")}
   ${has?`<section><h2>Ready to kick off</h2><p style="color:var(--muted);font-size:var(--fs-footnote,13.5px);margin:0 0 4px">New builds (${esc(NBF.name)} "${esc(NBF.value)}")${INFO_F.length?" and jobs with "+esc(INFO_F.map(n=>n.replace(/\s+info$/i,"")).join(" or "))+" info in JobTread":""} that don't have utility to-dos yet. For any other job, enter its number.</p>
-  <div class="ut-ko">${ready.map(j=>`<div class="ut-kc"><div style="min-width:0"><b>#${esc(j.number)} ${esc(street(j.address))}</b><div class="sub">${esc([j.pm.join(" / "),j.type.join(", "),flowWords(j.flow)].filter(Boolean).join(" · "))}</div></div><span class="ut-a"><button class="pri" data-utko="${esc(j.id)}">Start utilities</button></span></div>`).join("")||(has?`<div class="ut-kc"><span class="sub">Nothing waiting. New builds show up here when they reach Approved/Planning.</span></div>`:"")}</div>
-  <div class="ut-add"><input data-utaddno placeholder="Job #" value="${esc(U.addNo)}" aria-label="Job number"><button class="opsb" type="button" data-utadd>Start utilities on this job</button>${U.addMsg?`<span class="ut-msg err">${esc(U.addMsg)}</span>`:""}</div></section>`:""}
-  ${has?`<section style="margin-top:22px"><h2>In progress</h2>${tracked.map(jobCard).join("")||`<div class="empty">No utility to-dos yet. Start one above.</div>`}</section>`:""}`}
-(window.DPOPS_EXTRA=window.DPOPS_EXTRA||[]).push({h:"utilities",label:"Utilities",show:()=>!!(window.DPR&&window.DPR.feat("utilities")&&window.DPR.all()),view,refresh:()=>load(true),busy:()=>!!CORE.get(KEY).busy,count:()=>(U.data||[]).flatMap(j=>j.steps).filter(s=>!s.done&&s.due&&s.due<today()).length});
+  <div class="ut-ko">${ready.map(j=>`<div class="ut-kc"><div style="min-width:0"><b>#${esc(j.number)} ${esc(street(j.address))}</b><div class="sub">${esc([j.pm.join(" / "),j.type.join(", "),flowWords(j.flow)].filter(Boolean).join(" · "))}</div></div><span class="ut-a"><button class="pri" data-utko="${esc(j.id)}" data-utat="ready">Start utilities</button></span></div>${kickAt("ready",j.id)}`).join("")||(has?`<div class="ut-kc"><span class="sub">Nothing waiting. New builds show up here when they reach Approved/Planning.</span></div>`:"")}</div>
+  <div class="ut-add"><input data-utaddno placeholder="Job #" value="${esc(U.addNo)}" aria-label="Job number"><button class="opsb" type="button" data-utadd>Start utilities on this job</button>${U.addMsg?`<span class="ut-msg err">${esc(U.addMsg)}</span>`:""}</div>${kickAt("add","")}</section>`:""}
+  ${has?`<section style="margin-top:22px"><h2>In progress</h2>${tracked.map(jobCard).join("")||`<div class="empty">No utility to-dos yet. Start one above.</div>`}</section>`:""}${kickAt("end","")}
+  <p class="opsmeta ut-tools"><button class="dpc-link" type="button" data-utprov aria-expanded="${!!U.cfgOpen}">Utility companies</button></p>${U.cfgOpen?provForm():""}`}
+const on=()=>!!(window.DPR&&window.DPR.feat("utilities")&&window.DPR.all());
+const overdue=()=>(U.data||[]).flatMap(j=>j.steps).filter(s=>!s.done&&s.due&&s.due<today()).length;
+window.__dpUtil={on,key:KEY,body:view,refresh:()=>load(true),busy:()=>!!CORE.get(KEY).busy,loaded:()=>CORE.get(KEY).data!==undefined,overdue};
+(window.DPOPS_EXTRA=window.DPOPS_EXTRA||[]).push({h:"utilities",hidden:true,show:on,view:()=>P().openOffice("util")});
 CORE.render();
 document.addEventListener("click",e=>{const t=e.target.closest("[data-utdone],[data-utnote],[data-utnotego],[data-utmail],[data-utfu],[data-utko],[data-utkgo],[data-utkx],[data-utadd],[data-utref],[data-utprov],[data-utpsave],[data-utpx]");if(!t)return;const d=t.dataset;
   if(d.utdone!=null){markDone(d.utdone,t);return}
@@ -7392,7 +7430,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-utdone],[d
   if(d.utnotego!=null){const i=document.querySelector(`[data-utnotev="${d.utnotego}"]`);if(i)U.note[d.utnotego]=i.value;logNote(d.utnotego,t);return}
   if(d.utmail!=null){const key=d.utmail;U.open[key]=!U.open[key];if(U.open[key]&&!(U.mail[key]&&U.mail[key].list)){const [jid,k]=key.split("|");const j=(U.data||[]).find(x=>x.id===jid);if(j)loadMail(j,k)}else rr();return}
   if(d.utfu!=null){const [jid,k]=d.utfu.split("|");followUp(jid,k);return}
-  if(d.utko!=null){U.flash="";openKick(d.utko);return}if(d.utkgo!=null){e.preventDefault();createKick();return}if(d.utkx!=null){e.preventDefault();U.ko=null;rr();return}
+  if(d.utko!=null){U.flash="";openKick(d.utko,d.utat);return}if(d.utkgo!=null){e.preventDefault(); if(e.detail>1)return;createKick();return}if(d.utkx!=null){e.preventDefault();U.ko=null;rr();return}
   if(d.utadd!=null){const i=document.querySelector("[data-utaddno]");U.addNo=i?i.value:"";addByNumber();return}
   if(d.utref!=null){load(true);return}if(d.utprov!=null){U.cfgOpen=!U.cfgOpen;rr();return}if(d.utpsave!=null){saveCfg();return}if(d.utpx!=null){U.cfgOpen=false;rr();return}});
 document.addEventListener("change",e=>{if(e.target.closest("#utko")){readKick();if(U.ko&&U.ko.confirm&&!U.ko.busy){U.ko.confirm=false;U.ko.msg="";rr()}}});
@@ -7487,6 +7525,28 @@ span.co-chk{cursor:default}span.co-chk:has(.bx:not(:empty)){background:var(--ok-
 .opsrocks h2{display:flex;gap:8px;align-items:baseline;margin:0}
 
 .tm-tdtog{margin:0 0 8px}.tm-nonelist{list-style:none;padding:0!important;margin:0 0 12px}.tm-nonelist li{padding:8px 0;border-top:1px solid var(--navy-muted)}.tm-nonelist li span{color:var(--muted)}
+.tm-src{margin:-4px 0 0;font-size:var(--fs-caption);color:var(--muted)}
+button.tm-row.tm-rowb{width:100%;border:0;font:inherit;color:var(--fg);text-align:left;cursor:pointer;min-height:44px}
+.tm-row span.m,.tm-row span.s{display:block}.tm-row span.r{display:block}
+button.tm-row.tm-rowb:hover b.t{text-decoration:underline}
+button.tm-row.tm-rowb:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.tm-sec>.kpis{margin:0}
+.opsmenu{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 10px;background:var(--surface-2);border-radius:10px}
+.opsmenu .opsb,.opsacts .opsmore{min-height:44px}
+.opsplan{display:grid;gap:10px;margin-top:6px}
+.opsrest{margin-top:12px}.opsrest .rows{margin-bottom:10px}
+p.opsalert{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+.wzshare{display:grid;gap:10px}
+ul.dig.plist li.prow>.prow-b{display:grid;grid-template-columns:minmax(0,1fr) auto 14px;gap:2px 12px;align-items:center;width:100%;padding:11px 0;min-height:44px;background:none;border:0;border-radius:0;color:var(--fg);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+ul.dig.plist li.prow>.prow-b:hover b{text-decoration:underline}
+ul.dig.plist li.prow>.prow-b:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+ul.dig.plist .plast{grid-column:1;grid-row:3;font-size:var(--fs-caption);color:var(--muted);min-width:0;overflow:hidden;white-space:normal;-webkit-line-clamp:2}
+ul.dig.plist li.prow>.prow-b .pamt{grid-row:1/4}
+ul.dig.plist li.prow>.prow-b .go{grid-column:3;grid-row:1/4;transition:transform .15s}
+ul.dig.plist li.prow.on>.prow-b .go{transform:rotate(90deg)}
+.pext.pgone{padding-top:0}
+@media (prefers-reduced-motion:reduce){ul.dig.plist li.prow>.prow-b .go{transition:none}}
+.opsrow .sub .opsjt,.opsrow .opst a{z-index:1}
 </style>
 <script>
 (function(){
@@ -7496,7 +7556,7 @@ const esc=CORE.esc||(s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&l
 const SHEETS="@@SRV:sheets@@",DRIVE="@@SRV:drive@@";
 const KEY="team:rollup",KTODO="team:todos",KMETA="team:meta";
 const TTL=5*60e3,G={label:"Google Sheets"},JT={label:"JobTread"};
-const T={pm:"All",apm:"",tab:"site",sheetId:"",snaps:null,adminDays:[],notesBusy:false};
+const T={pm:"All",wantAdmin:false,fold:{},sheetId:"",snaps:null,adminDays:[],notesBusy:false};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const today=()=>CORE.day(0);
 const dOf=d=>new Date(String(d).slice(0,10)+"T12:00:00");
@@ -7615,92 +7675,170 @@ const meta=()=>{const m=CORE.get(KMETA).data||{days:[],snaps:{}};if(T.snaps)m.sn
 
 const pipe=()=>{const r=window.__dpReview&&window.__dpReview();return (r&&r.pipeline)||{proposals:[],invoices:[]}};
 function pmNames(){const s=new Set();const pl=pipe();(pl.proposals||[]).concat(pl.invoices||[]).forEach(x=>pmsOf(x).forEach(n=>pmOk(n)&&s.add(n)));
+  (CORE.get("ops:jobs").data||[]).forEach(j=>(j.pm||[]).forEach(n=>pmOk(n)&&s.add(n)));
   const have=new Set([...s].map(norm));roll().people.forEach(p=>{if(!/operat|admin|office|^ops$/i.test(p.role)&&!have.has(norm(p.name)))s.add(p.name)});return [...s].sort((a,b)=>a.localeCompare(b))}
 const same=(a,b)=>norm(a)===norm(b);
 const owed=x=>{const P=window.__dpPipe;if(P&&P.due)return P.due(x);const v=x.balance!=null&&x.balance!==""?x.balance:x.amountDue!=null&&x.amountDue!==""?x.amountDue:x.amount;const n=parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,""));return isFinite(n)?n:0};
 
-function gather(pm){const pl=pipe(),ro=roll(),td=CORE.get(KTODO).data||[];
+const WAIT_DEF="Open client asks, selections not settled and orders not delivered yet.";
+function waitingOf(rows){const of=k=>rows.filter(r=>r.kind===k);const by=(a,b)=>String(a.date).localeCompare(String(b.date));
+  const asks=of("ask").sort(by),sels=of("selection").filter(x=>!/approved|final|installed|ordered/i.test(x.status)),orders=of("order").filter(x=>!/delivered|received|cancel/i.test(x.status)).sort(by);
+  return{asks,sels,orders,n:asks.length+sels.length+orders.length}}
+function gather(pm){const ro=roll(),td=CORE.get(KTODO).data||[];const ps=PS(pm);
   const mine=ro.rows.filter(r=>same(r.pm,pm));const of=k=>mine.filter(r=>r.kind===k);
   const sharing=ro.people.some(p=>same(p.name,pm)&&!p.err);
-  const contacts=of("contact").slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  const fu=(job,number,kind)=>{const l=contacts.filter(c=>c.job&&c.job===job);const tx=c=>c.title+" "+c.detail;const ex=l.filter(c=>number&&tx(c).includes(number));if(ex.length)return ex;
-    const re=kind==="inv"?/invoice|pay|deposit|check|balance|draw/i:/proposal|estimate|change order|approv|sign/i;return l.filter(c=>re.test(tx(c))&&!/\b\d{3,6}-\d+\b/.test(tx(c)))};
-  const inv=(pl.invoices||[]).filter(x=>pmsOf(x).includes(pm)).sort((a,b)=>(b.daysOverdue||0)-(a.daysOverdue||0)).map(x=>({k:"inv:"+x.number,l:`Invoice ${x.number}, ${x.customer||""}`,x,fu:fu(jobNo({number:x.number}),x.number,"inv")}));
-  const props=(pl.proposals||[]).filter(x=>pmsOf(x).includes(pm)&&!/approved|declined/i.test(x.status||"")).sort((a,b)=>(b.days||0)-(a.days||0)).map(x=>({k:"prop:"+x.number,l:`Proposal ${x.number}, ${x.customer||""}`,x,fu:fu(jobNo({number:x.number}),x.number,"prop")}));
-  const asks=of("ask").sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(x=>({k:"ask:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
-  const sels=of("selection").filter(x=>!/approved|final|installed|ordered/i.test(x.status)).map(x=>({k:"sel:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
-  const orders=of("order").filter(x=>!/delivered|received|cancel/i.test(x.status)).map(x=>({k:"ord:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
-  const cost=of("cost").map(x=>{const d=x.data||{};const m=d.marginPct!=null?+d.marginPct:null,good=d.goodPct!=null?+d.goodPct:window.DPOrg.margin().good;return{k:"cost:"+x.job,l:`${x.customer||"Job "+x.job}: margin ${m==null?"?":m+"%"}`,x,m,good,low:m!=null&&m<good}}).filter(c=>c.low).sort((a,b)=>a.m-b.m);
+  const fu=(x,inv)=>{const X=window.__dpPipe;return X&&X.notes?X.notes(x,inv):[]};
+  const inv=ps.overdue.slice().sort((a,b)=>(b.daysOverdue||0)-(a.daysOverdue||0)).map(x=>({k:"inv:"+x.number,l:`Invoice ${x.number}, ${x.customer||""}`,x,fu:fu(x,true)}));
+  const props=ps.pend.slice().sort((a,b)=>(b.days||0)-(a.days||0)).map(x=>({k:"prop:"+x.number,l:`Proposal ${x.number}, ${x.customer||""}`,x,fu:fu(x,false)}));
+  const W=waitingOf(mine);
+  const asks=W.asks.map(x=>({k:"ask:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
+  const sels=W.sels.map(x=>({k:"sel:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
+  const orders=W.orders.map(x=>({k:"ord:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
   const todos=td.filter(t=>t.people.some(n=>same(n,pm))&&!(window.DPRocks&&DPRocks.is(t.name))).sort((a,b)=>String(a.due).localeCompare(String(b.due))).map(x=>({k:"todo:"+x.id,l:`To-do: ${x.name}`,x}));
   const site=of("site").filter(x=>x.date>=today()&&x.date<=CORE.day(6)&&!/cancel/i.test(x.status)).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  return{inv,props,asks,sels,orders,cost,todos,site,sharing,all:[].concat(inv,props,asks,sels,orders,cost,todos)}}
+  const od=todoLists(pm,{todos}).od;
+  return{inv,props,asks,sels,orders,todos,od,site,sharing,all:[].concat(inv,props,asks,sels,orders,od)}}
 
 const kpi=(v,l,c)=>`<div class="kpi${c?" "+c:""}"><b>${v}</b><span>${esc(l)}</span></div>`;
 const chips=(names,cur,attr,all)=>`<div class="chips tm-chips" role="group" aria-label="Project manager">${(all?[["All","Everyone"]]:[]).concat(names.map(n=>[n,n])).map(([v,l])=>`<button type="button" data-${attr}="${esc(v)}" aria-pressed="${cur===v}">${esc(l)}</button>`).join("")}</div>`;
-const sec=(title,n,body,empty)=>`<section class="tm-sec"><h2>${esc(title)}${n?`<span class="cnt">${n}</span>`:""}</h2>${n?`<div class="tm-list">${body}</div>`:`<div class="empty">${esc(empty)}</div>`}</section>`;
+const sec=(title,n,body,empty,from)=>`<section class="tm-sec"><h2>${esc(title)}${n?`<span class="cnt">${n}</span>`:""}</h2>${from||""}${n?`<div class="tm-list">${body}</div>`:`<div class="empty">${esc(empty)}</div>`}</section>`;
 let EQ=[];
-const asec=(title,n,body,empty)=>{if(!n&&!/^Loading/.test(String(empty||""))){EQ.push([title,empty]);return ""}return sec(title,n,body,empty)};
+const asec=(title,n,body,empty,from)=>{if(!n&&!/^Loading/.test(String(empty||""))){EQ.push([title,empty]);return ""}return sec(title,n,body,empty,from)};
 const noneGroup=()=>EQ.length?`<details class="tm-clr tm-none" data-tmnone${T.noneOpen?" open":""}><summary>Nothing to review (${EQ.length})</summary><ul class="tm-nonelist">${EQ.map(([t,e])=>`<li><b>${esc(t)}</b><span> ${esc(e||"")}</span></li>`).join("")}</ul></details>`:"";
 const jobBit=x=>[x.customer,x.address,x.job?"Job "+x.job:""].filter(Boolean).map(esc).join(" · ");
 const cap=v=>{v=String(v||"");return v?v.charAt(0).toUpperCase()+v.slice(1):v};
 const srcWord=s=>({email:"Email",text:"Text",call:"Call",meeting:"Meeting",jobtread:"JobTread"}[String(s||"").toLowerCase()]||"");
 const link=x=>/^https:\/\//i.test(String(x.link||""))?` ${CORE.link(x.link,"Open source")}`:"";
-function fuLine(list,sharing){if(list&&list.length){const c=list[0];return `<div class="f"><b>Last follow-up ${esc(fmtD(c.date))}${srcWord(c.src)?" · "+srcWord(c.src):""}:</b> ${esc(c.title)}${c.detail?" "+esc(c.detail):""}${list.length>1?` <span class="opsmeta">(+${list.length-1} earlier)</span>`:""}</div>`}
-  return sharing?`<div class="f none">No follow-up with the client is logged yet.</div>`:""}
+const noteD=v=>{const t=Date.parse(v);return t?new Date(t).toLocaleDateString([],{month:"short",day:"numeric"}):""};
+function fuLine(list,always){if(list&&list.length){const c=list[0];return `<div class="f"><b>Last note${noteD(c.at)?" "+esc(noteD(c.at)):""}${c.by?" · "+esc(c.by):""}:</b> ${esc(String(c.text||"").replace(/\s+/g," "))}${list.length>1?` <span class="opsmeta">(+${list.length-1} earlier)</span>`:""}</div>`}
+  return always?`<div class="f none">No notes on it yet.</div>`:""}
 function sinceTag(k,snap){if(!snap)return "";return snap.keys&&snap.keys[k]?`<span class="tm-tag still">Open since ${esc(fmtD(snap.date))}</span>`:`<span class="tm-tag new">New</span>`}
 const offNote=()=>{const ro=CORE.get(KEY);const d=ro.data;
   if(ro.status==="error"&&d===undefined){const denied=/denied|not_granted/.test((ro.err&&ro.err.code)||"")||/permission|do(es)? not have|access denied|forbidden|\b403\b/i.test((ro.err&&ro.err.raw)||"");
     return denied?`<div class="tm-note warn" role="status">You don't have access to your company's team roll-up sheet yet. Ask ${esc((window.DPOrg&&window.DPOrg.support)||"the person who shared this with you")} to share it with you. Money and to-dos below still come live from JobTread.</div>`:CORE.errorBox(ro.err,KEY,G)}
   if(d&&d.off&&d.found&&reader())return `<div class="tm-bar"><p><b>Your company's team roll-up is on.</b><small>Connect this page to it to see each project manager's site schedule, selections, orders, open asks and follow-ups here. Only job-level summaries are shared, never personal messages.</small></p><button type="button" class="opsb pri" data-tmlink${CORE.confirmOpen("team:link")?' aria-expanded="true"':""}>Connect to team roll-up</button>${CORE.confirmHtml("team:link")}</div>`;
   if(d&&d.off)return `<div class="tm-bar"><p><b>Team roll-up is off.</b><small>Turn it on to see each project manager's site schedule, selections, orders, open asks and follow-ups here. Only job-level summaries are shared, never personal messages.</small></p>${reader()?`<button type="button" class="opsb pri" data-tmon${CORE.confirmOpen("team:on")?' aria-expanded="true"':""}>Turn on team roll-up</button>`:`<span class="opsmeta">An owner or operations manager turns this on.</span>`}${CORE.confirmHtml("team:on")}</div>`;
-  if(d&&!d.off&&d.meReader===false&&reader()&&!d.isOwner)return `<div class="tm-note" role="status">You're not on the team roll-up's reader list yet. Ask ${esc((d.owner&&d.owner.name)||"the person who turned the roll-up on")} to add you under Team activity › Who can see everyone's rows. Each project manager's next update then shares their job-level summaries with you.</div>`;
+  if(d&&!d.off&&d.meReader===false&&reader()&&!d.isOwner)return `<div class="tm-note" role="status">You're not on the team roll-up's reader list yet. Ask ${esc((d.owner&&d.owner.name)||"the person who turned the roll-up on")} to add you under Setup › Team roll-up. Each project manager's next update then shares their job-level summaries with you.</div>`;
   return ""};
 
 function todoLists(pm,g){needTodosAll(pm);const d=CORE.get(KTALL+pm).data;const seen=new Set(),all=[];const ok=t=>!(window.DPRocks&&DPRocks.is(t.name));
-  g.todos.map(t=>t.x).concat(d||[]).forEach(x=>{if(!x||seen.has(x.id)||!ok(x))return;seen.add(x.id);all.push({k:"todo:"+x.id,x})});
+  g.todos.map(t=>t.x).concat(d||[]).forEach(x=>{if(!x||seen.has(x.id)||!ok(x))return;seen.add(x.id);all.push({k:"todo:"+x.id,l:"To-do: "+x.name,x})});
   const by=(a,b)=>String(a.x.due||"9").localeCompare(String(b.x.due||"9"));all.sort(by);
   return{all,od:all.filter(({x})=>x.due&&x.due<today())}}
 function todosSec(pm,g,snap){const all=!!T.tdAll;let list,empty,title;const TL=todoLists(pm,g);
   if(all){const c=CORE.get(KTALL+pm);const d=c.data;title="All open JobTread to-dos";list=TL.all;
     empty=d===undefined?(c.status==="error"?"Couldn't load the to-dos from JobTread.":"Loading to-dos from JobTread…"):"No open to-dos on "+first(pm)+"'s jobs."}
   else{title="Overdue JobTread to-dos";list=TL.od;empty=CORE.get(KTODO).data===undefined?"Loading to-dos from JobTread…":"No overdue to-dos."}
-  const row=({k,x})=>{const late=x.due&&x.due<today();return `<div class="tm-row"><div class="m"><b class="t">${esc(x.name)}</b>${sinceTag(k,snap)}<div class="s">${x.job?"Job "+esc(x.job.number):"No job"}</div></div><div class="r${late?" crit":""}">${x.due?"Due "+esc(fmtD(x.due)):"No due date"}${late?`<small>${ageDays(x.due)} ${plural(ageDays(x.due),"day")} late</small>`:""}</div></div>`};
+  const row=({k,x})=>{const late=x.due&&x.due<today();return `<div class="tm-row"><div class="m"><b class="t">${esc(x.name)}</b>${late?sinceTag(k,snap):""}<div class="s">${x.job?"Job "+esc(x.job.number):"No job"}</div></div><div class="r${late?" crit":""}">${x.due?"Due "+esc(fmtD(x.due)):"No due date"}${late?`<small>${ageDays(x.due)} ${plural(ageDays(x.due),"day")} late</small>`:""}</div></div>`};
   const tg=`<div class="chips tm-chips tm-tdtog" role="group" aria-label="Which to-dos to show"><button type="button" data-tmtd="od" aria-pressed="${!all}">Overdue</button><button type="button" data-tmtd="all" aria-pressed="${all}">All open</button></div>`;
   const body=list.length?`<div class="tm-list">${list.map(row).join("")}</div>`:`<div class="empty">${esc(empty)}</div>`;
-  return `<section class="tm-sec"><h2>${esc(title)}${list.length?`<span class="cnt">${list.length}</span>`:""}</h2>${tg}${body}${all&&CORE.get(KTALL+pm).status==="error"?CORE.errorBox(CORE.get(KTALL+pm).err,KTALL+pm,JT):""}</section>`}
-function vAdmin(){EQ=[];needRoll();needTodos();needMeta();needCleared();
-  const names=pmNames();const m=meta();
-  if(!T.apm||!names.includes(T.apm)){const up=m.days.filter(d=>d.date>=today()&&names.includes(d.pm)).sort((a,b)=>a.date.localeCompare(b.date))[0];T.apm=up?up.pm:(names[0]||"")}
-  const head=window.DPPageHead("Admin day","Everything to go over with a project manager, in one place: overdue invoices and how they've been followed up, proposals and change orders waiting, margins, invoicing, work orders and what's been paid, jobs paid in full, who is waiting on an answer, selections, orders and overdue to-dos."+(P().updLine?P().updLine(KEY).replace(/JobTread/g,"JobTread and the team roll-up"):""));
-  if(!names.length)return head+offNote()+(CORE.box(KEY,{loading:"Loading the team roll-up…",rows:3})||`<div class="empty">No project managers found yet. They show up here once the pipeline has loaded or someone starts sharing to the team roll-up.</div>`);
-  const pm=T.apm,g=gather(pm),snap=m.snaps[pm]||null;needLive(pm);if(coMod())needCo();
+  return `<section class="tm-sec"><h2>${esc(title)}${list.length?`<span class="cnt">${list.length}</span>`:""}</h2>${src("JobTread to-dos, read live",loadAt(all?KTALL+pm:KTODO))}${tg}${body}${all&&CORE.get(KTALL+pm).status==="error"?CORE.errorBox(CORE.get(KTALL+pm).err,KTALL+pm,JT):""}</section>`}
+const PS=pm=>{const X=window.__dpPipe;return X&&X.stats?X.stats(pipe(),pm):{pend:[],overdue:[],openValue:0,openCount:0,arOverdue:0}};
+const pipeAt=()=>{const r=window.__dpReview&&window.__dpReview();return (r&&r.generatedAt)||""};
+const rollAt=()=>{const m=Math.max(0,...roll().people.map(p=>Date.parse(p.at)||0));return m?new Date(m).toISOString():""};
+const loadAt=k=>{const s=CORE.get(k);return s&&s.at?new Date(s.at).toISOString():""};
+const src=(what,at)=>`<p class="tm-src">${esc(what)}${fmtAt(at)?" · as of "+esc(fmtAt(at)):""}</p>`;
+const r1=n=>Math.round(n*10)/10;
+function jobMargin(no,live){const hm=window.__hubMargin;if(!hm)return null;no=String(no||"");
+  const hub=(window.__hubJobList?window.__hubJobList():[]).find(j=>(j.jobs||[]).some(n=>String(n.number)===no));
+  const out=(m,src)=>({pct:r1(m.fc),src,price:Math.round(m.price),cost:Math.round(Math.max(m.budget,m.spend))});
+  if(hub){const m=hm(hub);if(m&&!m.na)return out(m,"Job costing")}
+  if(live&&live.price>0){const m=hm({costing:{budgetPrice:live.price,budgetCost:live.budget,actualCost:live.bills}});if(m&&!m.na)return out(m,"JobTread documents")}
+  return null}
+window.__dpJobMargin=jobMargin;
+const stageOf=f=>/Planning/i.test(f)?"plan":/Progress/i.test(f)?"wip":"fin";
+const opsJobs=()=>P()&&P().jobs?P().jobs():{data:undefined};
+const jobPms=j=>(j.pm||[]).filter(pmOk);
+function activeOf(pm){const A=opsJobs().data;if(A===undefined)return undefined;return (A||[]).filter(j=>pm==="No PM"?!jobPms(j).length:jobPms(j).some(n=>same(n,pm)))}
+function jobsFor(pm){const A=activeOf(pm);if(A===undefined)return undefined;const L=pm!=="No PM"?liveOf(pm):undefined;
+  return A.map(a=>{const lj=L&&L.jobs.find(x=>String(x.number)===String(a.number));if(lj)return Object.assign({},lj,{flow:a.flow});
+    const mg=jobMargin(a.number);
+    return{id:a.id,number:String(a.number),name:"",customer:"",address:a.address||"",created:"",flow:a.flow,price:0,cost:0,margin:mg?mg.pct:null,msrc:mg?mg.src:"",mprice:mg?mg.price:0,mcost:mg?mg.cost:0,
+      lastInv:"",invDays:null,openBills:{n:0,amt:0},unpaidWO:[],paidFull:false,paidAt:"",props:[],nolive:true}})}
+const marginSrc=j=>j.margin==null?"no approved proposal":[j.msrc||"margin",j.mprice?`price ${money(j.mprice)}, cost ${money(j.mcost)}`:""].filter(Boolean).join(" · ");
+function stamp(){const ks=[KEY,KTODO,"ops:jobs",KLIVE+T.pm];const t=Math.max(0,...ks.map(k=>CORE.get(k).at||0));const busy=ks.some(k=>CORE.get(k).busy&&CORE.get(k).data!==undefined);
+  return ` <span class="opsupd" role="status">${busy?"Updating…":t?"Updated "+esc(new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):""}</span>`}
+const pmChips=(names,cur)=>`<div class="chips tm-chips" role="group" aria-label="Project manager">${[["All","Everyone"]].concat(names.map(n=>[n,n])).map(([v,l])=>`<button type="button" data-tmpm="${esc(v)}" aria-pressed="${cur===v}">${esc(l)}</button>`).join("")}</div>`;
+const siteRow=(x,who,dated)=>`<div class="tm-row"><div class="m"><b class="t">${esc([x.who,x.title].filter(Boolean).join(": "))}</b>${/tentative|changed/i.test(x.status)?`<span class="tm-tag">${esc(cap(x.status))}</span>`:""}<div class="s">${jobBit(x)}${who(x)}${link(x)}</div></div><div class="r">${dated?esc(fmtD(x.date)):esc(x.detail||"")}<small>${esc(dated?x.detail||srcWord(x.src):srcWord(x.src))}</small></div></div>`;
+const askRow=(x,who,snap,k)=>{const a=ageDays(x.date);return `<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${k?sinceTag(k,snap):""}${/urgent/i.test(x.status)?'<span class="tm-tag hot">Urgent</span>':""}<div class="s">${jobBit(x)}${x.who?" · from "+esc(x.who):""}${who(x)}</div></div><div class="r${a>=3?" crit":""}">${!x.date?"":a?a+" "+plural(a,"day"):"Today"}<small>${esc(srcWord(x.src))}</small></div></div>`};
+const selRow=(x,who,snap,k)=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${k?sinceTag(k,snap):""}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}${who(x)}</div></div><div class="r">${esc(cap(x.status)||"Pending")}<small>${esc(fmtD(x.date))}</small></div></div>`;
+const ordRow=(x,who,snap,k)=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${k?sinceTag(k,snap):""}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}${who(x)}</div></div><div class="r">${esc(cap(x.status)||"Ordered")}<small>${esc(fmtD(x.date))}</small></div></div>`;
+const fold=(title,n,body,key)=>n?`<details class="tm-clr" data-tmfold="${esc(key)}"${T.fold&&T.fold[key]?" open":""}><summary>${esc(title)} (${n})</summary><div class="tm-list">${body}</div></details>`:"";
+function adminPick(names){const m=meta();const up=m.days.filter(d=>d.date>=today()&&names.includes(d.pm)).sort((a,b)=>a.date.localeCompare(b.date))[0];return up?up.pm:(names[0]||"All")}
+function vTeamPage(){EQ=[];needRoll();needTodos();needMeta();opsJobs();
+  const names=pmNames();
+  if(T.wantAdmin&&CORE.get(KMETA).data!==undefined&&names.length){T.pm=adminPick(names);T.wantAdmin=false}
+  if(T.pm!=="All"&&names.length&&!names.includes(T.pm))T.pm="All";
+  const pm=T.pm!=="All"?T.pm:"";
+  const head=window.DPPageHead("Team",(pm?esc(pm)+"'s money, open asks, site visits, jobs and to-dos.":"Money, open asks, who's on site and every job, by project manager.")+stamp());
+  if(T.wantAdmin)return head+(CORE.box(KMETA,{loading:"Loading…",rows:2,label:"your page"})||`<div class="empty" role="status">Loading…</div>`);
+  if(!names.length)return head+offNote()+((P()&&P().jobsBox&&P().jobsBox())||CORE.box(KEY,{loading:"Loading the team roll-up…",rows:3})||`<div class="empty">No project managers found yet. They show up here once the pipeline or JobTread's active jobs have loaded, or someone starts sharing to the team roll-up.</div>`);
+  return head+pmChips(names,T.pm)+offNote()+lockBar(roll())+(pm?pmView(pm):everyone(names))}
+
+function everyone(names){const s=PS("All");const ro=roll(),has=CORE.get(KEY).data!==undefined&&!ro.off&&ro.people.length>0;const t=window.DPOrg.margin().target;
+  const who=x=>` · <b>${esc(first(x.pm))}</b>`;
+  const per=names.map(n=>{const x=PS(n);return{n,w:x.openValue,wn:x.pend.length,o:x.arOverdue,on:x.overdue.length}}).filter(r=>r.wn||r.on);
+  const noPm=x=>!pmsOf(x).some(pmOk),A=(window.__dpPipe&&window.__dpPipe.amt)||num;const np={wn:s.pend.filter(noPm).length,on:s.overdue.filter(noPm).length};
+  np.w=s.pend.filter(noPm).reduce((a,x)=>a+A(x.amount),0);np.o=s.overdue.filter(noPm).reduce((a,x)=>a+owed(x),0);
+  const rowIn=r=>`<span class="m"><b class="t">${esc(r.n)}</b><span class="s">${r.wn||r.n!=="No PM"?`${r.wn} ${plural(r.wn,"proposal")} waiting · ${money(r.w)||"$0"}`:"No project manager on JobTread or QuickBooks"}</span></span><span class="r${r.o>0?" crit":""}">${r.on?money(r.o):"None"}<small>overdue</small></span>`;
+  const moneyS=`<section class="tm-sec" data-tmsec="money"><h2>Money</h2>${src("Pipeline, from your morning update",pipeAt())}
+    <div class="kpis">${kpi(money(s.openValue)||"$0",`Proposals waiting (${s.pend.length})`)}${kpi(money(s.arOverdue)||"$0",`Overdue invoices (${s.overdue.length})`,s.arOverdue>0?"crit":"")}</div>
+    ${per.length||np.wn||np.on?`<div class="tm-list">${per.map(r=>`<button type="button" class="tm-row tm-rowb" data-tmpm="${esc(r.n)}">${rowIn(r)}</button>`).join("")}${np.wn||np.on?`<div class="tm-row" data-tmnopm>${rowIn(Object.assign({n:"No PM"},np))}</div>`:""}</div>`:""}
+    <p class="tm-link"><a class="opsb" href="#pipeline">Open Pipeline</a></p></section>`;
+  let waiting="",site="";
+  if(has){const rows=ro.rows;const of=k=>rows.filter(r=>r.kind===k);
+    const W=waitingOf(rows.filter(r=>names.some(n=>same(n,r.pm))));const asks=W.asks,sels=W.sels,orders=W.orders;
+    waiting=`<section class="tm-sec" data-tmsec="waiting" data-tmwait="${W.n}"><h2>Waiting${W.n?`<span class="cnt">${W.n}</span>`:""}</h2><p class="opsmeta tm-def">${esc(WAIT_DEF)}</p>${src("Team roll-up, from each person's updates",rollAt())}
+      ${asks.length?`<div class="tm-list">${asks.map(x=>askRow(x,who)).join("")}</div>`:`<div class="empty">${W.n?"No open client asks.":"Nothing is waiting right now."}</div>`}
+      ${fold("Selections not settled",sels.length,sels.map(x=>selRow(x,who)).join(""),"sels")}${fold("Open orders",orders.length,orders.map(x=>ordRow(x,who)).join(""),"orders")}</section>`;
+    const sv=of("site").filter(x=>x.date>=today()&&x.date<=CORE.day(6)&&!/cancel/i.test(x.status)).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.pm).localeCompare(String(b.pm)));
+    let last="";site=`<section class="tm-sec" data-tmsec="site"><h2>On site this week${sv.length?`<span class="cnt">${sv.length}</span>`:""}</h2>${src("Team roll-up",rollAt())}
+      ${sv.length?`<div class="tm-list">${sv.map(x=>{const h=x.date!==last?`<h3 class="tm-day">${esc(x.date===today()?"Today, "+fmtD(x.date):fmtDow(x.date))}</h3>`:"";last=x.date;return h+siteRow(x,who)}).join("")}</div>`:`<div class="empty">Nothing is scheduled on site in the next 7 days.</div>`}</section>`}
+  else if(CORE.get(KEY).data!==undefined&&!ro.off)waiting=`<div class="tm-note" role="status">Team roll-up is on. Open asks and site visits fill in after each person's next scheduled update.</div>`;
+  const J=opsJobs();let jobs;
+  if(J.data===undefined)jobs=`<section class="tm-sec" data-tmsec="jobs"><h2>Jobs</h2>${(P()&&P().jobsBox&&P().jobsBox())||""}</section>`;
+  else{
+    const who=[...new Set((J.data||[]).flatMap(j=>jobPms(j).length?jobPms(j):["No PM"]))];
+    const ws=who.map(n=>{const js=jobsFor(n)||[];if(n!=="No PM")needLive(n);const w={n,plan:0,wip:0,fin:0,under:0,priced:0,checking:n!=="No PM"&&!liveOk(n),failed:n!=="No PM"&&!liveOk(n)&&CORE.get(KLIVE+n).status==="error"&&!CORE.get(KLIVE+n).busy};
+      js.forEach(j=>{w[stageOf(j.flow)]++;if(j.margin!=null){w.priced++;if(j.margin<t)w.under++}});return w})
+      .sort((a,b)=>(a.n==="No PM")-(b.n==="No PM")||(b.plan+b.wip+b.fin)-(a.plan+a.wip+a.fin)||a.n.localeCompare(b.n));
+    jobs=`<section class="tm-sec" data-tmsec="jobs"><h2>Jobs${ws.length?`<span class="cnt">${(J.data||[]).length}</span>`:""}</h2>${src(`Active jobs: JobTread · margin: Job costing, target ${t}%`,loadAt("ops:jobs"))}
+      ${ws.length?`<div class="tm-list">${ws.map(w=>{const tot=w.plan+w.wip+w.fin;const tag=w.n!=="No PM"&&names.includes(w.n);const inner=`<span class="m"><b class="t">${esc(w.n)}</b><span class="s">${w.plan} planning · ${w.wip} in progress · ${w.fin} final stage</span></span><span class="r${w.under?" crit":""}" data-tmjobs="${tot}" data-tmunder="${w.under}">${tot} active<small>${w.failed?"margins didn't load: open to try again":w.checking?"checking margins…":w.under?w.under+" under "+t+"% margin":w.priced?"all at "+t+"%+":"no margin yet"}</small></span>`;
+        return tag?`<button type="button" class="tm-row tm-rowb" data-tmpm="${esc(w.n)}">${inner}</button>`:`<div class="tm-row">${inner}</div>`}).join("")}</div>`:`<div class="empty">No active jobs in JobTread right now.</div>`}</section>`}
+  return moneyS+waiting+site+jobs+(CORE.get(KEY).data!==undefined&&!ro.off?whoSharing(ro):"")}
+function whoSharing(ro){const tm=[...new Set(pmNames().concat((CFG.office||[]).map(o=>o&&o[0])).concat(CFG.name?[CFG.name]:[]).filter(Boolean))].map(n=>({name:n}));
+  const seen=new Set(ro.people.map(p=>norm(p.name)));const missing=tm.filter(t=>!seen.has(norm(t.name)));
+  const cards=ro.people.map(p=>{const late=p.at&&Date.now()-Date.parse(p.at)>36*3600e3;return `<div class="${p.err?"off":late?"late":""}"><b>${esc(p.name)}</b><small>${p.err?"Couldn't read their page of the roll-up":`${esc(fmtAt(p.at)||"No time recorded")} · ${p.n} ${plural(p.n,"line")}${late?" · not updated in over a day":""}`}</small></div>`}).join("")+
+    missing.map(t=>`<div class="off"><b>${esc(t.name)}</b><small>Not sharing yet (starts on its own once their Workspace is set up and updated)</small></div>`).join("");
+  const lateN=ro.people.filter(p=>p.err||(p.at&&Date.now()-Date.parse(p.at)>36*3600e3)).length;
+  return `<details class="tm-clr" data-tmfold="who"${T.fold&&T.fold.who?" open":""}><summary>Who's sharing (${ro.people.length})${lateN?` <span class="tm-tag still">${lateN} behind</span>`:""}</summary><div class="tm-who">${cards||`<div class="off"><b>No one yet</b><small>People appear here after their next scheduled update.</small></div>`}</div>
+    <p class="opsmeta">Each person's rows are visible only to the readers ${esc((ro.owner&&ro.owner.name)||"the owner")} chose${(ro.readers||[]).length?": "+esc(ro.readers.join(", ")):""}. Project managers don't see each other's jobs here.${ro.isOwner?` <button type="button" class="dpc-link" data-setup>Change readers in Setup</button>`:""}</p></details>`}
+
+function pmView(pm){const g=gather(pm),m=meta(),snap=m.snaps[pm]||null;needLive(pm);needCleared();if(coMod())needCo();const s=PS(pm);
   const day=m.days.filter(d=>d.pm===pm&&d.date>=today()).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  const tdOk=CORE.get(KTODO).data!==undefined;const avail=k=>/^(inv|prop):/.test(k)?true:/^todo:/.test(k)?tdOk:g.sharing;
+  const tdOk=CORE.get(KTODO).data!==undefined&&CORE.get(KTALL+pm).data!==undefined;const avail=k=>/^(inv|prop):/.test(k)?true:/^todo:/.test(k)?tdOk:g.sharing;
   const cleared=snap?Object.entries(snap.keys||{}).filter(([k])=>avail(k)&&!g.all.some(x=>x.k===k)).map(([,l])=>l):[];
   const nNew=snap?g.all.filter(x=>!(snap.keys||{})[x.k]).length:0,nStill=snap?g.all.length-nNew:0;
-  const invV=g.inv.reduce((s,i)=>s+owed(i.x),0),propV=g.props.reduce((s,i)=>s+(+i.x.amount||0),0);
-  const TLK=todoLists(pm,g);
+  const TLK=todoLists(pm,g);const none=x=>"";
   const bar=`<div class="tm-bar"><p><b>${esc(pm)}</b><small>${day?`Next admin day: ${esc(fmtDow(day.date))}${day.time?", "+esc(day.time):""} (from your calendar). `:""}${snap?`Last reviewed ${esc(fmtD(snap.date))}: ${nNew} new, ${nStill} still open, ${cleared.length} cleared since then.`:"Not reviewed here yet. Tap Mark reviewed after you meet, and next time this page shows what's new, what's still open and what got done."}</small></p>
     <button type="button" class="opsb pri" data-tmmark="${esc(pm)}">Mark reviewed today</button></div>`;
-  const body=`${chips(names,pm,"tmapm")}${bar}${offNote()}
-  ${!g.sharing&&!(roll().off)&&CORE.get(KEY).data!==undefined?`<div class="tm-note" role="status">${esc(first(pm))}'s Workspace isn't sharing to the team roll-up yet, so open asks, selections, orders, job costing, what's on site and follow-up notes aren't shown. Money and to-dos below are live from JobTread.</div>`:""}
-  <section class="kpis">${kpi(g.inv.length?money(invV):"None","Overdue invoices",g.inv.length?"crit":"")}${kpi(g.props.length?money(propV):"None","Proposals waiting")}${kpi(g.sharing?g.asks.length:"—","Open asks",g.asks.some(a=>ageDays(a.x.date)>=3)?"crit":"")}${kpi(TLK.od.length,"Overdue to-dos",TLK.od.length?"crit":"")}</section>
-  ${asec("Overdue invoices",g.inv.length,g.inv.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b>${sinceTag(k,snap)}<div class="s">${[x.address,"Invoice "+x.number,x.dueDate?"due "+x.dueDate:"",x.amount!=null&&x.amount!==""&&owed(x)!==num(x.amount)?"invoice total "+money(num(x.amount)):""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${money(owed(x))}<small>${x.daysOverdue||0} ${plural(x.daysOverdue||0,"day")} overdue</small></div>${fuLine(fu,g.sharing)}</div>`).join(""),"No overdue invoices.")}
+  const PSRC=src("Pipeline, from your morning update",pipeAt()),RSRC=src("Team roll-up",rollAt());
+  return `${bar}
+  ${!g.sharing&&!(roll().off)&&CORE.get(KEY).data!==undefined?`<div class="tm-note" role="status">${esc(first(pm))}'s Workspace isn't sharing to the team roll-up yet, so open asks, selections, orders, what's on site and follow-up notes aren't shown. Money, jobs and to-dos are live.</div>`:""}
+  <section class="kpis">${kpi(s.overdue.length?money(s.arOverdue):"None","Overdue invoices",s.overdue.length?"crit":"")}${kpi(s.pend.length?money(s.openValue):"None","Proposals waiting")}${kpi(g.sharing?g.asks.length:"—","Open asks",g.asks.some(a=>ageDays(a.x.date)>=3)?"crit":"")}${kpi(TLK.od.length,"Overdue to-dos",TLK.od.length?"crit":"")}</section>
+  ${asec("Overdue invoices",g.inv.length,g.inv.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b>${sinceTag(k,snap)}<div class="s">${[x.address,"Invoice "+x.number,x.dueDate?"due "+x.dueDate:"",x.amount!=null&&x.amount!==""&&owed(x)!==num(x.amount)?"invoice total "+money(num(x.amount)):""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${money(owed(x))}<small>${x.daysOverdue||0} ${plural(x.daysOverdue||0,"day")} overdue</small></div>${fuLine(fu,true)}</div>`).join(""),"No overdue invoices.",PSRC)}
+  ${asec("Proposals waiting on the client",g.props.length,g.props.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b><span class="tm-tag kind">${esc(propKind(x,pm))}</span>${sinceTag(k,snap)}<div class="s">${[x.address,x.number,x.sentDate?"sent "+x.sentDate:""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r${(x.days||0)>=30?" crit":""}">${money(x.amount)}<small>${x.days||0} ${plural(x.days||0,"day")} waiting</small></div>${fu.length?fuLine(fu,true):""}</div>`).join(""),"No proposals waiting.",PSRC)}
   ${adminNotes(pm)}
-  ${asec("Proposals waiting on the client",g.props.length,g.props.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b><span class="tm-tag kind">${esc(propKind(x,pm))}</span>${sinceTag(k,snap)}<div class="s">${[x.address,x.number,x.sentDate?"sent "+x.sentDate:""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r${(x.days||0)>=30?" crit":""}">${money(x.amount)}<small>${x.days||0} ${plural(x.days||0,"day")} waiting</small></div>${fu.length?fuLine(fu,true):""}</div>`).join(""),"No proposals waiting.")}
-  ${adminLive(pm)}
-  ${adminRocks(pm)}
-  ${g.sharing?asec("Open asks",g.asks.length,g.asks.map(({k,x})=>{const a=ageDays(x.date);return `<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}${/urgent/i.test(x.status)?'<span class="tm-tag hot">Urgent</span>':""}<div class="s">${jobBit(x)}${x.who?" · from "+esc(x.who):""}</div></div><div class="r${a>=3?" crit":""}">${!x.date?"":a?a+" "+plural(a,"day"):"Today"}<small>${esc(srcWord(x.src))}</small></div></div>`}).join(""),"Nothing is waiting on "+first(pm)+"."):""}
-  ${g.sharing?asec("Selections not settled",g.sels.length,g.sels.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}</div></div><div class="r">${esc(cap(x.status)||"Pending")}<small>${esc(fmtD(x.date))}</small></div></div>`).join(""),"Every selection on "+first(pm)+"'s jobs is settled."):""}
-  ${g.sharing?asec("Open orders",g.orders.length,g.orders.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}</div></div><div class="r">${esc(cap(x.status)||"Ordered")}<small>${esc(fmtD(x.date))}</small></div></div>`).join(""),"No open material orders."):""}
-  ${g.sharing&&!liveOk(pm)?asec("Jobs under the margin target",g.cost.length,g.cost.map(({k,x,m,good})=>{const d=x.data||{};return `<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"Job "+x.job)}</b>${sinceTag(k,snap)}<div class="s">${[x.address,x.job?"Job "+x.job:"",d.approved!=null?"approved "+money(d.approved):"",d.spent!=null?"spent "+money(d.spent):"",d.left!=null?money(d.left)+" left in budget":""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${m}%<small>target ${good}%+</small></div></div>`}).join(""),"Every job is at or above the margin target."):""}
+  ${g.sharing?asec("Waiting on "+first(pm),g.asks.length+g.sels.length+g.orders.length,(g.asks.length?g.asks.map(({k,x})=>askRow(x,none,snap,k)).join(""):`<div class="empty">No open asks.</div>`)+
+      fold("Selections not settled",g.sels.length,g.sels.map(({k,x})=>selRow(x,none,snap,k)).join(""),"psels")+fold("Open orders",g.orders.length,g.orders.map(({k,x})=>ordRow(x,none,snap,k)).join(""),"porders"),"Nothing is waiting on "+first(pm)+".",`<p class="opsmeta tm-def">${esc(WAIT_DEF)}</p>`+RSRC):""}
+  ${g.sharing?asec("On site this week",g.site.length,g.site.map(x=>siteRow(x,none,true)).join(""),"Nothing scheduled on site in the next 7 days.",RSRC):""}
+  ${pmJobs_(pm)}
   ${todosSec(pm,g,snap)}
-  ${g.sharing?asec("On site this week",g.site.length,g.site.map(x=>`<div class="tm-row"><div class="m"><b class="t">${esc([x.who,x.title].filter(Boolean).join(": "))}</b>${/tentative|changed/i.test(x.status)?`<span class="tm-tag">${esc(cap(x.status))}</span>`:""}<div class="s">${jobBit(x)}</div></div><div class="r">${esc(fmtD(x.date))}<small>${esc(x.detail||"")}</small></div></div>`).join(""),"Nothing scheduled on site in the next 7 days."):""}
+  ${adminRocks(pm)}
   ${noneGroup()}
-  ${cleared.length?`<details class="tm-clr"><summary>Cleared since ${esc(fmtD(snap.date))} (${cleared.length})</summary><ul>${cleared.slice(0,60).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></details>`:""}`;
-  return head+body}
+  ${cleared.length?`<details class="tm-clr"><summary>Cleared since ${esc(fmtD(snap.date))} (${cleared.length})</summary><ul>${cleared.slice(0,60).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></details>`:""}`}
 
-async function markReviewed(pm){if(CORE.get(KEY).busy||CORE.get(KTODO).busy||CORE.get(KTODO).data===undefined||CORE.get(KEY).data===undefined){CORE.toast("Still loading. Try again in a moment.");return}
+async function markReviewed(pm){if(CORE.get(KEY).busy||CORE.get(KTODO).busy||CORE.get(KTODO).data===undefined||CORE.get(KEY).data===undefined||CORE.get(KTALL+pm).data===undefined){CORE.toast("Still loading. Try again in a moment.");return}
   const g=gather(pm);const old=(meta().snaps[pm]||{}).keys||{};const keys={};g.all.slice(0,400).forEach(x=>keys[x.k]=String(x.l).slice(0,140));
   if(!g.sharing)Object.entries(old).forEach(([k,l])=>{if(/^(ask|sel|ord|cost):/.test(k))keys[k]=l});const prevSnaps=T.snaps;
   const m=meta();const snaps=Object.assign({},m.snaps,{[pm]:{date:today(),at:Date.now(),keys}});T.snaps=snaps;rr();
@@ -7716,7 +7854,7 @@ const strList=v=>Array.isArray(v)?v.map(x=>typeof x==="string"?x.trim():"").filt
 const PMF=(JTF.pm&&JTF.pm.name)||"Project Consultant";
 const street=a=>String(a||"").split(",")[0].trim();
 const jobLabel=j=>("#"+j.number+" "+(street(j.address)||j.name||"")).trim();
-function marginTarget(){const c=coMod();const v=c&&c.marginPct!=null&&c.marginPct!==""?num(c.marginPct):NaN;return v>0&&v<100?v:window.DPOrg.margin().target}
+function marginTarget(){return window.DPOrg.margin().target}
 const plainErr=msg=>{const e=new Error(msg);e.plain=msg;e.code="rejected";return e};
 const whoAmI=async()=>{if(CFG.name&&String(CFG.name).indexOf("{{")<0)return CFG.name;try{return (await R().jtMe()).name||""}catch(e){return ""}};
 
@@ -7750,7 +7888,8 @@ function calcLive(raw){const jobs=(raw.jobs||[]).map(j=>Object.assign({},j));con
     wos.forEach(d=>{v(d).c+=d.cost});bills.forEach(d=>{v(d).p+=d.balance==null?0:Math.max(0,d.cost-d.balance)});
     const unpaidWO=Object.entries(byV).filter(([,x])=>x.c-x.p>0.5).map(([k,x])=>({vendor:k,left:x.c-x.p}));
     Object.entries(byV).forEach(([k,x])=>{const g=vend[k]=vend[k]||{vendor:k,committed:0,paid:0,jobs:[]};g.committed+=x.c;g.paid+=x.p;if(!g.jobs.includes(j.number))g.jobs.push(j.number)});
-    Object.assign(j,{price:P0,cost:Math.max(C,S),margin:P0>0?Math.round((P0-Math.max(C,S))/P0*1000)/10:null,lastInv:last,invDays:last?ageDays(last):null,
+    const mg=jobMargin(j.number,{price:P0,budget:C,bills:S});
+    Object.assign(j,{price:P0,cost:Math.max(C,S),margin:mg?mg.pct:null,msrc:mg?mg.src:"",mprice:mg?mg.price:0,mcost:mg?mg.cost:0,lastInv:last,invDays:last?ageDays(last):null,
       openBills:{n:open.length,amt:open.reduce((s,d)=>s+d.balance,0)},unpaidWO,paidFull,paidAt,
       props:ord.filter(d=>/pending/.test(low(d.status))).map(d=>({number:d.number,name:d.name,price:d.price,co:appr.length>0||/change\s*order/i.test(d.name)}))})});
   const vendors=Object.values(vend).filter(x=>x.committed>0||x.paid>0).sort((a,b)=>(b.committed-b.paid)-(a.committed-a.paid)||a.vendor.localeCompare(b.vendor));
@@ -7774,39 +7913,39 @@ function propKind(x,pm){const k=String(x.kind||"");if(/change/i.test(k))return "
 const KCLR="team:cleared";
 async function loadCleared(){const d=await docGet("team/cleared");return d&&d.jobs&&typeof d.jobs==="object"?d.jobs:{}}
 function needCleared(){return CORE.load(KCLR,loadCleared,{ttl:10*60e3,label:"your page"})}
-function clearPaid(id,btn){const L=liveOf(T.apm);const j=L&&L.jobs.find(x=>x.id===id);if(!j)return;const key="tm:clr:"+id;if(CORE.confirmOpen(key)){CORE.cancelConfirm(key);return}
-  CORE.confirm({key,from:btn,what:`Clear ${jobLabel(j)} from Paid in full`,target:"This page (Admin day)",note:"It stays hidden here once it's handled. Nothing changes in JobTread or the closeout Sheet.",
+function clearPaid(id,btn){const L=liveOf(pmNow());const j=L&&L.jobs.find(x=>x.id===id);if(!j)return;const key="tm:clr:"+id;if(CORE.confirmOpen(key)){CORE.cancelConfirm(key);return}
+  CORE.confirm({key,from:btn,what:`Clear ${jobLabel(j)} from Paid in full`,target:"This page (Team)",note:"It stays hidden here once it's handled. Nothing changes in JobTread or the closeout Sheet.",
     label:"Clear",busy:"Saving…",done:`Cleared #${j.number}.`,errLabel:"your page",
     onConfirm:async()=>{const cur=Object.assign({},((await docGet("team/cleared"))||{}).jobs||{});const cut=Date.now()-120*864e5;Object.keys(cur).forEach(k=>{if(!(cur[k]&&cur[k].at>cut))delete cur[k]});
-      cur[id]={at:Date.now(),job:String(j.number),pm:T.apm,by:await whoAmI()};await docSet("team/cleared",{jobs:cur,updatedAt:new Date().toISOString()});CORE.get(KCLR).data=cur}})}
+      cur[id]={at:Date.now(),job:String(j.number),pm:pmNow(),by:await whoAmI()};await docSet("team/cleared",{jobs:cur,updatedAt:new Date().toISOString()});CORE.get(KCLR).data=cur}})}
 
 function adminNotes(pm){if(!window.__dpNoteBox)return "";return `<section class="tm-sec tm-notes">${window.__dpNoteBox("adminday-"+pm,"Notes for "+first(pm)+"'s admin day","Notes for this admin day. Saved as you type.")}</section>`}
 const coBtn=(j,where)=>{if(!coMod())return "";if(onCo(j.number))return `<span class="tm-tag new">On the closeout list</span>`;const key=`co:add:${where}:${j.id}`;
   return `<button type="button" class="opsb" data-tmcoadd="${esc(where+":"+j.id)}"${CORE.confirmOpen(key)?' aria-expanded="true"':""}>${where==="open"?"Add to weekly closeout list":"Add to closeout list"}</button>`};
-function adminLive(pm){const L=liveOf(pm);const key=KLIVE+pm;
-  if(L===undefined)return CORE.box(key,{loading:"Loading "+first(pm)+"'s jobs from JobTread…",rows:2,label:"JobTread"})||"";
-  const t=marginTarget(),clr=CORE.get(KCLR).data||{},jobs=L.jobs;const sub=a=>a.filter(Boolean).map(esc).join(" · ");
-  const lowM=jobs.filter(j=>j.margin!=null&&j.margin<t).sort((a,b)=>a.margin-b.margin);
-  const inv=jobs.slice().sort((a,b)=>(invLate(b)-invLate(a))||((b.invDays==null?1e4:b.invDays)-(a.invDays==null?1e4:a.invDays)));
-  const nLate=jobs.filter(invLate).length;
-  const paid=jobs.filter(j=>j.paidFull&&j.paidAt&&j.paidAt>=CORE.day(-7)&&!clr[j.id]).sort((a,b)=>b.paidAt.localeCompare(a.paidAt));
-  const head=(j)=>`<b class="t">${esc(j.customer||j.name||"Job "+j.number)}</b>`;
-  const where=j=>sub([street(j.address),"Job "+j.number,j.name&&j.name!==j.customer?j.name:""]);
+function pmJobs_(pm){const L=liveOf(pm);const key=KLIVE+pm;
+  const act=jobsFor(pm);
+  if(L===undefined||act===undefined)return `<section class="tm-sec" data-tmsec="jobs"><h2>Jobs</h2>${(L===undefined?CORE.box(key,{loading:"Loading "+first(pm)+"'s jobs from JobTread…",rows:2,label:"JobTread"}):(P()&&P().jobsBox&&P().jobsBox()))||""}</section>`;
+  const t=window.DPOrg.margin().target,clr=CORE.get(KCLR).data||{},jobs=act;const sub=a=>a.filter(Boolean).map(esc).join(" · ");
+  const stg=j=>j.flow?CORE.flowShort(j.flow):"";
+  const low=j=>j.margin!=null&&j.margin<t;
+  const nLow=jobs.filter(low).length,nLate=jobs.filter(invLate).length;
+  const sorted=jobs.slice().sort((a,b)=>(low(b)-low(a))||(invLate(b)-invLate(a))||String(a.number).localeCompare(String(b.number)));
+  const paid=L.jobs.filter(j=>j.paidFull&&j.paidAt&&j.paidAt>=CORE.day(-7)&&!clr[j.id]).sort((a,b)=>b.paidAt.localeCompare(a.paidAt));
+  const head=j=>`<b class="t">${esc(j.customer||j.name||"Job "+j.number)}</b>`;
+  const where=j=>sub([street(j.address),"Job "+j.number,j.name&&j.name!==j.customer?j.name:"",stg(j)]);
   const invLine=j=>j.lastInv?`Last invoice ${fmtD(j.lastInv)} (${j.invDays} ${plural(j.invDays,"day")} ago)`:"No invoice yet";
-  const coLink=coMod()?`<a class="opsb" href="#closeout">Weekly closeout${(()=>{const d=coData();const n=d&&d.rows?d.rows.filter(r=>!r.sent).length:0;return n?` (${n} waiting)`:""})()}</a>`:"";
-  return CORE.staleNote(key,JT)+(L.capped?`<p class="opsmeta" role="status">Showing the first jobs and documents from JobTread. There are more; Admin day stops there to stay quick.</p>`:"")+
-  asec(`Jobs under ${t}% margin`,lowM.length,lowM.map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)} · ${esc(`price ${money(j.price)}, cost ${money(j.cost)}`)}</div></div><div class="r crit">${j.margin}%<small>target ${t}%+</small></div></div>`).join(""),
-    `Every open job with an approved proposal is at ${t}% or above.`)+
-  asec("When each job was last invoiced",jobs.length,inv.map(j=>{const late=invLate(j);return `<div class="tm-row"><div class="m">${head(j)}${late?`<span class="tm-tag hot">None in 30+ days</span>`:""}<div class="s">${where(j)}</div></div><div class="r${late?" crit":""}">${j.lastInv?esc(fmtD(j.lastInv)):"None yet"}<small>${j.lastInv?`${j.invDays} ${plural(j.invDays,"day")} ago`:"no invoice sent"}</small></div></div>`}).join(""),
-    `${first(pm)} has no open jobs in JobTread.`).replace("</h2>",nLate?` <span class="tm-tag hot">${nLate} with no invoice in 30+ days</span></h2>`:"</h2>")+
+  const coLink=coMod()?`<p class="tm-link"><a class="opsb" href="#closeout">Weekly closeout${(()=>{const d=coData();const n=d&&d.rows?d.rows.filter(r=>!r.sent).length:0;return n?` (${n} waiting)`:""})()}</a></p>`:"";
+  const tags=(nLow?` <span class="tm-tag hot">${nLow} under ${t}%</span>`:"")+(nLate?` <span class="tm-tag hot">${nLate} with no invoice in 30+ days</span>`:"");
+  const rows=sorted.map(j=>`<div class="tm-row"><div class="m">${head(j)}${invLate(j)?`<span class="tm-tag hot">None in 30+ days</span>`:""}<div class="s">${where(j)}</div><div class="s">${j.nolive?"":esc(invLine(j))}${j.openBills.n?" · "+esc(`${j.openBills.n} open vendor ${plural(j.openBills.n,"bill")}`):""}</div></div><div class="r${low(j)?" crit":""}">${j.margin==null?"No margin yet":j.margin+"%"}<small>${esc(marginSrc(j))}</small></div>
+    ${coMod()&&!j.nolive?`<div class="tm-acts">${coBtn(j,"open")}</div>${CORE.confirmHtml(`co:add:open:${j.id}`)}`:""}</div>`).join("");
+  return CORE.staleNote(key,JT)+(L.capped?`<p class="opsmeta" role="status">Showing the first jobs and documents from JobTread. There are more; this page stops there to stay quick.</p>`:"")+
+    `<section class="tm-sec" data-tmsec="jobs" data-tmjobs="${jobs.length}" data-tmunder="${nLow}"><h2>Jobs${jobs.length?`<span class="cnt">${jobs.length}</span>`:""}${tags}</h2>${src(`JobTread, read live · margin: Job costing, target ${t}%`,loadAt(key))}${coLink}
+    ${jobs.length?`<div class="tm-list">${rows}</div>`:`<div class="empty">${esc(first(pm))} has no open jobs in JobTread.</div>`}</section>`+
   asec("Paid in full in the last 7 days",paid.length,paid.map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)}</div></div><div class="r">Paid in full<small>${esc(fmtD(j.paidAt))} · ${money(j.price)}</small></div>
     <div class="tm-acts">${coBtn(j,"paid")}<button type="button" class="opsb ghost" data-tmclr="${esc(j.id)}"${CORE.confirmOpen("tm:clr:"+j.id)?' aria-expanded="true"':""}>Clear</button></div>${CORE.confirmHtml(`co:add:paid:${j.id}`)}${CORE.confirmHtml("tm:clr:"+j.id)}</div>`).join(""),
-    "No job was paid in full in the last 7 days.")+
-  asec("Open jobs and close-outs",jobs.length,jobs.slice().sort((a,b)=>String(a.number).localeCompare(String(b.number))).map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)}</div><div class="s">${esc(invLine(j))}${j.openBills.n?" · "+esc(`${j.openBills.n} open vendor ${plural(j.openBills.n,"bill")}`):""}</div></div><div class="r${j.margin!=null&&j.margin<t?" crit":""}">${j.margin==null?"No margin yet":j.margin+"%"}<small>${j.margin==null?"no approved proposal":"margin"}</small></div>
-    ${coMod()?`<div class="tm-acts">${coBtn(j,"open")}</div>${CORE.confirmHtml(`co:add:open:${j.id}`)}`:""}</div>`).join(""),
-    `${first(pm)} has no open jobs in JobTread.`).replace("</h2>",coLink?`</h2><p class="tm-link">${coLink}</p>`:"</h2>")+
-  asec("Work orders vs paid, by vendor",L.vendors.length,L.vendors.map(v=>{const left=Math.max(0,v.committed-v.paid);return `<div class="tm-row"><div class="m"><b class="t">${esc(v.vendor)}</b><div class="s">${esc(v.jobs.map(n=>"Job "+n).join(", "))}</div></div><div class="r">${money(v.paid)||"$0"} paid<small>${v.committed?`of ${money(v.committed)} in work orders${left?" · "+money(left)+" left":""}`:"no work order"}</small></div></div>`}).join(""),
-    "No work orders or vendor bills on these jobs yet.")}
+    "No job was paid in full in the last 7 days.",src("JobTread invoices, read live",loadAt(key)))+
+  fold("Work orders vs paid, by vendor",L.vendors.length,src("JobTread work orders and vendor bills, read live",loadAt(key))+L.vendors.map(v=>{const left=Math.max(0,v.committed-v.paid);return `<div class="tm-row"><div class="m"><b class="t">${esc(v.vendor)}</b><div class="s">${esc(v.jobs.map(n=>"Job "+n).join(", "))}</div></div><div class="r">${money(v.paid)||"$0"} paid<small>${v.committed?`of ${money(v.committed)} in work orders${left?" · "+money(left)+" left":""}`:"no work order"}</small></div></div>`}).join(""),
+    "pvend")}
 
 const KCO="team:closeout",KCOF="team:cofacts";
 const coChecks=m=>{const c=strList(m&&m.checks);return c.length?c:["Have all subs been paid?",`Is the margin above ${marginTarget()}%?`,"No other open project at the same address (nothing cross-contaminated)?"]};
@@ -7958,7 +8097,7 @@ function coSearch(q){T.coQ=q;T.coLocal=coLocal(q);T.coSel=null;if(CORE.confirmOp
   T.coLiveBusy=true;coDraw();
   coTimer=setTimeout(async()=>{try{const r=await coLive(q);if(seq!==coSeq)return;T.coLiveRes=r;T.coLiveFor=q}catch(e){if(seq!==coSeq)return;T.coLiveRes=[];T.coLiveFor=q;T.coLiveErr=CORE.errMsg(e,"JobTread")}T.coLiveBusy=false;coDraw()},300)}
 function vCloseout(){const m=coMod();if(!m)return "";needCo();const d=coData();const who=coCloser(m)||"accounting";
-  const head=window.DPPageHead("Weekly closeout",`Jobs ready to close: check them off with the PM, send them to ${who}, then close them out here once ${who} is done. The list lives in your team's closeout Sheet (${coTab(m)} tab), so everyone sees the same one. The hints under each check come from JobTread; you tick the boxes.`+(P().updLine?P().updLine(KCO).replace(/JobTread/g,"the closeout Sheet"):""));
+  const head=window.DPPageHead("Weekly closeout",`Tick the checks with the PM, send to ${esc(who)}, then close it out once ${esc(who)} is done.`+(P().updLine?P().updLine(KCO).replace(/JobTread/g,"the closeout Sheet"):""));
   if(d&&d.noSheet)return head+`<div class="tm-note warn" role="status">The closeout module is on, but no Sheet is set for it yet. Ask ${esc((window.DPOrg&&window.DPOrg.support)||"the person who shared this with you")} to add the Sheet's id to your team settings.</div>`;
   const box=CORE.box(KCO,{loading:"Loading the closeout list…",rows:3,label:"Google Sheets"});if(box)return head+box;
   needCoFacts();const F=CORE.get(KCOF).data;const c=d.cols;
@@ -7970,7 +8109,7 @@ function vCloseout(){const m=coMod();if(!m)return "";needCo();const d=coData();c
   const add=`<div class="tm-bar tm-coadd"><label class="tm-radd" for="co-addq">Add a job</label><input id="co-addq" type="search" class="tm-q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="Job number, street address or customer" aria-controls="co-res" value="${esc(T.coQ||"")}"><div id="co-res" class="tm-res" role="listbox" aria-label="Jobs that match">${coResHtml()}</div><div id="co-sel" class="opsmeta" role="status">${coSelHtml()}</div><button type="button" class="opsb" data-coaddpick${CORE.confirmOpen("co:add:pick")?' aria-expanded="true"':""}${T.coSel?"":" disabled"}>Add to closeout list</button>${CORE.confirmHtml("co:add:pick")}</div>`;
   return head+CORE.staleNote(KCO,G)+(miss.length?`<div class="tm-note warn" role="status">The Sheet's first row is missing ${miss.length===1?"this column":"these columns"}: ${esc(miss.join(", "))}. Add ${miss.length===1?"it":"them"} so ticks and dates have somewhere to go.</div>`:"")+
     (CORE.get(KCOF).status==="error"?`<p class="opsmeta" role="status">Couldn't load the JobTread hints. ${esc(CORE.errMsg(CORE.get(KCOF).err,"JobTread"))}</p>`:"")+
-    sec("Waiting to send",open.length,open.map(r=>coRowHtml(m,r,F)).join(""),"Nothing waiting to send. Add jobs from Admin day or below.")+add+
+    sec("Waiting to send",open.length,open.map(r=>coRowHtml(m,r,F)).join(""),"Nothing waiting to send. Add jobs from Team (pick a project manager) or below.")+add+
     (late?`<div class="tm-note warn" role="status">${late} ${plural(late,"job")} ${late===1?"has":"have"} been with ${esc(who)} for more than a week. Check in on ${late===1?"it":"them"}.</div>`:"")+
     sec("With "+who,withC.length,withC.map(r=>coRowHtml(m,r,F)).join(""),`Nothing with ${who} right now.`)+
     (done.length?`<details class="tm-clr" data-coclosed${T.coOpen?" open":""}><summary>Closed (${done.length})</summary><div class="tm-list">${done.map(r=>coRowHtml(m,r,F)).join("")}</div></details>`:"")}
@@ -7988,11 +8127,12 @@ async function loadRocks(){const m=rocksMod();if(!m)return [];if(CORE.demo){awai
 function needRocks(force){if(!rocksMod())return;return CORE.load(KROCK,loadRocks,Object.assign({ttl:TTL,force:!!force},JT))}
 const SG={busy:false,err:"",out:null,q:null};
 function adminRocks(pm){const m=rocksMod();if(!m)return "";needRocks();const s=CORE.get(KROCK);const mine=(s.data||[]).filter(t=>t.people.some(n=>same(n,pm)));
-  const canSug=m.suggest===true&&!!R()&&/^(owner|ops)$/.test(R().role);
+  const canSug=m.suggest===true&&!!R()&&/^(owner|ops)$/.test(R().role);const plan=canSug?`<p class="tm-link"><button type="button" class="dpc-link" data-oqgo="rocks">Quarterly planning</button></p>`:"";
   const body=s.data===undefined?(CORE.box(KROCK,{loading:"Loading Rocks from JobTread…",rows:1,label:"JobTread"})||""):mine.length?`<div class="tm-list">${mine.sort((a,b)=>String(a.due||"9").localeCompare(String(b.due||"9"))).map(t=>`<div class="tm-row"><div class="m"><b class="t">${esc(String(t.name).replace(/^rock:\s*/i,""))}</b><div class="s">${esc(t.job?["Job "+t.job.number,t.people.join(", ")].filter(Boolean).join(" · "):t.people.length===1?t.people[0]+"'s Rock":["Company Rock",t.people.join(", ")].filter(Boolean).join(" · "))}</div></div><div class="r${t.due&&t.due<today()?" crit":""}">${t.due?"Due "+esc(fmtD(t.due)):"No due date"}</div></div>`).join("")}</div>`
     :`<div class="empty">No open Rocks for ${esc(first(pm))}. Rocks are JobTread to-dos with “${esc(m.match||"rock")}” in the name.</div>`;
   if(s.data!==undefined&&!mine.length&&!canSug){EQ.push(["Rocks",`No open Rocks for ${first(pm)}.`]);return ""}
-  return `<section class="tm-sec"><h2>Rocks${mine.length?`<span class="cnt">${mine.length}</span>`:""}</h2>${body}${canSug?sugHtml():""}</section>`}
+  return `<section class="tm-sec"><h2>Rocks${mine.length?`<span class="cnt">${mine.length}</span>`:""}</h2>${src("JobTread to-dos",loadAt(KROCK))}${body}${plan}</section>`}
+window.__dpRocks={on:()=>!!rocksMod(),need:needRocks,key:KROCK,canSuggest:()=>{const m=rocksMod();return !!m&&m.suggest===true&&!!R()&&/^(owner|ops)$/.test(R().role)},planning:()=>sugHtml()};
 function sugHtml(){const q=lastQuarter();
   const out=SG.out?SG.out.map((p,pi)=>`<div class="tm-sug"><h3>${esc(p.pm)}</h3>${p.rocks.map((r,ri)=>{const k=`rock:add:${pi}:${ri}`;return `<div class="tm-row"><div class="m"><b class="t">${esc(r.title)}</b>${r.why?`<div class="s">${esc(r.why)}</div>`:""}</div>
     <div class="tm-acts">${r.added?`<span class="tm-tag new">Added as a Rock</span>`:`<button type="button" class="opsb" data-tmrockadd="${pi}|${ri}"${CORE.confirmOpen(k)?' aria-expanded="true"':""}>Add as Rock</button>`}</div>${CORE.confirmHtml(k)}</div>`}).join("")}</div>`).join(""):"";
@@ -8036,13 +8176,13 @@ function rockAdd(pi,ri,btn){const p=SG.out&&SG.out[pi];const r=p&&p.rocks[ri];if
     note:"It shows in their JobTread to-dos and in the Rocks sections of the Workspace.",label:"Create Rock",busy:"Creating…",done:`Rock created for ${p.pm}.`,errLabel:"JobTread",
     onConfirm:async()=>{let tm=[];try{tm=await P().team()}catch(e){}const hit=tm.find(x=>same(x.name,p.pm));if(!hit)throw plainErr(`${p.pm} isn't on your JobTread team, so the Rock can't be assigned to them.`);
       const res=await P().jq({createTask:{$:{targetType:"organization",targetId:window.__dpORG,name,isToDo:true,endDate:due,assignedMembershipIds:[hit.membershipId],
-        description:(r.why?"Why: "+r.why+"\n":"")+"Suggested in the Design Pro Workspace (Admin day)."},createdTask:{id:{}}}});
+        description:(r.why?"Why: "+r.why+"\n":"")+"Suggested in the Design Pro Workspace (Office to-dos › Rocks)."},createdTask:{id:{}}}});
       const ct=(res&&res.createTask&&res.createTask.createdTask)||(res&&res.createdTask);if(!CORE.demo&&(!ct||!ct.id))throw CORE.error("bad_reply","JobTread","no createdTask id in the reply");
       r.added=true;const s=CORE.get(KROCK);if(s.data)s.data.push({id:(ct&&ct.id)||"new-"+Date.now(),name,due,job:null,people:[p.pm]})}})}
 
-document.addEventListener("toggle",e=>{const x=e.target;if(x&&x.matches&&x.matches("[data-coclosed]"))T.coOpen=x.open;if(x&&x.matches&&x.matches("[data-tmnone]"))T.noneOpen=x.open},true);
+document.addEventListener("toggle",e=>{const x=e.target;if(x&&x.matches&&x.matches("[data-coclosed]"))T.coOpen=x.open;if(x&&x.matches&&x.matches("[data-tmnone]"))T.noneOpen=x.open;if(x&&x.matches&&x.matches("[data-tmfold]"))T.fold[x.dataset.tmfold]=x.open},true);
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmcoadd],[data-tmclr],[data-cochk],[data-cosend],[data-coclose],[data-conote],[data-conotego],[data-conotex],[data-coaddpick],[data-copick],[data-tmrocksug],[data-tmrockadd]");if(!t)return;const d=t.dataset;
-  if(d.tmcoadd!=null){const [w,id]=d.tmcoadd.split(":");const L=liveOf(T.apm);const j=L&&L.jobs.find(x=>x.id===id);if(j)coAdd(j,T.apm,t,`co:add:${w}:${id}`);return}
+  if(d.tmcoadd!=null){const [w,id]=d.tmcoadd.split(":");const L=liveOf(pmNow());const j=L&&L.jobs.find(x=>x.id===id);if(j)coAdd(j,pmNow(),t,`co:add:${w}:${id}`);return}
   if(d.tmclr!=null){clearPaid(d.tmclr,t);return}
   if(d.cochk!=null){const [n,i]=d.cochk.split("|");coTick(+n,+i,t);return}
   if(d.cosend!=null){coSend(+d.cosend,t);return}
@@ -8058,45 +8198,17 @@ document.addEventListener("input",e=>{const n=e.target.dataset&&e.target.dataset
 document.addEventListener("input",e=>{if(e.target&&e.target.id==="co-addq")coSearch(e.target.value)});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="co-addq"){e.preventDefault();const f=coResList()[0];if(f){T.coSel=f;coDraw()}}});
 
-const TABS=[["site","On site"],["asks","Open asks"],["sels","Selections"],["orders","Orders"],["cost","Job costing"]];
-function vTeam(){needRoll();const ro=roll();const has=CORE.get(KEY).data!==undefined;
-  const head=window.DPPageHead("Team activity","What's happening on every project manager's jobs, rolled up from each person's Workspace: who is on site, who is waiting on an answer, selections, orders and job costing."+(P().updLine?P().updLine(KEY).replace(/JobTread/g,"the team roll-up"):""));
-  if(!has)return head+(offNote()||CORE.box(KEY,{loading:"Loading the team roll-up…",rows:4}));
-  if(ro.off)return head+offNote();
-  if(!ro.people.length)return head+`<div class="tm-note" role="status">Team roll-up is on. It fills in after each person's next scheduled update.</div>`;
-  const names=ro.people.filter(p=>!p.err&&p.n>0).map(p=>p.name);if(T.pm!=="All"&&!names.includes(T.pm))T.pm="All";
-  const rows=ro.rows.filter(r=>T.pm==="All"||r.pm===T.pm);const of=k=>rows.filter(r=>r.kind===k);
-  const site=of("site").filter(x=>x.date>=today()&&x.date<=CORE.day(6)&&!/cancel/i.test(x.status)).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.pm).localeCompare(String(b.pm)));
-  const asks=of("ask").sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  const sels=of("selection").filter(x=>!/approved|final|installed|ordered/i.test(x.status));
-  const orders=of("order").filter(x=>!/delivered|received|cancel/i.test(x.status)).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  const cost=of("cost").map(x=>{const d=x.data||{};return Object.assign({m:d.marginPct!=null?+d.marginPct:null,good:d.goodPct!=null?+d.goodPct:30},x)}).sort((a,b)=>(a.m==null?999:a.m)-(b.m==null?999:b.m));
-  const N={site:site.length,asks:asks.length,sels:sels.length,orders:orders.length,cost:cost.length};
-  const who=x=>T.pm==="All"?` · <b>${esc(first(x.pm))}</b>`:"";
-  let body="";
-  if(T.tab==="site"){let last="";body=site.map(x=>{const h=x.date!==last?`<h3 class="tm-day">${esc(x.date===today()?"Today, "+fmtD(x.date):fmtDow(x.date))}</h3>`:"";last=x.date;
-      return h+`<div class="tm-row"><div class="m"><b class="t">${esc([x.who,x.title].filter(Boolean).join(": "))}</b>${/tentative|changed/i.test(x.status)?`<span class="tm-tag">${esc(cap(x.status))}</span>`:""}<div class="s">${jobBit(x)}${who(x)}${link(x)}</div></div><div class="r">${esc(x.detail||"")}<small>${esc(srcWord(x.src))}</small></div></div>`}).join("")||`<div class="empty">Nothing is scheduled on site in the next 7 days.</div>`}
-  else if(T.tab==="asks")body=asks.map(x=>{const a=ageDays(x.date);return `<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${/urgent/i.test(x.status)?'<span class="tm-tag hot">Urgent</span>':""}<div class="s">${jobBit(x)}${x.who?" · from "+esc(x.who):""}${who(x)}</div></div><div class="r${a>=3?" crit":""}">${!x.date?"":a?a+" "+plural(a,"day"):"Today"}<small>${esc(srcWord(x.src))}</small></div></div>`}).join("")||`<div class="empty">Nobody is waiting on an answer right now.</div>`;
-  else if(T.tab==="sels")body=sels.map(x=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b><div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}${who(x)}</div></div><div class="r">${esc(cap(x.status)||"Pending")}<small>${esc(fmtD(x.date))}</small></div></div>`).join("")||`<div class="empty">Every selection is settled.</div>`;
-  else if(T.tab==="orders")body=orders.map(x=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b><div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}${who(x)}</div></div><div class="r">${esc(cap(x.status)||"Ordered")}<small>${esc(fmtD(x.date))}</small></div></div>`).join("")||`<div class="empty">No open material orders.</div>`;
-  else body=cost.map(x=>{const d=x.data||{};const low=x.m!=null&&x.m<x.good;return `<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"Job "+x.job)}</b><div class="s">${[x.address,x.job?"Job "+x.job:"",d.approved!=null?"approved "+money(d.approved):"",d.spent!=null?"spent "+money(d.spent):"",d.left!=null?money(d.left)+" left in budget":""].filter(Boolean).map(esc).join(" · ")}${who(x)}</div></div><div class="r${low?" crit":""}">${x.m==null?"No budget yet":x.m+"%"}<small>target ${x.good}%+</small></div></div>`}).join("")||`<div class="empty">No job costing has been shared yet.</div>`;
-  const tm=[...new Set(pmNames().concat((CFG.office||[]).map(o=>o&&o[0])).concat(CFG.name?[CFG.name]:[]).filter(Boolean))].map(n=>({name:n}));
-  const seen=new Set(ro.people.map(p=>norm(p.name)));const missing=tm.filter(t=>!seen.has(norm(t.name)));
-  const whoCards=ro.people.map(p=>{const late=p.at&&Date.now()-Date.parse(p.at)>36*3600e3;return `<div class="${p.err?"off":late?"late":""}"><b>${esc(p.name)}</b><small>${p.err?"Couldn't read their page of the roll-up":`${esc(fmtAt(p.at)||"No time recorded")} · ${p.n} ${plural(p.n,"line")}${late?" · not updated in over a day":""}`}</small></div>`}).join("")+
-    missing.map(t=>`<div class="off"><b>${esc(t.name)}</b><small>Not sharing yet (starts on its own once their Workspace is set up and updated)</small></div>`).join("");
-  const notes=`<div class="tm-bar"><p><b>Follow-up notes in JobTread: ${ro.notes==="on"?"On":"Off"}</b><small>${ro.notes==="on"?"When someone follows up with a client about an invoice, payment or proposal by email or text, their Workspace posts a short team-only note on that job in JobTread.":"When on, each person's Workspace posts a short team-only note on the job in JobTread whenever they follow up with a client about an invoice, payment or proposal. Clients and vendors never see it."}</small></p>
-    ${R().role==="owner"?`<button type="button" class="opsb" data-tmnotes="${ro.notes==="on"?"off":"on"}"${CORE.confirmOpen("team:notes")?' aria-expanded="true"':""}>${ro.notes==="on"?"Turn off":"Turn on"}</button>`:""}${CORE.confirmHtml("team:notes")}</div>`;
-  return head+offNote()+lockBar(ro)+chips(names,T.pm,"tmpm",true)+
-    `<div class="tm-seg" role="group" aria-label="Show">${TABS.map(([k,l])=>`<button type="button" data-tmtab="${k}" aria-pressed="${T.tab===k}">${esc(l)}<span class="n">${N[k]}</span></button>`).join("")}</div>
-    <div class="tm-list">${body}</div>
-    <section class="tm-sec"><h2>Who's sharing</h2><div class="tm-who">${whoCards||`<div class="off"><b>No one yet</b><small>People appear here after their next scheduled update.</small></div>`}</div>
-      <p class="opsmeta">Each person's rows are visible only to the readers ${esc((ro.owner&&ro.owner.name)||"the owner")} chose${(ro.readers||[]).length?": "+esc(ro.readers.join(", ")):""}. Project managers don't see each other's jobs here.</p>${readersBox(ro)}${notes}</section>`}
+function notesBar(ro){return `<div class="tm-bar"><p><b>Follow-up notes in JobTread: ${ro.notes==="on"?"On":"Off"}</b><small>${ro.notes==="on"?"When someone follows up with a client about an invoice, payment or proposal by email or text, their Workspace posts a short team-only note on that job in JobTread.":"When on, each person's Workspace posts a short team-only note on the job in JobTread whenever they follow up with a client about an invoice, payment or proposal. Clients and vendors never see it."}</small></p>
+    ${R().role==="owner"?`<button type="button" class="opsb" data-tmnotes="${ro.notes==="on"?"off":"on"}"${CORE.confirmOpen("team:notes")?' aria-expanded="true"':""}>${ro.notes==="on"?"Turn off":"Turn on"}</button>`:""}${CORE.confirmHtml("team:notes")}</div>`}
+window.__dpTeamSettings={html:()=>{needRoll();const st=CORE.get(KEY);if(st.data===undefined)return CORE.box(KEY,{loading:"Loading the team roll-up…",rows:2,label:"Google Sheets"})||"";const ro=roll();
+  if(ro.off)return `<p class="opsmeta">The team roll-up is off. Turn it on from Operations › Team; then choose here who can see everyone's rows.</p>`;
+  return readersBox(ro)+(ro.isOwner?"":`<p class="opsmeta">Only ${esc((ro.owner&&ro.owner.name)||"the person who turned the roll-up on")} chooses who can see everyone's rows${(ro.readers||[]).length?" (now: "+esc(ro.readers.join(", "))+")":""}.</p>`)+notesBar(ro)}};
 
 async function meNow(){let me={email:"",name:CFG.name||""};try{me=await R().jtMe()}catch(e){}return{email:String(me.email||"").toLowerCase(),name:me.name||CFG.name||""}}
 async function turnOn(btn){let team=[];try{team=(await P().team()).filter(t=>t.email)}catch(e){}
   const me=await meNow();const others=team.filter(t=>t.email!==me.email);
   CORE.confirm({key:"team:on",from:btn,what:"Turn on the team roll-up",target:"Google Drive · a new team index sheet your "+(others.length?others.length+" "+plural(others.length,"teammate")+" from JobTread":"team")+" can view (not edit)",
-    note:"Each person's scheduled updates then share job-level summaries (site schedule, selections, orders, open asks, follow-ups on money, job costing) only with the readers you choose. At first that's just you; add your operations people under Team activity. Never personal messages. Teammates get Google's usual sharing email.",
+    note:"Each person's scheduled updates then share job-level summaries (site schedule, selections, orders, open asks, follow-ups on money, job costing) only with the readers you choose. At first that's just you; add your operations people under Setup › Team roll-up. Never personal messages. Teammates get Google's usual sharing email.",
     label:"Turn on",busy:"Setting up…",done:"Team roll-up is on. It fills in after each person's next update.",errLabel:"Google Drive",
     onConfirm:async()=>{if(!me.email)throw CORE.error("bad_reply","JobTread","couldn't read your email address");let id=T.newId||"";
       if(!id){const r=await CORE.call(DRIVE,"create_file",{title:"DP Workspace Team Roll-up - "+(CFG.jtOrg||""),contentMimeType:"application/vnd.google-apps.spreadsheet"},{write:true,label:"Google Drive"});
@@ -8156,25 +8268,26 @@ function toggleNotes(to,btn){const on=to==="on";
       const id=await sheetId();await CORE.call(SHEETS,"append_values",{spreadsheetId:id,range:"A:E",values:[["setting","jobtreadNotes",to,CFG.name||"",new Date().toISOString()]]},{write:true,label:"Google Sheets"});
       const d=CORE.get(KEY).data;if(d)d.notes=to}})}
 
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmapm],[data-tmtd],[data-tmpm],[data-tmtab],[data-tmmark],[data-tmon],[data-tmlink],[data-tmnotes],[data-tmradd],[data-tmrrm],[data-tmrkeep],[data-tmlock]");if(!t)return;const d=t.dataset;
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmtd],[data-tmpm],[data-tmmark],[data-tmon],[data-tmlink],[data-tmnotes],[data-tmradd],[data-tmrrm],[data-tmrkeep],[data-tmlock]");if(!t)return;const d=t.dataset;
   if(d.tmlock!=null){lockIndex(t);return}
   if(d.tmradd!=null){const s=document.getElementById("tm-raddsel");if(s&&s.value)readerAct("add",s.value,t);return}
   if(d.tmrrm!=null){readerAct("rm",d.tmrrm,t);return}
   if(d.tmrkeep!=null){readerAct("keep",d.tmrkeep,t);return}
-  if(d.tmapm!=null){T.apm=d.tmapm;rr();return}
   if(d.tmtd!=null){T.tdAll=d.tmtd==="all";rr();return}
-  if(d.tmpm!=null){T.pm=d.tmpm;rr();return}
-  if(d.tmtab!=null){T.tab=d.tmtab;rr();return}
+  if(d.tmpm!=null){T.pm=d.tmpm;T.wantAdmin=false;rr();if(t.classList.contains("tm-rowb"))setTimeout(()=>{const c=document.querySelector(`.tm-chips [data-tmpm="${CSS.escape(d.tmpm)}"]`);if(c)try{c.focus({preventScroll:true});scrollTo({top:0})}catch(x){}},40);return}
   if(d.tmmark!=null){markReviewed(d.tmmark);return}
   if(d.tmon!=null){turnOn(t);return}
   if(d.tmlink!=null){linkRoll(t);return}
   if(d.tmnotes!=null){toggleNotes(d.tmnotes,t);return}});
 
-const refresh=()=>{needRoll(true);needTodos(true);needLive(T.apm,true);needRocks(true);needCo(true);if(T.tdAll)needTodosAll(T.apm,true)};
+const pmNow=()=>T.pm!=="All"?T.pm:"";
+const refresh=()=>{needRoll(true);needTodos(true);if(pmNow())needLive(pmNow(),true);needRocks(true);needCo(true);if(T.tdAll&&pmNow())needTodosAll(pmNow(),true);if(P()&&P().jobsRefresh)P().jobsRefresh()};
+function oldRoute(h){if(h==="adminday")T.wantAdmin=true;else{T.pm="All";T.wantAdmin=false}
+  setTimeout(()=>{if(location.hash==="#"+h)location.replace("#team")},0);return `<div class="empty" role="status">Opening Team…</div>`}
 (window.DPOPS_EXTRA=window.DPOPS_EXTRA||[]).push(
-  {h:"adminday",label:"Admin day",show,view:vAdmin,refresh,busy:()=>!!(CORE.get(KEY).busy||CORE.get(KTODO).busy||(T.apm&&CORE.get(KLIVE+T.apm).busy))},
+  {h:"team",label:"Team",show,view:vTeamPage,refresh,busy:()=>!!(CORE.get(KEY).busy||CORE.get(KTODO).busy||(pmNow()&&CORE.get(KLIVE+pmNow()).busy))},
   {h:"closeout",label:"Weekly closeout",show:()=>!!coMod(),view:vCloseout,refresh:()=>{needCo(true);T.coSig=""},busy:()=>!!CORE.get(KCO).busy},
-  {h:"teamview",label:"Team activity",show,view:vTeam,refresh:()=>needRoll(true),busy:()=>!!CORE.get(KEY).busy});
+  {h:"adminday",hidden:true,show,view:()=>oldRoute("adminday")},{h:"teamview",hidden:true,show,view:()=>oldRoute("teamview")},{h:"workload",hidden:true,show,view:()=>oldRoute("workload")});
 CORE.render();
 
 const A={};
@@ -9768,6 +9881,8 @@ body>footer{flex:none}
 @media (pointer:coarse){
   .opstools .chips button,.opschips button,.opsb,.opsjt,.opspm select,nav.jsh-sub a{min-height:44px!important}
   .jcard h2 a.jlink,.jcard h3 a.jlink{display:flex;align-items:center;min-height:44px;margin-block:-12px}
+  .opsrow .opst a,.ut-h h3 a{display:inline-flex;align-items:center;min-height:44px;margin-block:-12px;vertical-align:middle}
+  .opsrow a.opsjt{display:inline-flex;align-items:center;min-height:44px;margin-block:-6px}
   .hmrole-b,.wzsave{min-height:44px}
   .opst a{display:inline-block}
   .tnxb>a,.linkb,.dpc-link,.opst a,.sub>a,.sub .opsjt,.ut-h h3 a,ul.dig.tcal a.evt-t{position:relative}
