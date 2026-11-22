@@ -1019,6 +1019,11 @@ function fmtD(v){return v?noon(v).toLocaleDateString([],{month:"short",day:"nume
 function daysSince(v){return Math.round((Date.now()-noon(v).getTime())/864e5)}
 function street(a){return String(a||"").split(",")[0].trim()}
 function flowShort(v){return String(v||"").replace(/^[^A-Za-z]+/,"").replace("Approved, Planning","Planning").replace("Work In Progress","Work in progress").replace("Final 5%","Final stage").trim()}
+function num(v){if(typeof v==="number")return v;const s=String(v==null?"":v).replace(/[^0-9.\-]/g,"");return s?parseFloat(s):NaN}
+function money(v,o){o=o||{};const n=num(v);if(!isFinite(n))return o.none!=null?o.none:"";const a=Math.abs(n),c=o.cents&&Math.round(a*100)%100;
+  const t=c?a.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):Math.round(a).toLocaleString("en-US");return (n<0&&t!=="0"?"−":"")+"$"+t}
+function pmOk(v){v=String(v||"").trim();return !!v&&v!=="No PM"&&v!=="Unassigned"&&window.DPOrg.jt().pm.ignore.indexOf(v)<0}
+function pms(x){const p=x&&x.pm;return (Array.isArray(p)?p:p?[p]:[]).map(v=>String(v).trim()).filter(pmOk)}
 let toastT=null;
 function toast(msg){if(!msg)return;let el=document.getElementById("dpc-toast");
   if(!el){el=document.createElement("div");el.id="dpc-toast";el.className="dpc-toast";el.setAttribute("role","status");el.setAttribute("aria-live","polite");document.body.appendChild(el)}
@@ -1106,10 +1111,11 @@ async function jtChunks(ids,fetchChunk,size){size=Math.min(size||JT_PAGE,JT_PAGE
 
 function error(code,label,raw){const e=mkErr(code,label,raw);note(label,"",e);return e}
 try{if(window.__DP_DEMO)document.documentElement.classList.add("dp-demo")}catch(e){}
-let JIX=[];const JIXL=new Set();
-function setJobIndex(list){JIX=Array.isArray(list)?list:[];JIXL.forEach(f=>{try{f(JIX)}catch(e){}})}
-function onJobIndex(f){JIXL.add(f);try{f(JIX)}catch(e){}return()=>JIXL.delete(f)}
-window.DPCore={seen:()=>Object.assign({},SEEN),call,db,ymd,fmtD,daysSince,street,flowShort,jobIndex:()=>JIX,setJobIndex,onJobIndex,errMsg,error,load,get,retry,box,staleNote,errorBox,failures:()=>LOG.slice(),poll,render,esc,safeUrl,link,toast,day,
+let JIX=[];const JIXL=new Set(),JIXS={loaded:false,err:null};
+function setJobIndex(list,err){if(err)JIXS.err=err;else{JIX=Array.isArray(list)?list:[];JIXS.loaded=true;JIXS.err=null}JIXL.forEach(f=>{try{f(JIX,JIXS)}catch(e){}})}
+function onJobIndex(f){JIXL.add(f);try{f(JIX,JIXS)}catch(e){}return()=>JIXL.delete(f)}
+let JIXR=null;function jobIndexSource(fn){JIXR=fn}function jobIndexRetry(){if(!JIXR)return false;JIXR();return true}
+window.DPCore={seen:()=>Object.assign({},SEEN),call,db,ymd,fmtD,daysSince,street,flowShort,money,pms,pmOk,jobIndex:()=>JIX,jobIndexLoaded:()=>JIXS.loaded,setJobIndex,jobIndexSource,jobIndexRetry,onJobIndex,errMsg,error,load,get,retry,box,staleNote,errorBox,failures:()=>LOG.slice(),poll,render,esc,safeUrl,link,toast,day,
   confirm,confirmHtml,confirmOpen,cancelConfirm,pendingWrites:()=>pend,JT_PAGE,jtPages,jtChunks,get demo(){return !!window.__DP_DEMO}};
 })();
 </script>
@@ -1415,7 +1421,7 @@ h2.srch{margin:4px 0 -12px}
 @media (prefers-reduced-motion:reduce){.selchev{transition:none}}
 </style><div class="hubroot"><header class="site"><div class="wrap">
   <div class="brandrow">
-    <div class="hdr-r"><span class="meta" id="meta">Loading…</span><button class="theme-btn" id="refresh" type="button" aria-label="Refresh">↻<span class="lbl"> Refresh</span></button></div>
+    <div class="hdr-r"><span class="meta" id="meta">Loading…</span><button class="theme-btn" id="hubrefresh" type="button" aria-label="Refresh">↻<span class="lbl"> Refresh</span></button></div>
   </div>
   <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 </div></header>
@@ -1437,7 +1443,7 @@ const OWNER=DPC.first;
 const ORG=DPC.jtOrg;
 const JT="@@SRV:jobtread@@", CAL="@@SRV:calendar@@", CCR="@@SRV:ccr@@";window.__dpGRAN="@@SRV:granola@@";window.__dpGMAIL="@@SRV:gmail@@";window.__dpJT=JT;window.__dpORG=ORG;
 const HUB="#hub/jobs";
-const REFRESH_TASK=DPC.middayTask;
+const REFRESH_TASK=(DPC.tasks&&typeof DPC.tasks==="object"&&DPC.tasks.eod)||DPC.middayTask;
 const BUDGET_TASK=DPC.budgetTask;
 const SUPPLIERS=window.DPOrg.suppliers();
 const KINDS=[["email","Email","email"],["text","Texts","texts"],["meeting","Meetings","meetings"],["waiting","Waiting on others","waiting"],["delivery","Deliveries","deliveries"],["money","Payments","money"],["jobtread","JobTread","jobtread"],["estimate","Estimates","estimates"]];
@@ -1449,7 +1455,6 @@ const TEAM=DPC.team||[];window.__dpTEAM=TEAM;
 const $=s=>document.querySelector(s);
 const ic=n=>`<i data-lucide="${n}" aria-hidden="true"></i>`;
 function icons(){try{if(window.lucide)window.lucide.createIcons({attrs:{"stroke-width":1.5}})}catch(e){}}
-const ICONS={feedback:"megaphone",people:"user-round",later:"alarm-clock",today:"sun",calendar:"calendar",jobs:"hammer",email:"mail",texts:"message-square",meetings:"users",waiting:"hourglass",deliveries:"truck",money:"dollar-sign",jobtread:"clipboard-list",estimates:"ruler",pipeline:"trending-up",assigned:"user-check",history:"history",permits:"clipboard-check",officeq:"inbox",workload:"gauge",utilities:"plug-zap"};
 const esc=window.DPCore.esc;
 const safeId=s=>String(s).replace(/[^A-Za-z0-9_-]/g,"_").slice(0,180);
 const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
@@ -1486,7 +1491,7 @@ function renderTabs(){
   const ppl=new Set(open.filter(({i,c})=>(i.kind==="email"||i.kind==="text")&&whoOf(i,c)).map(({i,c})=>whoOf(i,c))).size;
   const ht=(window.__hubTabCounts&&window.__hubTabCounts())||{};
   const ops=window.DPOPS?DPOPS.tabs():[];
-  const pipeN=(state.review&&state.review.pipeline)?pipeStats(state.review.pipeline,window.DPR&&DPR.role==="ops"?"All":ME).openCount:0;
+  const pipeN=(state.review&&state.review.pipeline)?pipeStats(state.review.pipeline,pipeScope()).openCount:0;
   const OPS_ORDER=["team","officeq","closeout"];
   const opsKids=ops.slice().sort((a,b)=>{const ia=OPS_ORDER.indexOf(a[0]),ib=OPS_ORDER.indexOf(b[0]);return (ia<0?99:ia)-(ib<0?99:ib)});
   const opsOver=opsOverdue();const S0=startState();
@@ -1540,14 +1545,7 @@ function renderTabs(){
 function paintHd(){const b=$("#hd");if(!b)return;b.removeAttribute("aria-pressed");b.setAttribute("role","switch");b.setAttribute("aria-checked",String(!!state.hideDone));
   const n=doneToday();b.innerHTML=`<span class="hdk">Done items</span> <span class="hdv">${state.hideDone?"Hidden":"Shown"}</span>`; b.setAttribute("aria-label","Hide done items");if(n)b.setAttribute("aria-description",`${n} done today`);else b.removeAttribute("aria-description");b.title=state.hideDone?"Done items are hidden. Tap to show them, struck through.":"Done items are shown, struck through. Tap to hide them."}
 
-function opsOverdue(){let n=0;try{const tabs=window.DPOPS?DPOPS.tabs():[];const has=k=>tabs.some(x=>x[0]===k);
-  if(!window.DPCore)return 0;
-  const U=window.__dpUtil&&window.__dpUtil.on()?window.__dpUtil:null;
-  const need=[has("officeq")?"ops:office":"",U?"ops:utilities":""].filter(Boolean);
-  if(need.some(k=>{const g=DPCore.get(k);return !g||g.data===undefined}))return 0;
-  const o=DPCore.get("ops:office");const t=ymd(new Date());
-  if(o&&o.data&&Array.isArray(o.data.tasks))n+=o.data.tasks.filter(x=>x.due&&String(x.due).slice(0,10)<t).length;
-  if(U)n+=U.overdue()}catch(e){}return n}
+function opsOverdue(){try{return window.DPOPS&&DPOPS.overdue?DPOPS.overdue()||0:0}catch(e){return 0}}
 
 const START_KEY=()=>state.owner?"settings/start_"+safeId(state.me||"me"):"data/users/"+safeId(state.me||"me")+"/start";
 state.start={};try{state.start=JSON.parse(localStorage.getItem("dp_start")||"{}")||{}}catch(e){state.start={}}
@@ -1682,7 +1680,6 @@ function freshness(){const r=state.review||{};const g=Date.parse(r.generatedAt||
   let missed=0;const d=new Date(d0);for(let k=0;k<days&&k<60;k++){d.setDate(d.getDate()+1);if(d<n0||now.getHours()>=9)missed++}
   const stale=now-g>18*3600e3&&missed>0;
   return{has:true,stale,days,when,day:gd.toLocaleDateString([],{weekday:"short"}),dayLong:gd.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}),ago:days<=0?"today":days===1?"yesterday":days+" days ago"}}
-window.__dpFresh=freshness;
 function ageOf(i){const s=String((i&&i.date)||"").trim();if(!s)return null;let d=null;
   if(/^\d{4}-\d{2}-\d{2}/.test(s))d=new Date(s.slice(0,10)+"T12:00:00");
   else{const m=s.match(/^([A-Za-z]{3})[a-z]*\.?\s+(\d{1,2})\b/);if(m){const mi=MON.indexOf(m[1].toLowerCase());if(mi>=0&&mi%3===0){const n=new Date();d=new Date(n.getFullYear(),mi/3,+m[2],12);if(d-n>2*864e5)d.setFullYear(d.getFullYear()-1)}}}
@@ -1750,7 +1747,6 @@ function wxSay(label,x){const hi=wxTemp(x.hi),lo=wxTemp(x.lo),p=wxPct(x),sum=Str
   const temps=[hi!=null?"high "+wxSayN(hi):"",lo!=null?"low "+wxSayN(lo):""].filter(Boolean).join(", ");
   return [label+(temps?" "+temps:""),
     sum?sum.charAt(0).toLowerCase()+sum.slice(1):"",p!=null?p+"% chance of "+(wxPrecipWord(x)==="rain"?"rain":"precipitation"):"",x.wind?"wind "+String(x.wind):""].filter(Boolean).join(", ")}
-window.__dpWxSay=wxSay;
 function wxPlan(w,W){const today=wxYmd(new Date());const base=W.day?wxDate(W.day):null;
   const days=(Array.isArray(w.days)?w.days:[]).map((d,k)=>{if(!d||typeof d!=="object"||Array.isArray(d))return null;
     let date=wxDate(d.date);if(!date&&base){date=new Date(base);date.setDate(date.getDate()+k+1)}
@@ -1783,7 +1779,6 @@ function weatherCard(r){const w=r&&r.weather;if(!w||typeof w!=="object"||Array.i
 function viewToday(){
   const r=state.review;const F=freshness();const all=allItems();const open=openOf(all);const todo=open.filter(({i})=>isTodo(i));
   const vis=state.hideDone?open:all;const visTodo=vis.filter(({i})=>isTodo(i));
-  const hr=new Date().getHours();const greet=(hr<12?"Good morning":hr<17?"Good afternoon":"Good evening")+(OWNER&&state.owner?", "+OWNER:"");
   const t=(r.today||[]).slice(0,5);const cal=r.calendar||[];const sn=snoozedList().length;
   const nkey=x=>{let s=0;const t=String(x)+"|"+(r.date||"");for(let i=0;i<t.length;i++)s=(s*31+t.charCodeAt(i))|0;return "n"+(s>>>0).toString(36)};
   const NA=sysNotice(F.stale);
@@ -1799,10 +1794,9 @@ function viewToday(){
   const nUrg=todo.filter(({i})=>i.urgent).length,nOvr=todo.filter(({i})=>i.aging).length,nMail=todo.filter(({i})=>i.kind==="email").length;
   const pplMap=new Map();vis.filter(({i,c})=>(i.kind==="email"||i.kind==="text")&&whoOf(i,c)&&!used.has(i.id)).forEach(x=>{const w=whoOf(x.i,x.c);if(!pplMap.has(w))pplMap.set(w,[]);pplMap.get(w).push(x)});
   const ppl=[...pplMap].map(([w,xs])=>[w,xs.sort(byAge)]).sort((a,b)=>byAge(a[1][0],b[1][0]));
-  const ALLP=!window.DPR||DPR.all();const pmKey=window.DPR&&DPR.role==="ops"?"All":ME;
+  const ALLP=!window.DPR||DPR.all();const pmKey=pipeScope();
   const ps=r.pipeline?pipeStats(r.pipeline,pmKey):null;
-  const overdue=ps?(ps.inv||[]).filter(x=>x.daysOverdue>0).sort((a,b)=>b.daysOverdue-a.daysOverdue):[];
-  const waitProps=ps?(ps.props||[]).filter(x=>!pipeAppr(x)&&!pipeOut(x)).sort((a,b)=>(b.days||0)-(a.days||0)):[];
+  const overdue=ps?ps.overdue:[],waitProps=ps?ps.pend:[];
   const mineA=Object.values(state.assigns).filter(a=>a.to===state.me&&!isDoneId(a.itemId));
   const li=(href,b,t,cls)=>`<li${cls?` class="${cls}"`:""}><a href="${href}"><b>${esc(b)}</b><span>${esc(t)}</span><i class="go" aria-hidden="true">›</i></a></li>`;
   const card=(key,title,n,body,more,moreLbl,extra)=>`<section class="dcard t-${key}" data-dkey="today-${key}"${extra||""}><h2>${title}${n!=null?`<span class="cnt" aria-hidden="true">${n}</span><span class="vh">, ${n}</span>`:""}</h2>${body}${more?`<a class="dmore" href="${more}">${moreLbl} ›</a>`:""}</section>`;
@@ -1814,15 +1808,14 @@ function viewToday(){
   const pplAll=new Set(vis.filter(({i,c})=>(i.kind==="email"||i.kind==="text")&&whoOf(i,c)&&!isDone(i)).map(({i,c})=>whoOf(i,c))).size;const pplMore=Math.max(0,pplAll-ppl.length);
   const cPpl=ppl.length?card("people","Waiting on you",ppl.length,`${pplMore?`<p class="tnote">${pplMore} more ${pplMore===1?"person is":"people are"} in Top 5 or Needs attention.</p>`:""}<ul class="dig tlist">${ppl.map(([w,xs])=>personRow(w,xs)).join("")}</ul>`,"#people","See everyone"):"";
   const pmName=x=>{const n=pmOf(x);return ALLP&&n.length&&!(n.length===1&&n[0]===ME)?"PM "+n.join(" / "):""};
-  const wc=pipeCounts(waitProps);const waitLbl=waitProps.length&&wc.co?pipeCountText(waitProps)+" waiting":`${ps?ps.openCount??waitProps.length:0} proposals waiting`;
-  const ovRow=x=>li("#pipeline",x.customer,[`${money(pipeDue(x))} overdue`,`${x.daysOverdue} days late`,x.number?"#"+x.number:"",pmName(x),pipeCheck(x)?"Check expected":"",pipeQB(x)?"QuickBooks":""].filter(Boolean).join(" · "),"hot");
-  const wpRow=x=>li("#pipeline",x.customer,[`${money(x.amount)} ${pipeKind(x).toLowerCase()}`,x.days!=null?"waiting "+x.days+" days":"",pmName(x)].filter(Boolean).join(" · "),(x.days||0)>=14?"warn":"");
+  const wc=pipeCounts(waitProps);const waitLbl=waitProps.length&&wc.co?pipeCountText(waitProps)+" waiting":`${ps?ps.openCount:0} proposals waiting`;
+  const ovRow=x=>li("#pipeline",x.customer,[`${money(pipeDue(x))} overdue`,daysWord(amt(x.daysOverdue))+" late",x.number?"#"+x.number:"",pmName(x),pipeCheck(x)?"Check expected":"",pipeQB(x)?"QuickBooks":""].filter(Boolean).join(" · "),"hot");
+  const wpRow=x=>li("#pipeline",x.customer,[`${money(x.amount)} ${pipeKind(x).toLowerCase()}`,pipeDays(x)!=null?"waiting "+daysWord(pipeDays(x)):"",pmName(x)].filter(Boolean).join(" · "),(pipeDays(x)||0)>=14?"warn":"");
   const cMoney=ps&&(overdue.length||waitProps.length)?card("money",ALLP&&pmKey==="All"?"Money · all PMs":"My money",null,`<div class="dstat"><a href="#pipeline"><b>${money(ps.openValue)}</b><span>${esc(waitLbl)}</span></a><a href="#pipeline"${ps.arOverdue>0?' class="crit"':""}><b>${money(ps.arOverdue)}</b><span>${overdue.length} overdue invoice${overdue.length===1?"":"s"}</span></a></div><ul class="dig">${overdue.map(ovRow).join("")}${waitProps.length?`<li class="tsub dpd-sub">Waiting on the client<em>${esc(pipeCountText(waitProps))}</em></li>`:""}${waitProps.map(wpRow).join("")}</ul>`,"#pipeline","Open pipeline"):"";
   const cRocks=rocks.length?card("rocks","Rocks",rocks.length,`<ul class="dig tlist">${rocks.sort(byAge).map(({i,c})=>aRow(i,c)).join("")}</ul>`):"";
   const cTeam=mineA.length?card("team","Assigned to you",mineA.length,`<ul class="dig">${mineA.map(a=>li("#assigned",a.customer||"Job",a.text||"")).join("")}</ul>`,"#assigned","Open assigned"):"";
   const cCal=card("cal","Calendar",cal.length||null,`<p class="tcalday">${esc(calDayLabel())}</p>`+(cal.length?calHtml(cal):`<div class="empty">Nothing on the calendar.</div>`),"#calendar","Open calendar");
   const cTop=t.length?`<section class="dcard t-top" data-dkey="today-top" data-nodpd><h2>Top ${t.length} ${F.stale?"from "+esc(F.day):"today"}</h2>${topRows?`<ol class="tlist ttop">${topRows}</ol>`:`<p class="tallset">${ic("check")} All ${t.length} done. Nice work.</p>`}</section>`:"";
-  const kmoney=v=>v>=1e6?"$"+(v/1e6).toFixed(1).replace(/\.0$/,"")+"M":v>=1e4?"$"+Math.round(v/1e3)+"k":money(v);
   const chip=(k,v,l,cls,href)=>`<a class="tchip${cls?" "+cls:""}" href="${href||"#today"}"${href?"":` data-tjump="${k}"`}><b>${v}</b> <span>${l}</span></a>`;
   const chips=chip("overdue",nOvr,"overdue",nOvr?"crit":"")+chip("urgent",nUrg,"urgent",nUrg?"crit":"")+chip("email",nMail,nMail===1?"email to answer":"emails to answer","","#email");
   const running=refreshRunning();
@@ -1887,6 +1880,15 @@ function tidyReview(r){if(!r||typeof r!=="object")return r;try{
   r.calendar=r.calendar.filter(e=>e&&typeof e==="object");
   r.calendar.forEach(e=>{const k=e.packet;if(k&&typeof k==="object"){k.openItems=asList(k.openItems).map(asText).filter(Boolean);k.notes=asList(k.notes).map(asText).filter(Boolean)}else if(k!=null)delete e.packet})}catch(x){}return r}
 window.__tidyReview=tidyReview;
+function withLight(r,l){if(!r||typeof r!=="object"||!l||typeof l!=="object")return r;try{
+  const lc=asList(l.cards).filter(c=>c&&typeof c==="object"&&asList(c.items).length);if(!lc.length)return r;
+  const cards=asList(r.cards).map(c=>c&&typeof c==="object"?{...c,items:asList(c.items).slice()}:c);
+  const have=new Set();cards.forEach(c=>c&&c.items&&c.items.forEach(i=>{if(i&&i.id)have.add(String(i.id))}));
+  lc.forEach(c=>{const add=asList(c.items).filter(i=>i&&typeof i==="object"&&i.id&&!have.has(String(i.id)));if(!add.length)return;
+    add.forEach(i=>have.add(String(i.id)));const own=c.id&&cards.find(x=>x&&x.id===c.id);
+    if(own)own.items.push(...add);else cards.push({...c,items:add})});
+  return {...r,cards}}catch(x){return r}}
+window.__withLight=withLight;
 function tasksBehind(r){const want=+((window.DP_CONFIG||{}).promptsVersion)||0;if(!want||!r||!r.generatedAt)return[];const have=+r.promptsVersion||0;
   const h=state.health;if(have<want&&h&&+h.promptsVersion>=want&&sysMs(h.at)>sysMs(r.generatedAt))return[];
   return have>=want?[]:["Your scheduled updates are still on older instructions, so some new features won't fill in yet."]}
@@ -1938,7 +1940,6 @@ function hubSlugNow(c,ix){
   let j=ix.find(x=>nums.some(n=>(x.jobNumbers||[]).includes(n)));if(j)return j.slug;
   const a=String(c.address||"").toLowerCase();if(a&&!a.includes("·")){j=ix.find(x=>{const m=String(x.street||"").toLowerCase().match(/^(\d+)\s+(.*)$/);if(!m)return false;const w=m[2].split(/\s+/).find(t=>!/^[nsew]$/.test(t)&&t.length>1)||"";return a.startsWith(m[1]+" ")&&a.includes(w)});if(j)return j.slug}
   const cu=String(c.customer||"").toLowerCase();j=ix.find(x=>x.group!=="investment"&&x.customer&&cu.includes(String(x.customer).toLowerCase()));return j?j.slug:null}
-function hubLink(c,label){const sl=hubSlug(c);return sl?`<a class="hublink" href="#hub/job-${esc(window.DPJob?DPJob.id(sl):sl)}" title="Selections, plans, purchases and costing for this job" aria-label="${esc(String(label||"Project Hub").replace(/\s*›\s*$/,""))}: ${esc(c.customer||"")}">${label||"Project Hub"}</a>`:""}
 function paintRefresh(){const b=$("#refresh");if(!b)return;if(isHub()){const h=window.__hubRefreshInfo&&window.__hubRefreshInfo();if(h){b.disabled=h.disabled;b.innerHTML=/Syncing/.test(h.html)?'↻<span class="lbl"> Refreshing…</span>':'↻<span class="lbl"> Refresh</span>';b.title=h.title}return}const r=state.refresh;
   const running=refreshRunning();
   b.disabled=!!running||!state.owner;b.innerHTML=running?'↻<span class="lbl"> Refreshing…</span>':'↻<span class="lbl"> Refresh</span>';
@@ -1961,7 +1962,7 @@ function askRefresh(from){
   el.innerHTML=`<p id="rconfm">${esc(msg)}</p><div class="acts"><button type="button" class="act primary" data-rc="go">${one?"Refresh this job":isHub()?"Refresh all jobs":"Run update"}</button><button type="button" class="act ghost" data-rc="no">Cancel</button></div>`;
   el.hidden=false;const go=el.querySelector('[data-rc="go"]');if(go)go.focus()}
 function closeRefreshAsk(restore){const el=document.getElementById("rconf");if(!el||el.hidden)return;el.hidden=true;const f=el.__from;el.__from=null;if(restore){const t=f&&f.isConnected&&f!==document.body?f:$("#refresh");try{t&&t.focus()}catch(e){}}}
-window.__dpAskRefresh=askRefresh;window.__dpCloseRefreshAsk=closeRefreshAsk;
+window.__dpAskRefresh=askRefresh;
 async function doRefresh(){if(isHub()){if(window.__hubDoRefresh)window.__hubDoRefresh();return}
   if(!state.mcp){showBanner("Refresh needs this page open on claude.ai with your connectors on.");return}
   if(refreshRunning()){paintRefresh();return}
@@ -2153,7 +2154,6 @@ async function saveNote(sid,text){const el=document.getElementById("dnote");cons
     if(changed)suggestFrom(sid)}
   catch(e){state.status[sid]=cur;say("Couldn't save the note. Check your connection, then try again.",true)}
   finally{if(btn)btn.disabled=false}}
-const saveDoneNote=saveNote;
 async function suggestFrom(sid){const v=state.status[sid];if(!v||!v.note||!state.sample)return;NOTE_BUSY[sid]=true;refreshNote(sid);
   const cx=window.DPJob&&v.job?DPJob.ctx(v.job):null;
   const prompt=`You turn a remodeling project manager's site note into follow-up items for their dashboard. Reply with JSON only, no other words: {"items":[...]}, at most 4 items, or {"items":[]} when nothing more is needed.
@@ -2221,11 +2221,6 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener("input",e=>{const t=e.target;if(!t||!t.dataset||t.dataset.sgT===undefined)return;const [sid,ix]=sgKey(t.dataset.sgT);const v=state.status[sid];const s=v&&v.sugg&&v.sugg[ix];if(!s)return;if(s.k==="selection")s.choice=t.value;else s.t=t.value});
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-inkind]");if(!b)return;state.inKind=b.dataset.inkind;if(location.hash!=="#inbox")location.hash="#inbox";else render()});
 document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("select[data-injob]");if(!s)return;state.inJob=s.value;render()});
-function viewKind([k,label]){
-  const list=allItems().filter(({i})=>i.kind===k);
-  const sub={email:"Emails that need a reply.",text:"Texts that need a reply.",meeting:"Action items from meetings.",waiting:"People you're waiting on.",delivery:"Orders and deliveries.",money:"Payments, invoices and deposits.",jobtread:"JobTread tasks and fixes.",estimate:"Estimates to write, update or chase."}[k]||"";
-  return pageHead(label,sub)+(list.length?grouped(list):`<div class="empty">Nothing here.</div>`);
-}
 function grouped(list){return inboxGroups(list,{roll:false})}
 function itemAbout(i,c){const who=String(whoOf(i,c||{})||(c&&c.customer)||"").replace(/\s*<[^>]*>\s*/g,"").trim();
   const t=String((i&&i.text)||"").replace(/\s+/g," ").trim(),short=t.length>60?t.slice(0,59).trim()+"…":t;
@@ -2409,7 +2404,8 @@ function viewFeedback(){
 }
 document.addEventListener("submit",e=>{if(e.target.id==="fbf"){e.preventDefault();fbSubmit(false)}});
 window.__emSearch=q=>{EM.tab="inbox";EM.filter="inbox";EM.q=String(q||"");EM.threads=null;EM.open=null;if(location.hash!=="#email")location.hash="#email";else render();emPoll(true)};
-window.__dpReview=()=>state.review;window.__dpFB=()=>FB.reqs||[];
+window.__dpReview=()=>state.review;
+window.__dpLive=()=>({review:state.reviewLoaded?state.review:undefined,texts:state.textsLoaded?state.texts:undefined});window.__dpFB=()=>FB.reqs||[];
 document.addEventListener("click",e=>{const v=e.target.closest("[data-fbv]");if(v){fbVote(v.dataset.fbv);return}
   const so=e.target.closest("[data-fbs]");if(so){const f=document.getElementById("fbf");if(f)f.querySelectorAll("[data-fb]").forEach(el=>FB.form[el.dataset.fb]=el.value);FB.sort=so.dataset.fbs;render();return}
   if(e.target.closest("[data-fbr]")){fbLoad(true)}});
@@ -2737,9 +2733,7 @@ async function copyFrom(btn){
 
 
 const INB={reveal:new Set(),quiet:new Set(),cs:{}};
-const ibxShort=(t,n)=>{t=String(t||"").replace(/\s+/g," ").trim();n=n||44;return t.length>n?t.slice(0,n-1).trim()+"…":t};
 const ibxScore=i=>isDone(i)?0:i.urgent?3:i.aging?2:1;
-function ibxWho(i,c){return String(whoOf(i,c)||(c&&c.customer)||"").replace(/\s*<[^>]*>\s*/g,"").trim()}
 const ibxCtx=(i,c)=>itemAbout(i,c);
 function inboxGroups(list,opt){opt=opt||{};const roll=opt.roll!==false;
   const by=new Map();list.forEach(({i,c},ix)=>{let g=by.get(c);if(!g){g={c,items:[],ix};by.set(c,g)}g.items.push({i,ix})});
@@ -2903,7 +2897,7 @@ function viewInbox(preset){
 .ibx-jpb{border:0;background:none;padding:6px 0;color:var(--accent);font:600 var(--fs-footnote) var(--body);cursor:pointer;text-align:left;min-height:32px}
 @media (pointer:coarse){.ibx-jpb{min-height:44px}}
 `;document.head.appendChild(st)})();
-const money=n=>n==null||isNaN(n)?"":"$"+Math.round(+n).toLocaleString();
+const money=n=>DPCore.money(n);
 const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return ymd(d)};
 const nice=s=>{try{return new Date(s+(s.length===10?"T12:00:00":"")).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})}catch(e){return s}};
@@ -3071,19 +3065,23 @@ async function assignTo(id,uid){const sid=safeId(id);const {i,c}=findItem(id);co
 async function unassign(id){const sid=safeId(id);const prev=state.assigns[sid];delete state.assigns[sid];setForm(id,null);if(!state.db)return;
   try{await state.db.doc("assignments/"+sid).delete()}catch(e){if(!state.assigns[sid])undoFail(sid,state.assigns,prev,"Couldn't remove the assignment, so it's still assigned.",()=>unassign(id))}}
 
-function pmOf(x){return Array.isArray(x.pm)?x.pm:(x.pm?[x.pm]:[])}
+function pmOf(x){return DPCore.pms(x)}
+function pipeScope(){return window.DPR&&DPR.role==="ops"?"All":ME}
 function inPm(x,pm){return pm==="All"||pmOf(x).includes(pm)}
 function amt(v){if(typeof v==="number")return isFinite(v)?v:0;const n=parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,""));return isFinite(n)?n:0}
 function winFrac(v){if(v==null||v==="")return null;let n=amt(v);if(n>1)n=n/100;return Math.max(0,Math.min(1,n))}
 const pipeAppr=x=>/approved/i.test(x.status||""),pipeGone=x=>/declin|denied|reject|void|cancel/i.test(x.status||""),
   pipeOut=x=>pipeGone(x)||!!(x&&x.docId&&state.stale&&(state.stale[x.docId]||{}).status==="denied");
 const pErr=m=>{const e=new Error(m);e.plain=m;return e};
+const pipeLate=x=>amt(x.daysOverdue)>0;
+const pipeDays=x=>x.days==null||x.days===""?null:amt(x.days);
+const daysWord=n=>n==null?"":n===1?"1 day":n+" days";
 function pipeDue(x){const v=x.balance!=null&&x.balance!==""?x.balance:x.amountDue!=null&&x.amountDue!==""?x.amountDue:x.amount;return amt(v)}
 function pipeKind(x){return /change order/i.test(String(x.title||x.docName||x.documentName||""))||/change/i.test(String(x.kind||""))?"Change Order":"Proposal"}
 const pipeQB=x=>/quickbooks/i.test(String(x.source||""));
 function pipeCmts(x){return (Array.isArray(x.comments)?x.comments:[]).filter(c=>c&&c.text).slice().sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0))}
 const CHECK_RE=/\b(checks?|cheques?|mailed|in the mail|deposit(s|ed|ing)?)\b/i;
-function pipeCheck(x,extra){return x.daysOverdue>0&&!pipeQB(x)&&pipeCmts(x).concat(extra||[]).some(c=>CHECK_RE.test(String(c.text||c.message||"")))}
+function pipeCheck(x,extra){return pipeLate(x)&&!pipeQB(x)&&pipeCmts(x).concat(extra||[]).some(c=>CHECK_RE.test(String(c.text||c.message||"")))}
 function pipeCounts(xs){const co=xs.filter(x=>pipeKind(x)==="Change Order").length;return{props:xs.length-co,co}}
 function pipeCountText(xs){const n=pipeCounts(xs);return [n.props?n.props+" proposal"+(n.props===1?"":"s"):"",n.co?n.co+" change order"+(n.co===1?"":"s"):""].filter(Boolean).join(" · ")||"None"}
 function pipeStats(p,pm){
@@ -3097,10 +3095,10 @@ function pipeStats(p,pm){
   const appr=props.filter(pipeAppr);
   return{openValue:rowsOr(pend,pend.reduce((a,x)=>a+amt(x.amount),0),"openValue"),openCount:rowsOr(pend,pend.length,"openCount"),
     approved30Value:rowsOr(appr,appr.reduce((a,x)=>a+amt(x.amount),0),"approved30Value"),
-    arOverdue:rowsOr(inv,inv.filter(x=>amt(x.daysOverdue)>0).reduce((a,x)=>a+pipeDue(x),0),"arOverdue"),winRate,props,inv,
-    pend,overdue:inv.filter(x=>amt(x.daysOverdue)>0)};
+    arOverdue:rowsOr(inv,inv.filter(pipeLate).reduce((a,x)=>a+pipeDue(x),0),"arOverdue"),winRate,props,inv,
+    pend:pend.slice().sort((a,b)=>(pipeDays(b)||0)-(pipeDays(a)||0)),overdue:inv.filter(pipeLate).sort((a,b)=>amt(b.daysOverdue)-amt(a.daysOverdue))};
 }
-window.__dpPipe={stats:pipeStats,winFrac:winFrac,amt:amt,due:pipeDue,notes:(x,inv)=>pipeAll(!!inv,x,pipeKey(inv?"inv":"prop",x)).all};
+window.__dpPipe={stats:pipeStats,winFrac:winFrac,amt:amt,due:pipeDue,late:pipeLate,days:pipeDays,notes:(x,inv)=>pipeAll(!!inv,x,pipeKey(inv?"inv":"prop",x)).all};
 function pipeHref(x){if(pipeQB(x))return null;const sl=hubSlug({job:String(x.job||x.number||"").split("-")[0],address:x.address||"",customer:x.customer||""});return sl?{h:"#hub/job-"+(window.DPJob?DPJob.id(sl):sl),ext:false}:x.link?{h:x.link,ext:true}:null}
 function pipeIdxJid(no){if(!no)return "";const j=(DPCore.jobIndex()||state.hubIdx||[]).find(j=>j&&(j.jobNumbers||[]).map(String).includes(no));return j&&(j.jobIds||[])[0]?String(j.jobIds[0]):""}
 const pipeJid=x=>x.jobId||((String(x.link||"").match(/app\.jobtread\.com\/jobs\/([A-Za-z0-9_-]+)/)||[])[1])||pipeIdxJid(pipeJobNo(x))||PIPE.jid[pipeJobNo(x)]||"";
@@ -3214,26 +3212,26 @@ function viewPipeline(){
   const all=[...(p.proposals||[]),...(p.invoices||[])];
   const cnt={};all.forEach(x=>pmOf(x).forEach(n=>cnt[n]=(cnt[n]||0)+1));
   const ALL=window.DPR?DPR.all():DPC.role!=="pm";const pms=ALL?Object.keys(cnt).filter(n=>n!==ME).sort():[];
-  let pm=state.pm==="All"||cnt[state.pm]||state.pm===ME?state.pm:ME;if(window.DPR&&DPR.role==="ops"&&pm===ME)pm="All";if(!ALL)pm=ME;
+  let pm=state.pm==="All"||cnt[state.pm]||state.pm===ME?state.pm:ME;if(pm===ME)pm=pipeScope();if(!ALL)pm=ME;
   const first=n=>n.split(" ")[0];
   const chips=`<div class="chips" role="group" aria-label="Project consultant">${[...(window.DPR&&DPR.role==="ops"?[]:[[ME,"Mine"]]),...pms.map(n=>[n,first(n)+" "+n.split(" ").slice(1).join(" ").slice(0,1)+"."]),...(ALL?[["All","All PMs"]]:[])].map(([v,l])=>{const n=v==="All"?all.length:(cnt[v]||0);return `<button data-pm="${esc(v)}" aria-pressed="${pm===v}">${esc(l)} <span class="n" aria-hidden="true">${n}</span><span class="vh">, ${n}</span></button>`}).join("")}</div>`;
   const KIND=PIPE.kind||"all";const kf=x=>KIND==="all"||(KIND==="prop"&&pipeKind(x)==="Proposal")||(KIND==="co"&&pipeKind(x)==="Change Order");
   const staleXs=(p.stale||[]).filter(x=>pm===ME&&!pmOf(x).length?true:inPm(x,pm)).filter(kf);
   const s=pipeStats(p,pm);pipeResolveJobs(s.props.concat(s.inv,staleXs));const kpi=(v,l,c)=>`<div class="kpi${c?" "+c:""}"><b>${v}</b> <span>${l}</span></div>`;
-  const props=s.props.slice().sort((a,b)=>(b.days||0)-(a.days||0));const inv=s.inv.slice().sort((a,b)=>(b.daysOverdue||0)-(a.daysOverdue||0));
+  const props=s.props.slice().sort((a,b)=>(pipeDays(b)||0)-(pipeDays(a)||0));const inv=s.inv.slice().sort((a,b)=>amt(b.daysOverdue)-amt(a.daysOverdue));
   const who=x=>{const n=pmOf(x);return n.length&&!(n.length===1&&n[0]===ME)?"PM "+n.join(" / "):""};
   const pend=props.filter(x=>!pipeAppr(x)&&!pipeGone(x)&&kf(x));
   const appr=props.filter(pipeAppr).filter(kf);
   const title=pm===ME?"My pipeline":pm==="All"?"Pipeline · all PMs":"Pipeline · "+pm;
   const F=freshness();const upd=F.has?"Updated "+(F.days>=2?F.dayLong:F.when)+".":p.asOf?"Updated "+p.asOf+".":"";
   const PMF=esc(window.DPOrg.jt().pm.name);const sub=(pm===ME?`Jobs where you're the ${PMF} in JobTread.`:pm==="All"?`Jobs where any project manager is the ${PMF} in JobTread.`:`Jobs where ${esc(pm)} is the ${PMF} in JobTread.`)+(upd?" "+upd:"");
-  const days=n=>n==null?"":n===1?"1 day":n+" days";
+  const days=daysWord;
   const card=(key,t,n,body,foot)=>`<section class="dcard pcard" data-dkey="pipe-${key}"><h2>${t}${n!=null?`<span class="cnt" aria-hidden="true">${n}</span><span class="vh">, ${n}</span>`:""}</h2>${body}${foot||""}</section>`;
-  const cProps=card("props","Proposals waiting",pend.length,pend.length?`<p class="pnote pcount">${esc(pipeCountText(pend))}</p><ul class="dig plist">${pend.map(x=>pipeRow(pipeKind(x),x,money(amt(x.amount)),x.days!=null?"waiting "+days(x.days):"",[x.address,x.number?"#"+x.number:"",x.sentDate?"sent "+x.sentDate:"",who(x)].filter(Boolean).join(" · "),(x.days||0)>=7)).join("")}</ul>`:`<div class="empty">${KIND==="co"?"No change orders waiting.":"No proposals waiting."}</div>`);
+  const cProps=card("props","Proposals waiting",pend.length,pend.length?`<p class="pnote pcount">${esc(pipeCountText(pend))}</p><ul class="dig plist">${pend.map(x=>pipeRow(pipeKind(x),x,money(amt(x.amount)),pipeDays(x)!=null?"waiting "+days(pipeDays(x)):"",[x.address,x.number?"#"+x.number:"",x.sentDate?"sent "+x.sentDate:"",who(x)].filter(Boolean).join(" · "),(pipeDays(x)||0)>=7)).join("")}</ul>`:`<div class="empty">${KIND==="co"?"No change orders waiting.":"No proposals waiting."}</div>`);
   const cAppr=appr.length?card("appr","Recently approved",appr.length,`<ul class="dig plist">${appr.map(x=>pipeRow("Approved "+pipeKind(x).toLowerCase(),x,money(amt(x.amount)),"",[x.address,x.number?"#"+x.number:"",x.approvedDate?"approved "+x.approvedDate:"",who(x)].filter(Boolean).join(" · "),false)).join("")}</ul>`):"";
   const occ=ALL?`<div class="pacts"><button class="act primary" type="button" data-oemail>Email PMs about overdue</button><button class="act" type="button" data-occ aria-label="Choose who is copied on the overdue-invoice emails">Choose who's copied</button><p class="pnote">Builds one email per project manager from JobTread. You check each one before it's sent.</p></div>`:"";
-  const invAmt=x=>x.daysOverdue>0?money(pipeDue(x)):money(amt(x.amount));
-  const invWhen=x=>x.daysOverdue>0?"overdue"+(x.amount!=null&&pipeDue(x)!==(+x.amount||0)?" of "+money(amt(x.amount)):"")+" · "+days(x.daysOverdue)+" late":String(x.status||"");
+  const invAmt=x=>pipeLate(x)?money(pipeDue(x)):money(amt(x.amount));
+  const invWhen=x=>pipeLate(x)?"overdue"+(x.amount!=null&&pipeDue(x)!==amt(x.amount)?" of "+money(amt(x.amount)):"")+" · "+days(amt(x.daysOverdue))+" late":String(x.status||"");
   const cInv=card("inv","Invoices",inv.length,inv.length?`<ul class="dig plist">${inv.map(x=>pipeRow("Invoice",x,invAmt(x),invWhen(x),[x.address,x.number?"#"+x.number:"",x.dueDate?"due "+x.dueDate:"",who(x)].filter(Boolean).join(" · "),x.daysOverdue>0)).join("")}</ul>`:`<div class="empty">No open invoices.</div>`,occ);
   const kinds=`<div class="chips" role="group" aria-label="Show">${[["all","All"],["prop","Proposals"],["co","Change orders"],["inv","Invoices"]].map(([v,l])=>`<button type="button" data-pkind="${v}" aria-pressed="${KIND===v}">${l}</button>`).join("")}</div>`;
   const left=KIND==="inv"?"":cProps+cAppr,right=KIND==="prop"||KIND==="co"?"":cInv;
@@ -3255,7 +3253,7 @@ function staleHtml(xs,who){
   const row=x=>{const st=state.stale[x.docId]||{};const gone=st.status==="denied";const cl=pipeCloseUi(x);
     return `<div class="row${gone?" gone":""}" data-doc="${esc(x.docId)}"><div style="min-width:0"><b>${esc(x.customer)}</b><div class="sub">${esc([x.address,"#"+x.number,x.sentDate?"sent "+x.sentDate:"",x.jobClosed?"job closed":"",who(x)].filter(Boolean).join(" · "))}</div>
       <div class="acts">${cl.btn}${pipeJTUrl(x)?`<a class="act ghost" href="${esc(DPCore.safeUrl(pipeJTUrl(x)))}" target="_blank" rel="noopener" aria-label="Open in JobTread (new tab): ${esc(x.customer)}${x.number?" #"+esc(x.number):""}">Open in JobTread</a>`:""}</div>${cl.extra}</div>
-      <div class="amt">${money(amt(x.amount))}<small>${x.days!=null?x.days+(x.days===1?" day":" days"):""}</small></div></div>`};
+      <div class="amt">${money(amt(x.amount))}<small>${daysWord(pipeDays(x))}</small></div></div>`};
   return `<section class="dcard pcard pstale" data-dkey="pipe-stale"><h2>Stale proposals<span class="cnt" aria-hidden="true">${live.length}</span><span class="vh">, ${live.length}</span></h2><p class="pnote">Sent 30+ days ago and still pending in JobTread, ${money(tot)} in all. Closing one updates JobTread, your pipeline and win rate, and the customer is not notified. You confirm each one, and Undo sets it back to pending.</p><div class="rows">${xs.map(row).join("")}</div></section>`;
 }
 const pipeDocRow=id=>{const p=(state.review||{}).pipeline||{};return(p.proposals||[]).concat(p.stale||[]).find(x=>x&&x.docId===id)};
@@ -3384,7 +3382,6 @@ function ssWhen(){const t=Date.parse((state.sites||{}).asOf||"");if(!t||t>Date.n
   if(Date.now()-t>18*3600e3)return{label:"Schedule from "+d.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}),old:true};
   const same=ssYmd(d)===todayStr();return{label:"Updated "+(same?"":d.toLocaleDateString([],{weekday:"short"})+" ")+d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}),old:false}}
 function ssUpcoming(){const today=todayStr(),last=ssAdd(today,13);return ssAll().filter(e=>!e.date||(e.date>=today&&e.date<=last))}
-window.__dpSites=()=>state.sites;
 window.__dpSiteList=()=>ssUpcoming().map(e=>({...e,where:ssWhere(e),href:e.slug?"#sites/"+ssJid(e.slug):"#sites",day:ssDayLabel(e.date,todayStr()).filter(Boolean).join(", ")}));
 window.__dpSiteFor=slug=>{const today=todayStr();return ssUpcoming().filter(e=>e.slug===slug&&e.date).sort((a,b)=>a.date.localeCompare(b.date)||ssSort(a,b)).map(e=>{const [d1,d2]=ssDayLabel(e.date,today);
   return{id:e.id,day:d1,date:d2,time:e.time,who:ssWho(e),co:ssCo(e),what:e.what,status:e.status,tag:SS_ST[e.status]&&e.status!=="confirmed"?SS_ST[e.status][0]:"",cls:e.status}})};
@@ -3536,7 +3533,6 @@ function onCancel(){if(P.on&&P.pull)end(false);else P.on=false}
 document.addEventListener("touchmove",onMove,{passive:false});
 document.addEventListener("touchend",onEnd,{passive:true});
 document.addEventListener("touchcancel",onCancel,{passive:true});
-window.__dpPtr={go,threshold:PTR_GO};
 })();
 const SYS_SAY={check:"Check my Design Pro Workspace",tasks:"Update my scheduled tasks",update:"Update my Design Pro Workspace",texts:"Add texts to my Design Pro Workspace",autoOn:"Turn automatic updates on",setup:"Set up my Design Pro Workspace"};
 const SYS_WHERE="Start a new task in the Claude desktop app and say: ";
@@ -3640,7 +3636,6 @@ function sysProblems(){const local=sysLocal();const h=sysHealth();const out=loca
       out.push({key,sev:t.st,src:"check",text:"The "+l.charAt(0).toLowerCase()+l.slice(1)+" "+t.note+".",fix:SYS_WHERE+SYS_SAY.check,...(t.stale?{stale:true}:{}),...(t.note==="is turned off"?{pauseKey:k}:{})})});
     if(sysOld(h.at,48*3600e3))out.push({key:"updater",sev:"warn",stale:true,src:"page",text:"The daily check hasn't run since "+sysWhen(h.at)+".",fix:SYS_WHERE+SYS_SAY.check})}
   return out.sort((a,b)=>SYS_RANK[b.sev]-SYS_RANK[a.sev])}
-window.__dpSysProblems=()=>sysProblems();
 window.__dpSysWord=(k,p)=>sysWord(k,p);
 function sysRows(){const h=sysHealth();const r=state.review;const now=Date.now();const ids=sysTaskIds();const probs=sysProblems();const rows=[];
   const worst=(a,b)=>SYS_RANK[b]>SYS_RANK[a]?b:a;const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -3835,7 +3830,7 @@ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest
   const s=document.querySelector("#view [data-lstrip] summary")||document.querySelector("#view [data-lslink]");if(s)s.focus({preventScroll:true})});
 (function(){const go=()=>window.DPCore&&DPCore.poll?DPCore.poll(lsFetch,{every:5*60e3,first:window.__DP_DEMO?500:4000,when:()=>route()==="today"&&!!lsSince()}):null;
   if(window.DPCore)go();else addEventListener("load",go)})();
-window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22c","highlights":["Each job has four tabs: Overview, To do, Money and Files. To do holds the job's open items and its lists together, with one Show checked switch; Money puts job costing, orders and purchases on one page.","Fewer taps on a phone: adding a punch item and sending a punch list each take 3 taps, and a job's money or orders 1.","One Send sheet for punch lists: the whole list or one trade, who gets each trade, email or text, then a confirm. A suggested sub is only filled in when their trade matches, and is marked to check before sending.","Lists, To sort, Open orders and Investment properties now live on All jobs as a button, a filter and chips. To sort shows every job with items to sort, and the Jobs menu shows how many.","On phones the job header keeps the street on its own line, and the job details wrap instead of scrolling sideways.","No new permissions: installs on its own."]},{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]}];
+window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22d","highlights":["Your scheduled updates read about 30% less and rewrite about 40% less each weekday: the nightly job sync only rewrites what changed, and the quick checks no longer reread your whole Today page.","Items a quick check finds land on Today straight away, merged into the right job card; the morning and evening updates fold them in.","Refresh now runs one full update instead of two.","One number everywhere: the Operations badge always matches the Overdue chip, Today's money card matches Pipeline, and amounts look the same on every page (overdue-invoice emails keep exact cents).","Request payment, Assign to office and Office to-dos always pick the same office people.","The page is a little lighter and loads less data when it opens.","No new permissions: installs on its own."]},{"version":"2026-11-22c","highlights":["Each job has four tabs: Overview, To do, Money and Files. To do holds the job's open items and its lists together, with one Show checked switch; Money puts job costing, orders and purchases on one page.","Fewer taps on a phone: adding a punch item and sending a punch list each take 3 taps, and a job's money or orders 1.","One Send sheet for punch lists: the whole list or one trade, who gets each trade, email or text, then a confirm. A suggested sub is only filled in when their trade matches, and is marked to check before sending.","Lists, To sort, Open orders and Investment properties now live on All jobs as a button, a filter and chips. To sort shows every job with items to sort, and the Jobs menu shows how many.","On phones the job header keeps the street on its own line, and the job details wrap instead of scrolling sideways.","No new permissions: installs on its own."]},{"version":"2026-11-22b","highlights":["Your scheduled updates use about 40% less of your Claude usage: 16 runs on a weekday instead of 26, and each run reads less (after the one-time step below).","The midday update is now a quick check for new items and urgent asks; your page still fully updates every morning and evening, and Refresh still runs a full update whenever you ask.","The quick checks run at 8, 10, 1 and 3 (plus midday), and texts are read every couple of hours on weekdays, not on Sundays.","Parts you don't use (Quo, QuickBooks, CompanyCam, the team roll-up) are left out of your updates' instructions until you start using them; Sub payments is always on.","Owners and operations: Admin day, Team activity and Team workload are now one Team page, Office to-dos also holds Utilities and Permits, and Pipeline rows are one short line you tap for the details.","One time only, to get the new schedule: start a new task in the Claude desktop app and say \"Update my scheduled tasks\". System status reminds you until it's done.","No new permissions: installs on its own (it needs the newest Design Pro Workspace plugin, which your company already has)."]},{"version":"2026-11-22a","highlights":["Today puts your Top 5 first: one header line with the date and three small counts, weather below Top 5, no Today sub-tabs, and several update notes fold into one line. New mail shows as \"· 3 new\" beside the update time, so nothing moves under your finger.","Pull to refresh checks for new email and JobTread changes without using Claude; the Refresh button (it asks first) still runs a full update.","Sub payments (under Money): every payment request from a sub, from email, texts, WhatsApp or JobTread bills. Approve, Request payment (a JobTread to-do for your office team, after a confirm) and Mark paid, each with Undo. Your updates close a request when the office says it's paid or the to-do is done, and say why.","Selections record: one Google Sheet per job in its Project Hub folder, with every selection actually used (brand, color or code, finish, size, lot, links, receipts) and a change log. Your nightly sync keeps it current; it's stamped final when the job closes.","One notes box per job (Project notes on Overview); notes left in the old box move over in one tap.","Fixes: closeout search finds closed jobs and fills in the PM; Pipeline totals drop as soon as you close a proposal; the Inbox job picker keeps your choice; one margin target everywhere; the new-version banner only shows when you need to act.","The page loads about 10% lighter.","No new permissions: installs on its own."]},{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]}];
 const updTask=()=>(DPC.tasks&&DPC.tasks.updater)||(window.__DP_DEMO?"demo-updater":"");
 const UPD={open:false,confirm:false,busy:false,msg:""};
 const updTxt=(v,n)=>String(v==null?"":v).replace(/[\u0000-\u001f<>]/g," ").trim().slice(0,n||200);
@@ -3899,7 +3894,7 @@ window.__dpSaysHtml=function(){return `<section class="dcard" data-nodpd aria-la
   <ul class="saysl">${DP_SAYS.map(([s,d],i)=>`<li><div class="syssay"><span class="sysph" id="say-${i}">${esc(s)}</span><button type="button" class="act" data-syscopy="${esc(s)}" data-sysph="say-${i}" aria-label="Copy the words: ${esc(s)}">Copy</button></div><p>${esc(d)}</p></li>`).join("")}</ul>
   <p class="stp"><a href="${esc(DPCore.safeUrl(window.DP_GUIDE_URL))}" target="_blank" rel="noopener">Open the Workspace guide ›</a> Setup steps, what's new, and why an update may need your OK.</p></section>`};
 window.__dpF2={get state(){return state},get EM(){return EM},get FB(){return FB},get LS(){return LS},get INB(){return INB},DPC,
-  replyTargets,threadText,sysTask,sysLocal,sysRows,sysRowOf,freshness,nextReviewDay,hcState,hcOverall,updState,lsFetch,weatherCard,refreshRunning,sgCan,opsOverdue,
+  replyTargets,threadText,sysTask,sysLocal,sysRows,sysRowOf,freshness,nextReviewDay,hcState,hcOverall,updState,lsFetch,weatherCard,refreshRunning,sgCan,opsOverdue,pipeScope,
   emAct,emUndoOp,emCommit,fbSubmit,fbSnap,render:()=>render(),rerenderItem,findItem,allItems,itemHtml:(...a)=>itemHtml(...a)};
 const SCROLLS={};let curHash=location.hash||"#today";
 addEventListener("scroll",()=>{SCROLLS[curHash]=scrollY},{passive:true});
@@ -3983,7 +3978,6 @@ function showBanner(m){const b=$("#banner");b.textContent=m;b.hidden=false}
 render();
 let drawQ=0,drawT=0;
 function drawSoon(){if(drawQ)return;const go=()=>{cancelAnimationFrame(drawQ);clearTimeout(drawT);drawQ=0;drawT=0;render()};drawQ=requestAnimationFrame(go);drawT=setTimeout(go,120)}
-window.__dpDrawSoon=drawSoon;
 function syncColl(obj,prev,q,put,keep,gone){const now=new Set();q.docs.forEach(d=>{now.add(d.id);put(d)});
   prev.forEach(id=>{if(!now.has(id)&&!(keep&&keep(id))){delete obj[id];if(gone)gone(id)}});return now}
 (async()=>{
@@ -3994,13 +3988,18 @@ function syncColl(obj,prev,q,put,keep,gone){const now=new Set();q.docs.forEach(d
   try{db=await window.DPCore.db()}catch(e){clearTimeout(timer);showBanner("Couldn't open this page's saved data. Reload the page to try again.");$("#meta").textContent="";return}
   if(!db){clearTimeout(timer);showBanner("Sign in to claude.ai to load your review.");$("#meta").textContent="";return}
   state.db=db;
-  db.doc("review/today").onSnapshot(s=>{clearTimeout(timer);state.review=s.exists?tidyReview(s.data()):null;state.reviewLoaded=true;if(!state.review){$("#meta").textContent="No review yet";}drawSoon()},err=>{clearTimeout(timer);showBanner("Couldn't load the review. Reload the page to try again.")});
+  let rawReview=null,rawLight=null;
+  const showReview=()=>{state.review=rawReview?tidyReview(withLight(rawReview,rawLight)):null};
+  db.doc("review/today").onSnapshot(s=>{clearTimeout(timer);rawReview=s.exists?s.data():null;showReview();state.reviewLoaded=true;if(!state.review){$("#meta").textContent="No review yet";}drawSoon()},err=>{clearTimeout(timer);showBanner("Couldn't load the review. Reload the page to try again.")});
+  db.doc("review/light").onSnapshot(s=>{const nl=s.exists?s.data():null;const key=x=>x&&Array.isArray(x.cards)&&x.cards.length?JSON.stringify(x.cards):"";
+    const changed=key(nl)!==key(rawLight);rawLight=nl;if(rawReview&&changed){showReview();drawSoon()}},()=>{});
   db.collection("status").onSnapshot(q=>{state.status={};q.docs.forEach(d=>state.status[d.id]=d.data());drawSoon()},()=>{});
-  let noteIds=new Set(),actIds=new Set();
+  let noteIds=new Set(),actIds=new Set(),refreshSeen="";
   const typing=id=>{const el=document.activeElement;return !!(el&&el.dataset&&safeId(el.dataset.note||"")===id)};
   db.collection("notes").onSnapshot(q=>{noteIds=syncColl(state.notes,noteIds,q,d=>{if(!typing(d.id))state.notes[d.id]=d.data()},typing);drawSoon()},()=>{});
   db.collection("actions").onSnapshot(q=>{actIds=syncColl(state.actions,actIds,q,d=>{const v=d.data();state.actions[d.id]=v;if(d.id.startsWith("stale-")&&!(state.stale[d.id.slice(6)]||{}).busy)state.stale[d.id.slice(6)]={status:v.status,at:v.at,jobId:v.jobId||"",from:v.prevStage||"",to:v.stageTo||"",msg:(state.stale[d.id.slice(6)]||{}).msg||""}},null,
-    id=>{const k=id.slice(6);if(id.startsWith("stale-")&&!(state.stale[k]||{}).busy)delete state.stale[k]});drawSoon()},()=>{});
+    id=>{const k=id.slice(6);if(id.startsWith("stale-")&&!(state.stale[k]||{}).busy)delete state.stale[k]});
+    const rf=JSON.stringify(state.actions.refresh||null);if(rf!==refreshSeen){refreshSeen=rf;state.refresh=state.actions.refresh||null;paintRefresh()}drawSoon()},()=>{});
   db.collection("noticeoff").onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=1);state.noticeOff=o;drawSoon()},()=>{});
   db.collection("later").onSnapshot(q=>{state.later={};q.docs.forEach(d=>state.later[d.id]=d.data());drawSoon()},()=>{});
   db.collection("assignments").onSnapshot(async q=>{state.assigns={};q.docs.forEach(d=>state.assigns[d.id]=d.data());
@@ -4009,8 +4008,10 @@ function syncColl(obj,prev,q,put,keep,gone){const now=new Set();q.docs.forEach(d
   db.doc("sitesched/current").onSnapshot(s=>{state.sites=s.exists?(s.data()||null):null;state.sitesLoaded=true;drawSoon()},()=>{state.sitesLoaded=true;drawSoon()});
   db.doc("texts/today").onSnapshot(s=>{state.texts=s.exists?(s.data()||null):null;state.textsLoaded=true;drawSoon()},()=>{state.textsLoaded=true;drawSoon()});
   db.doc("system/health").onSnapshot(s=>{state.health=s.exists?(s.data()||null):null;state.healthLoaded=true;drawSoon()},()=>{state.healthLoaded=true;drawSoon()});
-  db.doc("jobindex/current").onSnapshot(s=>{const js=s.exists?((s.data()||{}).jobs):[];state.hubIdx=Array.isArray(js)?js:[];try{window.DPCore.setJobIndex(state.hubIdx)}catch(e){}drawSoon()},()=>{});
-  db.doc("actions/refresh").onSnapshot(s=>{state.refresh=s.exists?s.data():null;paintRefresh()},()=>{});
+  let idxOff=null;const subIdx=()=>{try{if(idxOff)idxOff()}catch(e){}
+    idxOff=db.doc("jobindex/current").onSnapshot(s=>{const js=s.exists?((s.data()||{}).jobs):[];state.hubIdx=Array.isArray(js)?js:[];try{window.DPCore.setJobIndex(state.hubIdx)}catch(e){}drawSoon()},
+      e=>{try{window.DPCore.setJobIndex(null,e||new Error("subscription failed"))}catch(x){}})};
+  subIdx();try{window.DPCore.jobIndexSource(subIdx)}catch(e){}
 })();
 function loadUser(){Promise.resolve().then(()=>window.claude.use("user")).then(async u=>{if(!u)return;state.user=u;try{state.owner=(await u.isOwner())===true;state.me=await u.id();
   try{const db=await window.DPCore.db();let sd=null;if(db){try{sd=await db.doc(START_KEY()).get()}catch(x){}
@@ -4217,7 +4218,6 @@ ul.items.tg .cb::after{width:5px;height:10px}
 li.it .tx{font-size:var(--fs-subhead);line-height:1.35}
 ul.items.tg .meta{margin-top:3px}
 .selbar{display:flex;align-items:center;gap:8px;margin:8px 14px 2px;padding:8px 10px;background:var(--mint-bg);border-radius:8px;font-size:var(--fs-footnote);flex-wrap:wrap}
-.selhint{margin:8px 14px 0;font-size:var(--fs-caption);color:var(--text-faint)}
 label.smart{display:flex;align-items:center;font-size:var(--fs-footnote);cursor:pointer}
 label.smart b{color:var(--fg)}
 label.smart input{position:absolute;opacity:0;width:1px;height:1px}
@@ -4242,11 +4242,6 @@ li.it.gone{transform:translateX(-110%)!important;opacity:0;transition:transform 
 .prog .track{background:var(--line)}
 .lmain>.cnts .cnt{background:var(--surface);border:1px solid var(--line)}
 .jtop h1{overflow-wrap:anywhere}
-.tipbox{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
-.tipbox summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;font:600 var(--fs-caption)/1.2 var(--body);color:var(--fg)}
-.tipbox summary::-webkit-details-marker{display:none}
-.tipbox summary small{font:500 var(--fs-caption) var(--body);color:var(--muted)}
-.tipbox p{margin:0;padding:0 12px 10px;font-size:var(--fs-caption);line-height:1.45;color:var(--muted)}
 .chatp{max-width:640px;width:100%;max-height:min(86vh,760px);display:flex;flex-direction:column;gap:10px}
 .chatlog{flex:1;min-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
 .msg{max-width:88%;padding:9px 12px;border-radius:12px;font-size:var(--fs-subhead);line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -4262,7 +4257,6 @@ li.it.gone{transform:translateX(-110%)!important;opacity:0;transition:transform 
 #chatChips button:hover{border-color:var(--fg)}
 .jtopb{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-.lsum{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
 
 .prog .pl{flex:none;width:96px;text-align:right;white-space:nowrap}
 .ftools{display:flex;gap:8px;min-width:0}
@@ -4603,12 +4597,10 @@ function kwTrade(t){t=String(t||"").toLowerCase();
   for(const [k,re] of R)if(re.test(t))return k;return"general"}
 const slugT=s=>"x-"+String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24);
 const tradeLabel=(k,i)=>TRADES[k]||(i&&i.tradeLabel)||(S.tlabels[k])||String(k).replace(/^x-/,"").replace(/-/g," ").replace(/^./,c=>c.toUpperCase());
-const OFFICE=()=>{const c=(window.DP_OFFICE||(window.DP_CONFIG&&window.DP_CONFIG.office)||[]).filter(x=>x&&x[1]);if(c.length)return c;
-  const sv=window.__dpOffice&&window.__dpOffice.get&&window.__dpOffice.get();return sv&&Array.isArray(sv.members)?sv.members.map(m=>[String((m&&m.name)||"").trim()||"Office",String((m&&m.membershipId)||m||"")]).filter(x=>x[1]):[]};
-const officeNames=()=>{const o=OFFICE().map(x=>x[0]);return o.length>1?o.slice(0,-1).join(", ")+" and "+o[o.length-1]:o.join("")};
+const OFFICE=()=>window.DPOPS&&DPOPS.office?DPOPS.office():[];
+const officeNames=()=>{const o=(OFFICE()||[]).map(x=>x[0]);return o.length>1?o.slice(0,-1).join(", ")+" and "+o[o.length-1]:o.join("")};
 const tradeOf=i=>(i.trade&&(TRADES[i.trade]||/^x-/.test(i.trade)))?i.trade:kwTrade(i.text);
 const SMART_MIN=5;
-const punchOpen=sl=>jobItems(sl).filter(i=>i.list==="punch"&&!i.done).length;
 const smartSet=sl=>S.settings[sl]&&typeof S.settings[sl].smart==="boolean"?S.settings[sl].smart:null;
 const punchAll=sl=>jobItems(sl).filter(i=>i.list==="punch").length;
 const smartOn=sl=>{const v=smartSet(sl);return v===null?punchAll(sl)>=SMART_MIN:v};
@@ -4622,7 +4614,7 @@ const iso=d=>{const z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${
 const todayIso=()=>iso(new Date());
 const fmt=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString("en-US",{month:"short",day:"numeric"})};
 const okUrl=u=>/^https:\/\//.test(u||"");
-const S={jt:[],own:{},fading:new Set(),exp:new Set(),tg:new Map(),sent:{},subs:{},names:{},tipGone:{},tried:new Set(),tlabels:{},settings:{},sel:new Set(),adding:null,classifying:{},db:null,jobs:[],items:{},review:{},lastUpdate:null,filter:"all",onlyLate:false,showDone:false,open:null,sample:null,loaded:false};
+const S={jt:[],own:{},fading:new Set(),exp:new Set(),tg:new Map(),sent:{},subs:{},names:{},tipGone:{},tried:new Set(),tlabels:{},settings:{},sel:new Set(),adding:null,classifying:{},db:null,jobs:[],items:{},review:{},filter:"all",onlyLate:false,showDone:false,open:null,sample:null,loaded:false};
 const G={busy:false,msg:"",kind:""};
 const JK="lists:jobs";let jobsSub=null,jobsSnap=false,jobsErr=null,jobsWait=null;
 const late=i=>i.due&&!i.done&&i.due<todayIso();
@@ -4682,7 +4674,7 @@ function item(i,hideSent){const meta=SRC[i.src]&&i.src!=="you"?[`<span class="sr
    ${i.list==="punch"&&smartOn(i.job)?`<select data-e="trade" aria-label="Trade">${tradeOpts(i)}</select>`:""}
    <input type="date" data-e="due" value="${esc(i.due||"")}" aria-label="Due date"><input type="text" data-e="room" value="${esc(i.room||"")}" placeholder="Room or area" aria-label="Room or area"><input type="text" data-e="who" value="${esc(i.who||"")}" placeholder="Who (sub, client)" aria-label="Who">
    <button class="btn" data-e="save">Save</button>${px("editBtns",i)}${!i.office&&!i.done&&!(jobOf(i.job)||{}).own?`<button class="btn office" data-e="office">Assign to office</button>`:""}<button class="btn ghost" data-e="del">Delete</button></div>`:""}
-  ${open&&S.confirmOffice===i.id?`<div class="confirm">${OFFICE().length?`<span>Create a JobTread to-do on this job for <b>${esc(officeNames())}</b>?${i.due?" Due "+fmt(i.due)+".":""} They'll get JobTread's usual notification.</span>
+  ${open&&S.confirmOffice===i.id?`<div class="confirm">${!OFFICE()?`<span role="status">Finding the office team in JobTread…</span><div class="row"><button class="btn ghost" data-e="officeNo">Cancel</button></div>`:OFFICE().length?`<span>Create a JobTread to-do on this job for <b>${esc(officeNames())}</b>?${i.due?" Due "+fmt(i.due)+".":""} They'll get JobTread's usual notification.</span>
    <div class="row"><button class="btn pri" data-e="officeGo" ${S.busyOffice?"disabled":""}>${S.busyOffice?"Creating…":"Create to-do"}</button><button class="btn ghost" data-e="officeNo">Cancel</button></div>`:`<span>No office team is chosen yet, so there is no one to give this to. Choose one in Setup (the Office team step), then try again. If you don't see Setup, ask the person who owns this Workspace to do it.</span><div class="row"><button class="btn ghost" data-e="officeNo" style="min-width:64px">OK</button></div>`}</div>`:""}</li>`}
 const CHIP={punch:"Punch",order:"To order",todo:"To do",wait:"Waiting on"};
 const CHEV=`<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
@@ -4803,7 +4795,6 @@ R.addEventListener("click",async e=>{
   const ag=e.target.closest("[data-addgo]");if(ag){const inp=R.querySelector(`[data-addin="${ag.dataset.addgo}"]`);const v=inp?inp.value:(S.addDraft&&S.addDraft.key===ag.dataset.addgo?S.addDraft.v:"");addFrom(ag.dataset.addgo,v,true);return}
   if(e.target.closest("[data-addclose]")){const key=S.adding;const inp=key&&R.querySelector(`[data-addin="${key}"]`);const v=inp?inp.value:(S.addDraft&&S.addDraft.key===key?S.addDraft.v:"");S.adding=null;if(key&&String(v||"").trim())addFrom(key,v,false);else{S.addDraft=null;render(true)}return}
   const sh=e.target.closest("[data-share]");if(sh){openShare(sh.dataset.share);return}
-  if(e.target.closest("[data-gran]")){checkGranola();return}
   if(e.target.closest("[data-chat]")){openChat();return}
   if(e.target.closest("[data-granx]")){G.msg="";render(true);return}
   const r=e.target.closest("[data-r]");
@@ -4822,7 +4813,7 @@ R.addEventListener("click",async e=>{
     const ed=e.target.dataset.e;
     if(ed==="save"){const tsel=li.querySelector('[data-e="trade"]');const f=Object.assign(tsel?Object.assign({trade:tsel.value,tradeBy:"you"},TRADES[tsel.value]?{}:{tradeLabel:tradeLabel(tsel.value)}):{},{list:li.querySelector('[data-e="list"]').value,due:li.querySelector('[data-e="due"]').value||null,who:li.querySelector('[data-e="who"]').value.trim()||null,room:((li.querySelector('[data-e="room"]')||{}).value||"").trim().slice(0,40)||null});S.open=null;R.activeElement&&R.activeElement.blur();if(await upd(it.id,f))toast("Saved")}
     if(ed==="del"){S.open=null;await removeItem(it)}
-    if(ed==="office"){S.confirmOffice=it.id;render(true);const OF=window.__dpOffice;if(OF&&OF.get()===undefined&&OF.load)OF.load().then(()=>render(true),()=>{})}
+    if(ed==="office"){S.confirmOffice=it.id;render(true);if(window.DPOPS&&DPOPS.officeLoad)DPOPS.officeLoad().then(()=>render(true),e=>{S.confirmOffice=null;render(true);toast("Couldn't read the office team. "+em(e,"JobTread"))})}
     if(ed==="officeNo"){S.confirmOffice=null;render(true)}
     if(ed==="officeGo")await assignOffice(it)
     return}
@@ -4870,7 +4861,6 @@ ${todo.map(i=>`${i.id}: ${i.text}`).join("\n")}`,{modelTier:"quick",cache:false}
     for(const i of todo){const t=r&&r[i.id];if(!t)continue;const key=TRADES[t]?t:slugT(t);if(key==="x-")continue;
       await upd(i.id,cur=>{if(cur.tradeBy==="you")return null;const o={trade:key,tradeBy:"claude",tradeV:2};if(!TRADES[key])o.tradeLabel=String(t).slice(0,30);return o})}}
   catch(e){}finally{S.classifying[sl]=false;if(items().some(i=>i.job===sl&&i.list==="punch"&&!i.done&&!S.tried.has(i.id)&&!i.trade))setTimeout(()=>classify(sl),300)}}
-function granBtn(){return `<button class="gbtn" data-gran ${G.busy?"disabled":""} title="Sync Granola: look for walkthroughs from the last 7 days and add their items to Needs review">${G.busy?`<span class="spin"></span>Syncing…`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Sync Granola`}</button>`}
 function granStatus(){return G.msg?`<div class="gstat ${G.kind}" role="status"><span>${esc(G.msg)}</span>${G.busy?"":`<button data-granx aria-label="Dismiss">✕</button>`}</div>`:""}
 const gset=(msg,kind,busy)=>{G.msg=msg;G.kind=kind||"";if(busy!==undefined)G.busy=busy;render(true)};
 async function checkGranola(){if(G.busy)return;
@@ -4938,11 +4928,11 @@ async function assignOffice(it){const j=jobOf(it.job);const jobId=j&&(j.jobIds||
   if(!jobId){toast("No JobTread job is linked to this card.");return}
   S.busyOffice=true;render(true);
   try{const desc=`From the job list for ${j.customer||""}, ${j.address||j.street||""}${(j.jobNumbers||[]).length?" (Job "+j.jobNumbers.join(", ")+")":""}.\nList: ${LISTS[it.list]}${it.list==="punch"?" / "+tradeLabel(tradeOf(it),it):""}${it.who?"\nWho: "+it.who:""}`;
-    const r=await jtq({createTask:{$:{targetType:"job",targetId:jobId,name:it.text.slice(0,200),description:desc,endDate:it.due||null,isToDo:true,assignedMembershipIds:OFFICE().map(x=>x[1])},createdTask:{id:{},name:{}}}},true);
+    const r=await jtq({createTask:{$:{targetType:"job",targetId:jobId,name:it.text.slice(0,200),description:desc,endDate:it.due||null,isToDo:true,assignedMembershipIds:(OFFICE()||[]).map(x=>x[1])},createdTask:{id:{},name:{}}}},true);
     const ct=(r&&r.createTask&&r.createTask.createdTask)||(r&&r.createdTask);if(!ct||!ct.id)throw CORE.error("bad_reply","JobTread","no createdTask id in the reply");
     S.busyOffice=false;S.confirmOffice=null;S.open=null;
     officeChecked[it.job]=0;
-    await upd(it.id,{office:{taskId:ct.id,to:OFFICE().map(x=>x[0]),at:new Date().toISOString(),link:`https://app.jobtread.com/jobs/${jobId}/schedule`}},true);
+    await upd(it.id,{office:{taskId:ct.id,to:(OFFICE()||[]).map(x=>x[0]),at:new Date().toISOString(),link:`https://app.jobtread.com/jobs/${jobId}/schedule`}},true);
     toast("To-do created for "+officeNames())}
   catch(e){S.busyOffice=false;render(true);toast("Couldn't create the to-do. "+em(e,"JobTread"))}}
 const officeChecked={};
@@ -5259,26 +5249,25 @@ function showFound(mode){const out=$("#talkOut");
    for(const f of add)await newItem(Object.assign({job:f.job,list:f.list,text:f.text.trim(),src:importing?"import":"voice",who:f.who,due:f.due},f.list==="punch"&&f.trade?{trade:f.trade,tradeBy:"claude"}:{}));
    toast(`Added ${add.length} item${add.length===1?"":"s"}`)}}
 window.__dpListsAPI={S,R,$,col,put,upd,logSend,listBody,sheetReg,meetingsOf,newItem,render,toast,jobOf,curJob,items,tradeOf,tradeLabel,kwTrade,TRADES,LISTS,esc,fmt,fmtAt,fmtTel,telDigits,emailsIn,em,call,smartOn,listHref,sheetOpen,mergeJobs,removeItem,focusItem,iso,todayIso,short};
-function subJobs(){if(!S.db)return;try{if(typeof jobsSub==="function")jobsSub()}catch(e){}jobsErr=null;
-  jobsSub=S.db.doc("jobindex/current").onSnapshot(s=>{S.loaded=true;jobsSnap=true;jobsErr=null;S.jt=(s.exists?((s.data()||{}).jobs||[]):[]).filter(j=>j&&j.slug&&!/^own-/.test(j.slug)).sort((a,b)=>String(a.street||a.address).localeCompare(String(b.street||b.address)));mergeJobs();
-    if(jobsWait){jobsWait.res(S.jobs);jobsWait=null}render()},
-   e=>{jobsErr=e||new Error("subscription failed");S.loaded=true;if(jobsWait){jobsWait.rej(jobsErr);jobsWait=null}render()})}
-function loadJobs(force){if(!S.db||!CORE)return;return CORE.load(JK,()=>{if(jobsSnap&&!jobsErr)return Promise.resolve(S.jobs);if(jobsErr)subJobs();
+function subJobs(){if(jobsSub)return;jobsSub=CORE.onJobIndex((list,st)=>{if(st.err&&!st.loaded){jobsErr=st.err;S.loaded=true;if(jobsWait){jobsWait.rej(jobsErr);jobsWait=null}render();return}
+  if(!st.loaded)return;S.loaded=true;jobsSnap=true;jobsErr=null;S.jt=list.filter(j=>j&&j.slug&&!/^own-/.test(j.slug)).sort((a,b)=>String(a.street||a.address).localeCompare(String(b.street||b.address)));mergeJobs();
+  if(jobsWait){jobsWait.res(S.jobs);jobsWait=null}render()})}
+function rereadJobs(){if(!S.db||CORE.jobIndexRetry())return;S.db.doc("jobindex/current").get().then(s=>CORE.setJobIndex(s&&s.exists?((s.data()||{}).jobs||[]):[]),e=>CORE.setJobIndex(null,e||new Error("read failed")))}
+function loadJobs(force){if(!S.db||!CORE)return;return CORE.load(JK,()=>{if(jobsSnap&&!jobsErr)return Promise.resolve(S.jobs);if(jobsErr)rereadJobs();
   return new Promise((res,rej)=>{jobsWait={res,rej};setTimeout(()=>{if(jobsWait&&jobsWait.res===res){jobsWait=null;S.loaded=true;rej(CORE.error("timeout","Your job list","no reply from the database after 15 s"))}},15000)})},
   {ttl:864e5,label:"your job list",empty:d=>!(d&&d.length),force:!!force}).catch(()=>{})}
 function mergeJobs(){const own=Object.values(S.own).filter(j=>j&&j.slug&&!j.archived).map(j=>Object.assign({},j,{own:true})).sort((a,b)=>String(b.createdAt||"").localeCompare(String(a.createdAt||"")));S.jobs=S.jt.concat(own)}
-function retryJobs(){if(jobsErr||!jobsSnap)subJobs();loadJobs(true)}
+function retryJobs(){loadJobs(true)}
 (async()=>{if(!window.claude||!window.claude.use){S.loaded=true;render();return}
   let db=null;try{db=await window.claude.use("db")}catch(e){db=null}if(!db){S.loaded=true;render();return}S.db=db;
   subJobs();loadJobs();
   db.collection("lists_items").onSnapshot(q=>{const m={};q.docs.forEach(d=>{const v=d.data();if(v&&v.text)m[d.id]=Object.assign({id:d.id},v)});
-    Object.keys(PEND).forEach(id=>{m[id]=PEND[id]});S.items=m;render()},()=>{});
+    Object.keys(PEND).forEach(id=>{m[id]=PEND[id]});S.items=m;S.itemsIn=true;render()},()=>{});
   try{db.collection("lists_subs").onSnapshot(q=>{const m={};q.docs.forEach(d=>{const v=d.data();if(v&&(v.email||v.phone))m[d.id]=v});S.subs=Object.assign({},S.subs,m)},()=>{})}catch(e){}
   try{db.collection("lists_sent").onSnapshot(q=>{const m={};q.docs.forEach(d=>{const v=d.data();if(v&&v.job)m[d.id]=v});S.sent=Object.assign({},S.sent,m)},()=>{})}catch(e){}
   try{db.collection("lists_jobs").onSnapshot(q=>{const m={};q.docs.forEach(d=>{const v=d.data();if(v&&v.slug)m[d.id]=v});S.own=m;mergeJobs();render()},()=>{})}catch(e){}
   db.collection("lists_settings").onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});S.settings=m;render()},()=>{});
-  db.collection("lists_review").onSnapshot(q=>{const m={};q.docs.forEach(d=>{const v=d.data();if(v&&v.text)m[d.id]=Object.assign({id:d.id},v)});S.review=m;render()},()=>{});
-  db.doc("review/today").onSnapshot(s=>{const v=s.exists?s.data():null;S.lastUpdate=v&&v.generatedAt?new Date(v.generatedAt).toISOString():null;render()},()=>{});
+  db.collection("lists_review").onSnapshot(q=>{const m={};q.docs.forEach(d=>{const v=d.data();if(v&&v.text)m[d.id]=Object.assign({id:d.id},v)});S.review=m;S.reviewIn=true;render()},()=>{});
   window.claude.use("sample").then(s=>{S.sample=s}).catch(()=>{});
   window.claude.use("mcp").then(x=>{S.mcp=x;if(curJob())checkOffice(curJob()).catch(()=>{})}).catch(()=>{});
 })();
@@ -5737,7 +5726,6 @@ wire();setTimeout(caps,1500);
 
 (function(){
 const HROOT=window.__hubRoot;
-const DAILY="#today";
 const DRIVE_ROOT=window.DP_CONFIG.driveFolder;
 const GMAIL="@@SRV:gmail@@",GDRIVE="@@SRV:drive@@",CCR="@@SRV:ccr@@",JTS="@@SRV:jobtread@@";
 const CORE=window.DPCore;
@@ -5781,7 +5769,7 @@ const esc=CORE.esc;
 const lnk=(u,html,attrs)=>CORE.link(u,html,attrs);
 const ymd=t=>{const d=new Date(t);if(isNaN(d))return "";const z=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate())};
 const allWords=(hay,q)=>{const ws=String(q||"").toLowerCase().split(/\s+/).filter(Boolean);hay=String(hay||"").toLowerCase();return ws.every(w=>hay.includes(w))};
-const money=n=>n==null||n===""||isNaN(n)?"—":(n<0?"−":"")+"$"+Math.abs(Math.round(+n)).toLocaleString();
+const money=n=>CORE.money(n,{none:"—"});
 const safe=s=>String(s).replace(/[^A-Za-z0-9_-]/g,"_").slice(0,150);
 const nice=s=>{if(!s)return"";const d=new Date(String(s).length===10?s+"T12:00:00":s);return isNaN(d)?String(s):d.toLocaleDateString([],{month:"short",day:"numeric",year:d.getFullYear()===new Date().getFullYear()?undefined:"numeric"})};
 const route=()=>{const h=location.hash||"";return h.startsWith("#hub/")?(h.slice(5)||"jobs"):"jobs"};
@@ -6009,7 +5997,6 @@ function viewJobs(){
     .sort((a,b)=>(inboxOf(b).length-inboxOf(a).length)||String(a.customer).localeCompare(b.customer));
   const tb=pool.reduce((s,j)=>s+costOf(j).b,0),ta=pool.reduce((s,j)=>s+costOf(j).a,0);
   const sel=pool.reduce((n,j)=>n+rows(j,"selections").filter(s=>!["approved","installed","ordered"].includes(String(s.status||"").toLowerCase())).length,0);
-  const selJobs=pool.filter(needsSel).length;
   const sortN=S.jobs.reduce((n,j)=>n+inboxOf(j).length,0);
   const asOf=pool.map(asOfOf).filter(Boolean).sort().pop();
   const tiles=[`<div class="kpi"><b>${pool.length}</b><span>${inv?"Investment properties":(()=>{const onlyAct=stgOn&&stgPick.size===1&&stgPick.has("active");return scope==="mine"?(onlyAct?"My active projects":"My projects shown"):(onlyAct?"Active client projects":"Client projects shown")})()}</span></div>`];
@@ -6081,12 +6068,12 @@ function sitePanel(j){let xs=[];try{xs=window.__dpSiteFor?window.__dpSiteFor(j.s
   return `<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">On site</b><a class="small" href="${esc(href)}" data-raw aria-label="Site schedule for this job">Site schedule</a></div><ul class="list sslist">${xs.slice(0,6).map(x=>`<li class="${x.status?"st-"+esc(x.status):""}"><div class="body"><p><span class="ss-wh">${esc(x.day)}${x.time?" · "+esc(x.time):""}</span> · ${esc(x.who)}${x.co?` <span class="small">(${esc(x.co)})</span>`:""}${x.what?": "+esc(x.what):""}${x.tag?`<em class="ss-tag${x.status==="cancelled"?"":" warn"}">${esc(x.tag)}</em>`:""}</p></div></li>`).join("")}</ul>${xs.length>6?`<p class="small" style="padding:0 18px 12px">+${xs.length-6} more on the site schedule</p>`:""}</section>`}
 function refreshScope(){const r=route();if(!r.startsWith("job-"))return null;const c=jctx(r.slice(4).split("--")[0]);return c&&c.hub?c.slug:null}
 function lastSync(slug){if(slug){const j=job(slug);return Date.parse(j&&j.syncedAt||"")||0}return Math.max(0,...S.jobs.map(j=>Date.parse(j.syncedAt||"")||0))}
-function paintRefresh(){const b=$("#refresh");if(!b)return;const r=S.refresh;const sl=refreshScope();
+function paintRefresh(){const b=$("#hubrefresh");if(!b)return;const r=S.refresh;const sl=refreshScope();
   const running=r&&r.at&&!r.doneAt&&Date.now()-r.at<45*60e3&&(r.jobs&&r.jobs.length?r.jobs.every(x=>lastSync(x)<r.at):lastSync(null)<r.at);
   b.disabled=!!running||!S.canWrite;b.innerHTML=running?'↻<span class="lbl"> Syncing…</span>':`↻<span class="lbl"> ${sl&&job(sl)?"Refresh this job":"Refresh all jobs"}</span>`;
   b.title=running?`Sync started ${new Date(r.at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}. A single job takes a few minutes, all jobs longer. This page updates on its own.`:(sl&&job(sl)?"Pull new email, texts, meetings and JobTread changes for this job now":"Pull new email, texts, meetings and JobTread changes for every job now (uses more credits than one job)");if(window.__paintHeader)window.__paintHeader()}
 window.__hubDoRefresh=()=>doRefresh();
-window.__hubRefreshInfo=()=>{const b=$("#refresh");return b?{disabled:b.disabled,html:b.innerHTML,title:b.title}:null};
+window.__hubRefreshInfo=()=>{const b=$("#hubrefresh");return b?{disabled:b.disabled,html:b.innerHTML,title:b.title}:null};
 async function doRefresh(){
   if(!S.mcp){const m=$("#meta");if(m)m.textContent="Refresh needs this page open on claude.ai with your connectors on.";return}
   const sl=refreshScope();const msg=await fireSync(sl&&job(sl)?[sl]:[]);
@@ -6627,7 +6614,8 @@ async function hideRow(slug,id,hide,btn){if(btn)btn.disabled=true;
     if(hide)toast("Hidden from this job.",{label:"Undo",fn:()=>hideRow(slug,id,false)});else toast("Showing it again.")}
   catch(err){if(btn)btn.disabled=false;toast(hide?"Couldn't hide that row. Check your connection.":"Couldn't show it again. Check your connection.",{label:"Retry",fn:()=>hideRow(slug,id,hide)})}}
 async function saveStatus(k){const p=S.pend[k];if(!p||p.busy)return;p.busy=true;p.msg="";p.err=false;render();
-  try{if(p.id.startsWith("m-")){const ent=S.entries.find(x=>"m-"+x.id===p.id);if(!ent)throw new Error("missing");const data={...ent.data,status:p.value};await S.db.doc("hub_entries/"+ent.id).update({data});ent.data=data}
+  try{if(p.id.startsWith("m-")){const ent=S.entries.find(x=>"m-"+x.id===p.id);if(!ent)throw new Error("missing");const data={...ent.data,status:p.value};if(!data.date&&ent.at)data.date=ymd(ent.at);
+      const at=Date.now();await S.db.doc("hub_entries/"+ent.id).update({data,at});ent.data=data;ent.at=at}
     else await mark(p.slug,p.id,{status:p.value});
     delete S.pend[k];S.saved[k]=Date.now();render();setTimeout(()=>{if(S.saved[k]&&Date.now()-S.saved[k]>=3900){delete S.saved[k];render()}},4000)}
   catch(err){p.busy=false;p.err=true;p.msg=err&&err.code==="invalid_argument"?"You have view-only access to this hub.":"Couldn't save. Try again.";render()}}
@@ -6682,7 +6670,7 @@ function focusRow(){const f=window.__dpFocusRow;if(!f||Date.now()-f.at>8000)retu
     tr.classList.add("hl-row");tr.setAttribute("tabindex","-1");try{tr.focus({preventScroll:true})}catch(e){}setTimeout(()=>tr.classList.remove("hl-row"),2600)};
   setTimeout(go,60)}
 
-$("#refresh").addEventListener("click",e=>{if(window.__dpAskRefresh)window.__dpAskRefresh(e.currentTarget);});
+$("#hubrefresh").addEventListener("click",e=>{if(window.__dpAskRefresh)window.__dpAskRefresh(e.currentTarget);});
 
 (async function boot(){
   const cl=window.claude;if(!cl||!cl.use){$("#view").innerHTML=`<div class="empty">Open this page signed in to claude.ai to see your projects.</div>`;return}
@@ -6709,6 +6697,7 @@ function sub(name,what,fn){try{if(unsubs[name])unsubs[name]()}catch(e){}
 function loadBox(){return CORE?CORE.box("hub:jobs",{label:"Project Hub",loading:"Loading your projects…",rows:4})||`<div class="empty">Loading your projects…</div>`:`<div class="empty">Loading your projects…</div>`}
 function hubJobsChanged(){try{window.dispatchEvent(new CustomEvent("dp:hubjobs"))}catch(e){}}
 window.__hubLoaded=()=>!!S.loaded;
+window.__hubData=()=>S.loaded?{jobs:S.jobs,entries:S.entries}:null;
 window.__hubJobList=()=>S.jobs.slice();window.__hubMargin=j=>mOf(j);
 function applyMoved(){S.entries.filter(e=>e.kind==="inbox_moved").forEach(e=>{const j=job(e.job);if(!j)return;j.inbox=(j.inbox||[]).filter(x=>x.id!=="m-"+e.id).concat([{...e.data,id:"m-"+e.id}])})}
 window.__hubRender=()=>{if((location.hash||"").startsWith("#hub/"))render()};
@@ -6784,7 +6773,6 @@ body.dp-wz-open{overflow:hidden}
 @media (max-width:520px){.wzhd{padding:16px 18px 0}.wzstep{padding:12px 18px 0}.wzbody{padding:12px 18px 16px}.wzb{padding-left:18px;padding-right:18px}.wzr button{padding:12px 14px}.wzr button.wzsub{margin-left:16px}.wz{padding:10px}.wz.wz-first{padding:0}.wzc:focus{outline:none}
 .wz.wz-first .wzc{border-radius:0;border:0;max-width:none;height:100%}}
 body.role-ops #dock{display:none!important}
-body.role-ops [data-gran]{display:none!important}
 .opsupd{display:block;margin-top:8px;font-size:var(--fs-caption);color:var(--muted)}.opsupd:empty{display:none}
 .opstools{display:grid;gap:10px;margin:0;min-width:0}
 .opstools .chips{flex-wrap:wrap;min-width:0}
@@ -6794,7 +6782,6 @@ body.role-ops [data-gran]{display:none!important}
 .opsalert{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;text-align:left;border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);background:var(--warn-soft);color:var(--fg);border-radius:12px;padding:10px 14px;min-height:48px;font:500 var(--fs-footnote)/1.35 var(--body);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .opsalert svg{color:var(--warn);flex:none}
 .opsalert>span:nth-of-type(1){flex:1;min-width:0}
-.opsalert .opsgo{flex:none;font:700 var(--fs-caption) var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
 .opsalert[aria-pressed="true"]{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
 .opsalert:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 .opsempty{background:var(--surface);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);display:grid;gap:10px;justify-items:start}
@@ -6834,12 +6821,6 @@ body.role-ops [data-gran]{display:none!important}
 .insp{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .insp span{font:600 var(--fs-caption) var(--body);padding:2px 7px;border-radius:999px;background:var(--line);color:var(--muted)}
 .insp span.ok{background:var(--ok-soft);color:var(--ok)}
-.wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.wlc{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;display:grid;gap:10px;min-width:0}
-.wlc h2,.wlc h3{margin:0;font:700 var(--fs-body) var(--body)}
-.wlc dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;font-size:var(--fs-footnote)}
-.wlc dt{color:var(--muted)}.wlc dd{margin:0;text-align:right;font-weight:600}
-.wlc dd.crit{color:var(--crit)}
 .opsmeta{font-size:var(--fs-caption);color:var(--muted)}
 @media (max-width:560px){.opsrow{grid-template-columns:minmax(0,1fr)}.opsrow .st{text-align:left;white-space:normal;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.opsrow .st small{display:inline;margin:0}}
 </style>
@@ -6895,14 +6876,17 @@ async function team(){if(_team)return _team;if(FX){_team=FX.team.slice();return 
   const me=await jtMe();const dom=me.email.split("@")[1]||"";
   const ms=await CORE.jtPages(async page=>(await jq({organization:{$:{id:window.__dpORG},memberships:{$:{size:CORE.JT_PAGE,...(page?{page}:{}),...(dom?{where:[["user","emailAddress"],"like","%@"+dom]}:{})},nextPage:{},nodes:{id:{},role:{name:{}},user:{name:{},emailAddress:{}}}}}})).organization.memberships,{max:8});
   _team=ms.map(n=>({membershipId:n.id,name:(n.user||{}).name||"",email:String((n.user||{}).emailAddress||"").toLowerCase(),role:(n.role||{}).name||""})).filter(x=>x.name&&x.email&&!/customer|vendor/i.test(x.role));return _team}
+R.team=team;
 let _office;
 async function officeSaved(){if(_office!==undefined)return _office;_office=null;
   try{const d=await db();const x=d?await d.doc("settings/office").get():null;const v=x&&x.exists?(x.data()||{}):null;if(v&&Array.isArray(v.members)&&v.members.length)_office=v}catch(e){}return _office}
 window.__dpOffice={get:()=>_office,load:()=>officeSaved().then(()=>{try{window.__dpApply&&window.__dpApply()}catch(e){}})};
-async function officeTeam(){const tm=await team();const saved=await officeSaved();let ids,src;
-  if(saved){ids=new Set(saved.members.map(m=>String(m&&m.membershipId||m)));src="saved"}
-  else{ids=new Set(tm.filter(t=>OFFICE_RE.test(t.role)).map(t=>t.membershipId));(window.DP_OFFICE||CFG.office||[]).forEach(o=>o&&o[1]&&ids.add(o[1]));src="roles"}
-  return{who:tm.filter(t=>ids.has(t.membershipId)),ids:[...ids],src}}
+async function officeTeam(){const tm=await team();const saved=await officeSaved();let src;
+  const person=(id,name)=>{id=String(id||"");return tm.find(t=>t.membershipId===id)||{membershipId:id,name:String(name||"").trim()||"Office",email:"",role:""}};
+  let who=saved?(src="saved",saved.members.map(m=>person(m&&m.membershipId||m,m&&m.name)))
+    :(src="roles",(window.DP_OFFICE||CFG.office||[]).filter(o=>o&&o[1]).map(o=>person(o[1],o[0])).concat(tm.filter(t=>OFFICE_RE.test(t.role))));
+  const seen=new Set();who=who.filter(w=>w.membershipId&&!seen.has(w.membershipId)&&seen.add(w.membershipId));
+  return{who,ids:who.map(w=>w.membershipId),src}}
 
 const W={gen:0,open:false,step:0,role:"",sugg:"",jtRole:"",cc:null,ccLoaded:false,team:null,teamErr:null,busy:false,err:null,first:false,opener:null,conn:{},connAt:0,office:null,officeLoaded:false};
 const ROLES=[["owner","Owner","The whole company's pipeline with a filter for each PM, the Team page and office to-dos, overdue-invoice emails, plus your own jobs and your day."],
@@ -6922,6 +6906,8 @@ function host(){let h=$("#wz");if(!h){h=document.createElement("div");h.id="wz";
 function connDetails(){const f=CORE.failures();if(!f.length)return "";
   return `<details class="wzconn"><summary>Connection details: ${f.length} recent problem${f.length===1?"":"s"}</summary><ul>${f.slice(0,8).map(x=>`<li><b>${esc(new Date(x.at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))} · ${esc(x.label)}</b> ${esc(x.plain)}${x.raw?`<code>${esc(x.raw.slice(0,160))}</code>`:""}</li>`).join("")}</ul></details>`}
 
+async function liveDoc(k,path){const L=window.__dpLive&&window.__dpLive();if(L&&L[k]!==undefined)return L[k];
+  const d=await db();const x=d?await d.doc(path).get():null;return x&&x.exists?(x.data()||null):null}
 const SETTINGS_URL="https://claude.ai/settings/connectors";
 const quick={retries:0,timeoutMs:15000};
 const SOURCES=[
@@ -6929,11 +6915,11 @@ const SOURCES=[
   {k:"gmail",l:"Gmail",why:"Your email, replies and follow-ups",check:()=>CORE.call(window.__dpGMAIL,"search_threads",{query:"newer_than:1d",pageSize:1},Object.assign({label:"Gmail"},quick))},
   {k:"calendar",l:"Google Calendar",why:"Meetings and site visits on your day",check:()=>CORE.call("@@SRV:calendar@@","list_calendars",{},Object.assign({label:"Google Calendar"},quick))},
   {k:"granola",l:"Granola",why:"Meeting notes and walkthrough lists",need:r=>r!=="ops",check:()=>CORE.call(window.__dpGRAN,"search_meetings",{limit:1},Object.assign({label:"Granola"},quick))},
-  {k:"texts",l:"Texts",why:"Client texts, sent over from your Mac",optional:true,check:async()=>{const d=await db();const x=d?await d.doc("texts/today").get():null;
-    if(!(x&&x.exists))return{st:"opt",msg:"Optional. It needs your Mac. To add it, start a new task in the Claude desktop app on your Mac and say: Add texts to my Design Pro Workspace"}}},
+  {k:"texts",l:"Texts",why:"Client texts, sent over from your Mac",optional:true,check:async()=>{const has=await liveDoc("texts","texts/today");
+    if(!has)return{st:"opt",msg:"Optional. It needs your Mac. To add it, start a new task in the Claude desktop app on your Mac and say: Add texts to my Design Pro Workspace"}}},
   {k:"tasks",l:"Scheduled updates",why:"Build your review each morning, midday and evening",check:async()=>{
     if(!CFG.middayTask&&!CORE.demo)return{st:"warn",msg:"Not set up yet. Ask Claude to “set up my Design Pro Workspace” and it adds them."};
-    const d=await db();const x=d?await d.doc("review/today").get():null;const at=x&&x.exists?Date.parse((x.data()||{}).generatedAt||""):0;
+    const r=await liveDoc("review","review/today");const at=r?Date.parse(r.generatedAt||""):0;
     if(!at)return{st:"warn",msg:"Set up, but your first review hasn't run yet. You can run it at the end of Setup."};
     if(Date.now()-at>2*864e5)return{st:"warn",msg:`The last update ran ${new Date(at).toLocaleDateString([],{month:"short",day:"numeric"})}. If that's more than a weekend ago, start a new task in the Claude desktop app and say: Check my Design Pro Workspace`}}}];
 const OFF_CODES=/^(server_not_connected|needs_reauth|no_connector|not_granted|consent_required|denied)$/;
@@ -7067,7 +7053,6 @@ document.addEventListener("keydown",e=>{if(!W.open)return;if(e.key==="Escape"&&!
   R.loaded=true;apply();paintRoleMenu()})();
 
 const TTL=5*60*1000;const JT={label:"JobTread"};
-const money=n=>"$"+Math.round(Number(n)||0).toLocaleString("en-US");
 const {fmtD,daysSince,street,flowShort}=CORE;
 const today=()=>CORE.day(0);
 const addDays=n=>CORE.day(n);
@@ -7132,7 +7117,7 @@ function permitsBody(){need("jobs");watchIdx();const c=CORE.get(KEYS.jobs);const
     `<p class="opsmeta opsfoot">From each job location's permit and inspection dates in JobTread.</p>`)}
 async function askInspect(id,btn){const c=CORE.get(KEYS.jobs);const j=(c.data||[]).find(x=>x.id===id);if(!j)return;const p=permitOf(j);if(!p.next)return;
   const key="permit:insp:"+id;if(CORE.confirmOpen(key)){CORE.cancelConfirm(key);return}
-  let ot=null;try{await CORE.load(KEYS.officeteam,officeTeam,Object.assign({ttl:TTL,force:!!opsStale.officeteam},JT));opsStale.officeteam=false;ot=CORE.get(KEYS.officeteam).data}catch(e){}
+  let ot=null;try{await officeLoad();ot=CORE.get(KEYS.officeteam).data}catch(e){}
   const who=(ot&&ot.who)||[];const due=addDays(2);const names=who.map(w=>w.name);
   CORE.confirm({key,from:btn,what:`Ask the office to request the ${p.next.toLowerCase()} inspection for #${j.number} ${street(j.address)}`,
     to:names.length?names.join(", "):"No one yet (unassigned)",target:`JobTread · a to-do on job #${j.number}, due ${fmtD(due)}`,
@@ -7144,8 +7129,8 @@ async function askInspect(id,btn){const c=CORE.get(KEYS.jobs);const j=(c.data||[
       if(FX)FX.tasks.push({id:"dt"+Date.now(),name:`Request ${p.next.toLowerCase()} inspection`,due,created:today(),job:{id:j.id,number:j.number,address:j.address},people:who.map(w=>({id:w.membershipId,name:w.name}))});
       opsStale.office=true}})}
 
-async function officeTasks(){const ot=await officeTeam();const ids=new Set(ot.ids);if(R.role==="ops"){const me=await jtMe();if(me.membershipId)ids.add(me.membershipId)}
-  const tm=await team();const who=tm.filter(t=>ids.has(t.membershipId));
+async function officeTasks(){const ot=await officeTeam();const ids=new Set(ot.ids);const who=ot.who.slice();
+  if(R.role==="ops"){const me=await jtMe();if(me.membershipId&&!ids.has(me.membershipId)){ids.add(me.membershipId);const t=(await team()).find(x=>x.membershipId===me.membershipId);if(t)who.push(t)}}
   if(!ids.size)return{who:[],tasks:[],noOffice:true,src:ot.src};
   if(FX){await wait(120);return{who,src:ot.src,tasks:FX.tasks.filter(t=>t.people.some(p=>ids.has(p.id))).map(t=>Object.assign({},t,{people:t.people.slice()}))}}
   const nodes=await CORE.jtPages(async page=>(await jq({organization:{$:{id:window.__dpORG},tasks:{$:{size:CORE.JT_PAGE,...(page?{page}:{}),with:{office:{_:"assignedMemberships",$:{where:{or:[...ids].map(i=>["id",i])}},count:{}}},where:{and:[["isToDo",true],["completed",0],[["office","count"],">",0]]}},nextPage:{},
@@ -7176,11 +7161,11 @@ function rocksBody(){const K=RK();if(!K)return "";K.need();const s=CORE.get(K.ke
   const plan=K.canSuggest()?`<p class="opsmeta"><button type="button" class="dpc-link" data-oqplan aria-expanded="${!!F.plan}">Quarterly planning</button></p>${F.plan?`<div class="opsplan">${K.planning()}</div>`:""}`:"";
   return (s.data===undefined?(CORE.box(K.key,{loading:"Loading Rocks from JobTread…",rows:2,label:"JobTread"})||""):list.length?`<div class="rows">${list.map(row).join("")}</div>`:`<div class="empty">No open Rocks. Rocks are JobTread to-dos with “${esc(window.DPOrg.mod("rocks").match||"rock")}” in the name.</div>`)+plan}
 function vOffice(){const chipOk=k=>k==="util"?!!UT():k==="rocks"?!!RK():true;if(!chipOk(F.oq))F.oq="all";
-  if(F.oq!=="util"&&F.oq!=="permits")need("office");watchIdx();const c=CORE.get(KEYS.office);const d=c.data||{who:[],tasks:[]};const t0=today();
+  if(F.oq!=="util"&&F.oq!=="permits")need("office");watchIdx();const c=CORE.get(KEYS.office);const d=c.data||{who:[],tasks:[]};
   const has=c.data!==undefined;const noTeam=d.noOffice;
   if(F.officeq!=="All"&&has&&!d.who.some(w=>w.membershipId===F.officeq))F.officeq="All";
   const mine=d.tasks.filter(t=>F.officeq==="All"||t.people.some(p=>p.id===F.officeq)).filter(t=>!isRock(t));
-  const late=mine.filter(t=>dueOf(t)&&dueOf(t)<t0);
+  const late=lateOf(mine);
   const pj=CORE.get(KEYS.jobs).data;const permN=pj?pj.map(permitOf).filter(p=>p.st==="wait"||(p.st==="insp"&&p.next)).length:null;
   const u=UT(),k=RK();const uN=u&&u.loaded()?u.overdue():null;const rN=k&&CORE.get(k.key).data?CORE.get(k.key).data.length:null;
   const CH=[["all","All",has?mine.length:null],["late","Overdue",has?late.length:null],...(u?[["util","Utilities",uN]]:[]),["permits","Permits",permN],...(k?[["rocks","Rocks",rN]]:[])];
@@ -7241,7 +7226,13 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
   e.preventDefault();e.stopImmediatePropagation();if(!boardBusy(h))boardRefresh(h);setTimeout(paintHdr,0)},true);
 addEventListener("hashchange",()=>{if(!onBoard()&&$("#refresh")&&$("#refresh").getAttribute("aria-label")==="Refresh this page")$("#refresh").setAttribute("aria-label","Refresh")});
 function view(v){setTimeout(paintHdr,0);return VIEWS[v]&&R.all()?VIEWS[v]():(exOn().find(x=>x.h===v)||{view:()=>""}).view()}
-window.DPOPS={has:v=>(R.all()&&!!VIEWS[v])||exOn().some(x=>x.h===v),view,
+const officePairs=d=>d?d.who.map(w=>[w.name,w.membershipId]):null;
+async function officeLoad(force){await CORE.load(KEYS.officeteam,officeTeam,Object.assign({ttl:TTL,force:!!(force||opsStale.officeteam)},JT));
+  opsStale.officeteam=false;const c=CORE.get(KEYS.officeteam);if(!c.data&&c.err)throw c.err;return officePairs(c.data)||[]}
+function officeNow(){const c=CORE.get(KEYS.officeteam);if(c.data===undefined||opsStale.officeteam)officeLoad().catch(()=>{});return c.data?officePairs(c.data):c.status==="error"?[]:null}
+const lateOf=tasks=>tasks.filter(t=>!isRock(t)&&dueOf(t)&&dueOf(t)<today());
+function overdueN(){if(!R.all())return 0;const c=CORE.get(KEYS.office);return c.data===undefined?null:lateOf(c.data.tasks||[]).length}
+window.DPOPS={has:v=>(R.all()&&!!VIEWS[v])||exOn().some(x=>x.h===v),view,overdue:overdueN,office:officeNow,officeLoad,
   tabs:()=>(R.all()?[["officeq","Office to-dos",0]]:[]).concat(exOn().filter(x=>!x.hidden).map(x=>[x.h,x.label,x.count?x.count():0])),
   icons:{officeq:"inbox",team:"users",setup:"settings"},R,team:()=>team(),officeTeam:()=>officeTeam(),jq,jobLink,jtLink,rowAttr,watchIdx,updLine,paintHdr,demo:FX,openOffice,
   jobs:()=>{need("jobs");return CORE.get(KEYS.jobs)},jobsBox:()=>state("jobs","Loading active jobs from JobTread…"),jobsRefresh:()=>CORE.load(KEYS.jobs,FETCH.jobs,Object.assign({ttl:TTL,force:true},JT))};
@@ -7354,8 +7345,6 @@ const parseName=n=>{const m=String(n).match(/^Utilities · (Electric|Gas|Water)(
 const taskName=(k,p,st)=>`Utilities · ${KIND[k]}${p?" ("+p+")":""}: ${st}`;
 async function db(){try{return await window.claude.use("db")}catch(e){return null}}
 async function loadCfg(){if(U.cfgLoaded)return;U.cfgLoaded=true;const d=await db();if(!d)return;try{const x=await d.doc("settings/utilities").get();if(x&&x.exists&&(x.data()||{}).providers)U.cfg=x.data().providers}catch(e){}}
-async function fieldIds(){if(U.ids)return U.ids;const fs=await CORE.jtPages(async page=>(await jq({organization:{$:{id:window.__dpORG},customFields:{$:{size:CORE.JT_PAGE,...(page?{page}:{})},nextPage:{},nodes:{id:{},name:{},targetType:{}}}}})).organization.customFields,{max:12});const ids={};fs.forEach(f=>{ids[f.targetType+"|"+f.name]=f.id});U.ids=ids;return ids}
-const LEG_NAMES=Object.keys(LEGACY).map(k=>k.replace(/\b\w/g,c=>c.toUpperCase()));
 function load(force){return CORE.load(KEY,fetchAll,Object.assign({ttl:5*60e3,force:!!force},JT))}
 function demoData(){const fx=P()&&P().demo;if(!fx||typeof window.__dpDemoUtil!=="function")return [];
   return window.__dpDemoUtil({fx,taskName,parseName,nbf:NBF.value,infoField:k=>ORGS.infoField(k)})}
@@ -7518,18 +7507,12 @@ document.addEventListener("input",e=>{const n=e.target.dataset&&e.target.dataset
 .tm-bar{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;min-width:0}
 .tm-bar p{margin:0;min-width:0;flex:1 1 240px}
 .tm-bar p small{display:block;color:var(--muted);font-size:var(--fs-footnote);margin-top:2px}
-.tm-seg{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px}
-.tm-seg::-webkit-scrollbar{display:none}
-.tm-seg button{flex:0 0 auto;font:600 var(--fs-footnote) var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;min-height:44px;padding:6px 14px;cursor:pointer}
-.tm-seg button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:var(--white)}
-.tm-seg button .n{color:var(--count);margin-left:4px;font-weight:500}
-.tm-seg button[aria-pressed="true"] .n,.tm-seg button[aria-selected="true"] .n{color:inherit}
 .tm-chips{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 6px}
 .tm-chips::-webkit-scrollbar{display:none}
 .chips.tm-chips button{flex:0 0 auto;min-height:44px;padding-inline:14px}
 .tm-bar .opsb{min-height:44px}
-@media (hover:hover) and (pointer:fine),(min-width:900px){.tm-chips,.tm-seg{flex-wrap:wrap;overflow:visible}}
-@media (hover:hover) and (pointer:fine){.chips.tm-chips button,.tm-seg button{min-height:36px}}
+@media (hover:hover) and (pointer:fine),(min-width:900px){.tm-chips{flex-wrap:wrap;overflow:visible}}
+@media (hover:hover) and (pointer:fine){.chips.tm-chips button{min-height:36px}}
 .tm-day{font:700 var(--fs-caption) var(--display);color:var(--text-faint);margin:10px 0 0}
 .tm-note{background:var(--surface-mint);border-radius:12px;padding:10px 14px;font-size:var(--fs-footnote);color:var(--fg)}
 .tm-note.warn{background:var(--warn-soft)}
@@ -7581,8 +7564,6 @@ span.co-chk{cursor:default}span.co-chk:has(.bx:not(:empty)){background:var(--ok-
 .co-ned label{flex:1 1 100%;display:grid;gap:4px}
 .tm-sug{display:grid;gap:8px;min-width:0}
 .tm-sug h3{margin:8px 0 0;font:700 var(--fs-subhead) var(--display)}
-.opsrocks{margin-top:20px;display:grid;gap:10px}
-.opsrocks h2{display:flex;gap:8px;align-items:baseline;margin:0}
 
 .tm-tdtog{margin:0 0 8px}.tm-nonelist{list-style:none;padding:0!important;margin:0 0 12px}.tm-nonelist li{padding:8px 0;border-top:1px solid var(--navy-muted)}.tm-nonelist li span{color:var(--muted)}
 .tm-src{margin:-4px 0 0;font-size:var(--fs-caption);color:var(--muted)}
@@ -7624,7 +7605,7 @@ const fmtD=d=>d&&!isNaN(dOf(d))?dOf(d).toLocaleDateString([],{month:"short",day:
 const fmtDow=d=>d&&!isNaN(dOf(d))?dOf(d).toLocaleDateString([],{weekday:"long",month:"short",day:"numeric"}):"";
 const fmtAt=t=>{const d=new Date(t);return isNaN(d)?"":d.toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})};
 const ageDays=d=>d&&!isNaN(dOf(d))?Math.max(0,Math.round((dOf(today())-dOf(d))/864e5)):0;
-const money=n=>n==null||n===""||isNaN(n)?"":"$"+Math.round(+n).toLocaleString();
+const money=CORE.money;
 const plural=(n,w)=>n===1?w:w+"s";
 const first=n=>String(n||"").trim().split(/\s+/)[0]||"";
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
@@ -7632,9 +7613,8 @@ const hash=s=>{let h=0;s=String(s);for(let i=0;i<s.length;i++)h=(h*31+s.charCode
 const show=()=>!!(R()&&R().all&&R().all());
 const rr=()=>CORE.render();
 const jobNo=x=>String(x&&(x.job||x.number)||"").replace(/^job\s*/i,"").split("-")[0].trim();
-const pmsOf=x=>Array.isArray(x&&x.pm)?x.pm:(x&&x.pm?[x.pm]:[]);
+const pmsOf=CORE.pms,pmOk=CORE.pmOk;
 const JTF=window.DPOrg&&window.DPOrg.jt?window.DPOrg.jt():{pm:{ignore:[]}};
-const pmOk=v=>v&&!(JTF.pm.ignore||[]).includes(v)&&v!=="No PM";
 
 let _db;
 async function db(){if(_db===undefined){try{_db=window.claude&&window.claude.use?await window.claude.use("db"):null}catch(e){_db=null}}return _db}
@@ -7738,7 +7718,7 @@ function pmNames(){const s=new Set();const pl=pipe();(pl.proposals||[]).concat(p
   (CORE.get("ops:jobs").data||[]).forEach(j=>(j.pm||[]).forEach(n=>pmOk(n)&&s.add(n)));
   const have=new Set([...s].map(norm));roll().people.forEach(p=>{if(!/operat|admin|office|^ops$/i.test(p.role)&&!have.has(norm(p.name)))s.add(p.name)});return [...s].sort((a,b)=>a.localeCompare(b))}
 const same=(a,b)=>norm(a)===norm(b);
-const owed=x=>{const P=window.__dpPipe;if(P&&P.due)return P.due(x);const v=x.balance!=null&&x.balance!==""?x.balance:x.amountDue!=null&&x.amountDue!==""?x.amountDue:x.amount;const n=parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,""));return isFinite(n)?n:0};
+const owed=x=>window.__dpPipe.due(x);
 
 const WAIT_DEF="Open client asks, selections not settled and orders not delivered yet.";
 function waitingOf(rows){const of=k=>rows.filter(r=>r.kind===k);const by=(a,b)=>String(a.date).localeCompare(String(b.date));
@@ -7748,8 +7728,8 @@ function gather(pm){const ro=roll(),td=CORE.get(KTODO).data||[];const ps=PS(pm);
   const mine=ro.rows.filter(r=>same(r.pm,pm));const of=k=>mine.filter(r=>r.kind===k);
   const sharing=ro.people.some(p=>same(p.name,pm)&&!p.err);
   const fu=(x,inv)=>{const X=window.__dpPipe;return X&&X.notes?X.notes(x,inv):[]};
-  const inv=ps.overdue.slice().sort((a,b)=>(b.daysOverdue||0)-(a.daysOverdue||0)).map(x=>({k:"inv:"+x.number,l:`Invoice ${x.number}, ${x.customer||""}`,x,fu:fu(x,true)}));
-  const props=ps.pend.slice().sort((a,b)=>(b.days||0)-(a.days||0)).map(x=>({k:"prop:"+x.number,l:`Proposal ${x.number}, ${x.customer||""}`,x,fu:fu(x,false)}));
+  const inv=ps.overdue.map(x=>({k:"inv:"+x.number,l:`Invoice ${x.number}, ${x.customer||""}`,x,fu:fu(x,true)}));
+  const props=ps.pend.map(x=>({k:"prop:"+x.number,l:`Proposal ${x.number}, ${x.customer||""}`,x,fu:fu(x,false)}));
   const W=waitingOf(mine);
   const asks=W.asks.map(x=>({k:"ask:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
   const sels=W.sels.map(x=>({k:"sel:"+x.job+":"+hash(norm(x.title)),l:`${x.customer||"Job "+x.job}: ${x.title}`,x}));
@@ -7887,7 +7867,7 @@ function pmView(pm){const g=gather(pm),m=meta(),snap=m.snaps[pm]||null;needLive(
   ${!g.sharing&&!(roll().off)&&CORE.get(KEY).data!==undefined?`<div class="tm-note" role="status">${esc(first(pm))}'s Workspace isn't sharing to the team roll-up yet, so open asks, selections, orders, what's on site and follow-up notes aren't shown. Money, jobs and to-dos are live.</div>`:""}
   <section class="kpis">${kpi(s.overdue.length?money(s.arOverdue):"None","Overdue invoices",s.overdue.length?"crit":"")}${kpi(s.pend.length?money(s.openValue):"None","Proposals waiting")}${kpi(g.sharing?g.asks.length:"—","Open asks",g.asks.some(a=>ageDays(a.x.date)>=3)?"crit":"")}${kpi(TLK.od.length,"Overdue to-dos",TLK.od.length?"crit":"")}</section>
   ${asec("Overdue invoices",g.inv.length,g.inv.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b>${sinceTag(k,snap)}<div class="s">${[x.address,"Invoice "+x.number,x.dueDate?"due "+x.dueDate:"",x.amount!=null&&x.amount!==""&&owed(x)!==num(x.amount)?"invoice total "+money(num(x.amount)):""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${money(owed(x))}<small>${x.daysOverdue||0} ${plural(x.daysOverdue||0,"day")} overdue</small></div>${fuLine(fu,true)}</div>`).join(""),"No overdue invoices.",PSRC)}
-  ${asec("Proposals waiting on the client",g.props.length,g.props.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b><span class="tm-tag kind">${esc(propKind(x,pm))}</span>${sinceTag(k,snap)}<div class="s">${[x.address,x.number,x.sentDate?"sent "+x.sentDate:""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r${(x.days||0)>=30?" crit":""}">${money(x.amount)}<small>${x.days||0} ${plural(x.days||0,"day")} waiting</small></div>${fu.length?fuLine(fu,true):""}</div>`).join(""),"No proposals waiting.",PSRC)}
+  ${asec("Proposals waiting on the client",g.props.length,g.props.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b><span class="tm-tag kind">${esc(propKind(x,pm))}</span>${sinceTag(k,snap)}<div class="s">${[x.address,x.number,x.sentDate?"sent "+x.sentDate:""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r${(window.__dpPipe.days(x)||0)>=30?" crit":""}">${money(x.amount)}<small>${window.__dpPipe.days(x)||0} ${plural(window.__dpPipe.days(x)||0,"day")} waiting</small></div>${fu.length?fuLine(fu,true):""}</div>`).join(""),"No proposals waiting.",PSRC)}
   ${adminNotes(pm)}
   ${g.sharing?asec("Waiting on "+first(pm),g.asks.length+g.sels.length+g.orders.length,(g.asks.length?g.asks.map(({k,x})=>askRow(x,none,snap,k)).join(""):`<div class="empty">No open asks.</div>`)+
       fold("Selections not settled",g.sels.length,g.sels.map(({k,x})=>selRow(x,none,snap,k)).join(""),"psels")+fold("Open orders",g.orders.length,g.orders.map(({k,x})=>ordRow(x,none,snap,k)).join(""),"porders"),"Nothing is waiting on "+first(pm)+".",`<p class="opsmeta tm-def">${esc(WAIT_DEF)}</p>`+RSRC):""}
@@ -8214,7 +8194,7 @@ async function suggestRocks(){if(SG.busy)return;SG.busy=true;SG.err="";rr();
   try{const s=await sampler();if(!s)throw plainErr("Suggesting Rocks needs Claude on this page. Open it on claude.ai.");
     const names=pmNames();if(!names.length)throw plainErr("No project managers found yet.");
     const qn=await quarterNums();const t=marginTarget();const pl=pipe();
-    const lines=names.map(pm=>{const b=qn.by[pm]||{approved:0,won:0,lost:0,sent:0};const inv=(pl.invoices||[]).filter(x=>pmsOf(x).includes(pm)&&num(x.daysOverdue)>0);const invV=inv.reduce((a,x)=>a+owed(x),0);
+    const lines=names.map(pm=>{const b=qn.by[pm]||{approved:0,won:0,lost:0,sent:0};const inv=(pl.invoices||[]).filter(x=>pmsOf(x).includes(pm)&&window.__dpPipe.late(x));const invV=inv.reduce((a,x)=>a+owed(x),0);
       const L=liveOf(pm);const lowJ=L?L.jobs.filter(j=>j.margin!=null&&j.margin<t).map(j=>`#${j.number} ${j.margin}%`)
         :roll().rows.filter(r=>r.kind==="cost"&&same(r.pm,pm)&&r.data&&r.data.marginPct!=null&&num(r.data.marginPct)<t).map(r=>`#${r.job} ${r.data.marginPct}%`);
       const wr=b.won+b.lost?Math.round(b.won/(b.won+b.lost)*100)+"%":"no decided proposals";
@@ -8481,7 +8461,7 @@ const lagCfg=()=>{const m=mod()||{};return{from:/appt|estimate/i.test(String(m.l
 function lagRow(r,now){const sv=val(r,"lag").replace(/,/g,"");if(/^-?\d+(\.\d+)?$/.test(sv))return Math.max(0,Math.round(+sv));const c=lagCfg();return lag(val(r,c.from),val(r,"quote"),now,c.work)}
 const fmtDay=s=>s?CORE.fmtD(s):"";
 function amt(v){const n=parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,""));return isFinite(n)?n:0}
-const money=n=>"$"+Math.round(n).toLocaleString("en-US");
+const money=CORE.money;
 const isDone=r=>S().done.includes(val(r,"status").toLowerCase());
 const jobNo=r=>{const j=val(r,"job").replace(/^#/,"");if(j)return j;const m=/\bjob\s*#\s*(\d{3,})/i.exec(val(r,"notes"));return m?m[1]:""};
 function follow(r,now){if(isDone(r))return"";now=now||today();const rc=iso(val(r,"rcvd")),ap=iso(val(r,"appt")),qs=iso(val(r,"quote"));
@@ -8779,10 +8759,7 @@ const myJob=r=>pms(r).some(isMe);
 const seesAll=()=>{const r=R();return typeof r.all==="function"?!!r.all():r.role!=="pm"};
 const visible=r=>seesAll()||myJob(r)||isMe(r.addedBy);
 const canApprove=r=>R().role==="owner"||myJob(r);
-function OFFICE(){const c=(window.DP_OFFICE||(window.DP_CONFIG&&window.DP_CONFIG.office)||[]).filter(x=>x&&x[1]);if(c.length)return c.map(x=>[String(x[0]||"Office"),String(x[1])]);
-  const sv=window.__dpOffice&&window.__dpOffice.get&&window.__dpOffice.get();
-  return sv&&Array.isArray(sv.members)?sv.members.map(m=>[String((m&&m.name)||"").trim()||"Office",String((m&&m.membershipId)||m||"")]).filter(x=>x[1]):[]}
-function officeLoad(){const OF=window.__dpOffice;if(OF&&OF.get&&OF.get()===undefined&&OF.load)OF.load().then(rr,()=>{})}
+const OFFICE=()=>(window.DPOPS&&DPOPS.office&&DPOPS.office())||[];
 async function watch(){if(P.started)return;P.started=true;let d=null;try{d=await CORE.db()}catch(e){}
   if(!d){P.rows={};rr();return}P.db=d;
   const bad=()=>{P.err="The payment requests couldn't be loaded. Check your connection, then open this page again.";P.rows=P.rows||{};rr()};
@@ -8799,7 +8776,7 @@ async function save(id,doc){if(!P.db)throw CORE.error("no_connector","the page's
 const find=id=>rows().find(r=>r.id===id);
 const nowIso=()=>new Date().toISOString();
 const short=v=>{const t=Date.parse(v);return isNaN(t)?"":new Date(t).toLocaleDateString("en-US",{month:"short",day:"numeric"})};
-const money=n=>{const x=typeof n==="number"?n:parseFloat(String(n==null?"":n).replace(/[^0-9.\-]/g,""));return isFinite(x)?"$"+x.toLocaleString("en-US",{minimumFractionDigits:x%1?2:0,maximumFractionDigits:2}):""};
+const money=n=>CORE.money(n,{cents:true});
 const st=r=>LAB[r.status]?r.status:"requested";
 function waited(r){const a=Date.parse(r.requestedAt||"");if(isNaN(a))return null;const b=st(r)==="paid"&&Date.parse(r.paidAt||"")?Date.parse(r.paidAt):Date.now();return Math.max(0,Math.floor((b-a)/864e5))}
 const daysTxt=n=>n+" day"+(n===1?"":"s");
@@ -8832,7 +8809,9 @@ function undo(r,btn){const L=r.last;if(!L||L.undone||!LAB[L.from])return;
         try{await save(r.id,undoneDoc(r));CORE.toast(`Deleted the to-do. ${r.sub}'s request is back to ${LAB[L.from]}.`)}
         catch(e){CORE.toast("The to-do was deleted in JobTread, but this page couldn't save the change: "+CORE.errMsg(e,"the page's database"))}}});return}
   save(r.id,undoneDoc(r)).then(()=>CORE.toast(`Undone. ${r.sub}'s request is back to ${LAB[L.from]}.`),e=>CORE.toast("Couldn't undo that. "+CORE.errMsg(e,"the page's database")))}
-function reqOpen(r,btn){officeLoad();const of=OFFICE();const q=P.req[r.id]={to:(of[0]||[])[1]||"",msg:""};
+async function reqOpen(r,btn){const q=P.req[r.id]={to:"",msg:"",wait:true};rr();let of=[];
+  try{of=window.DPOPS&&DPOPS.officeLoad?await DPOPS.officeLoad():[]}catch(e){of=null;q.msg="Couldn't read the office team from JobTread. "+CORE.errMsg(e,"JobTread")}
+  if(P.req[r.id]!==q)return;q.wait=false;if(!of){rr();return}btn=document.querySelector(`[data-spreq="${CSS.escape(r.id)}"]`)||btn;q.to=(of[0]||[])[1]||"";
   if(!of.length){q.msg="No office team is chosen yet, so there's no one to send this to. Choose your office team in Setup › Office team (or ask whoever set up your Workspace).";q.setup=true;rr();return}
   if(!jobIdOf(r)){q.msg="This request isn't linked to a JobTread job, so there's nowhere to put the to-do. Add it again with its job picked.";rr();return}
   askReq(r,btn)}
@@ -8901,12 +8880,12 @@ function body(r){const s=st(r);const id=r.id;const lk=CORE.safeUrl(r.link)&&!/^#
     r.todo&&r.todo.id?["Office to-do",(CORE.safeUrl(r.todo.link)?CORE.link(r.todo.link,"For "+esc(r.todo.to||"the office")+" in JobTread"):"For "+esc(r.todo.to||"the office"))+(r.todo.at?", "+esc(short(r.todo.at)):"")]:null,
     s==="paid"&&r.paidAt?["Paid",esc(short(r.paidAt))]:null].filter(Boolean);
   const hist=(Array.isArray(r.history)?r.history:[]).slice(-6).reverse();
-  const q=P.req[id];const of=OFFICE();
+  const q=P.req[id];const of=q&&!q.wait?OFFICE():[];
   const nm=esc(rowName(r));
   const acts=[s==="requested"&&canApprove(r)?`<button type="button" class="act" data-spapprove="${esc(id)}" aria-label="Approve: ${nm}">Approve</button>`:"",
     (s==="approved"||(s==="requested"&&canApprove(r)))?`<button type="button" class="act primary" data-spreq="${esc(id)}" aria-label="Request payment: ${nm}"${q?' aria-expanded="true"':""}>Request payment</button>`:"",
     s!=="paid"&&s!=="requested"?`<button type="button" class="act" data-sppaid="${esc(id)}" aria-label="Mark paid: ${nm}">Mark paid</button>`:""].filter(Boolean).join("");
-  const reqPanel=q?`<div class="sp-req">${q.msg?`<p class="sp-msg" role="alert">${esc(q.msg)}${q.setup?` <a href="#setup">Open Setup</a>`:""}</p>`:of.length>1?`<label class="sp-fld"><span class="sp-l">Send it to</span><select data-spto="${esc(id)}">${of.map(([n,m])=>`<option value="${esc(m)}"${q.to===m?" selected":""}>${esc(n)}</option>`).join("")}</select></label>`:""}
+  const reqPanel=q?`<div class="sp-req">${q.wait?`<p class="sp-note" role="status">Finding the office team in JobTread…</p>`:q.msg?`<p class="sp-msg" role="alert">${esc(q.msg)}${q.setup?` <a href="#setup">Open Setup</a>`:""}</p>`:of.length>1?`<label class="sp-fld"><span class="sp-l">Send it to</span><select data-spto="${esc(id)}">${of.map(([n,m])=>`<option value="${esc(m)}"${q.to===m?" selected":""}>${esc(n)}</option>`).join("")}</select></label>`:""}
     ${CORE.confirmHtml("subpay:req:"+id)}${q.msg||!CORE.confirmOpen("subpay:req:"+id)?`<button type="button" class="act ghost" data-spreqx="${esc(id)}" aria-label="Close the payment request for ${esc(r.sub)}">Close</button>`:""}</div>`:"";
   const roleNote=s==="requested"&&!canApprove(r)?`<p class="sp-note">Waiting for the owner or the job's project manager to approve it.</p>`:"";
   return `<div class="sp-body" id="spb-${esc(id)}"><dl class="sp-dl">${dl.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${d}</dd></div>`).join("")}</dl>
@@ -8921,7 +8900,7 @@ function row(r){const s=st(r);
     <span class="sp-main"><b class="sp-sub">${esc(r.sub)}</b><span class="sp-job">${esc(jobLabel(r))}</span><span class="sp-meta${late?" late":""}">${esc(meta)}</span></span>
     <span class="sp-side"><b class="sp-amt">${esc(money(r.amount)||"No amount")}</b><span class="pill${PILL[s]?" "+PILL[s]:""}">${esc(LAB[s])}</span></span></button>
     ${whyLine(r)}${open?body(r):""}</li>`}
-function view(){watch();officeLoad();
+function view(){watch();
   const pmNote=seesAll()?"":" You see the requests on your own jobs.";
   const head=window.DPPageHead("Sub payments",esc("Payments your subs have asked for, from email, texts and JobTread bills. Approve, send to the office as a JobTread to-do, and it closes itself once paid."+pmNote),"",
     `<button type="button" class="act" data-spadd aria-expanded="${!!P.form}">Add a request</button>`);
@@ -8946,7 +8925,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   const r=find(d.spapprove||d.sppaid||d.spreq||d.spreqx||d.spundo);if(!r)return;
   if(d.spapprove!=null)approve(r);
   else if(d.sppaid!=null)markPaid(r);
-  else if(d.spreq!=null){if(!P.req[r.id])reqOpen(r,t);else if(!CORE.confirmOpen("subpay:req:"+r.id)&&!P.req[r.id].msg)askReq(r,t)}
+  else if(d.spreq!=null){if(!P.req[r.id])reqOpen(r,t);else if(!CORE.confirmOpen("subpay:req:"+r.id)&&!P.req[r.id].msg&&!P.req[r.id].wait)askReq(r,t)}
   else if(d.spreqx!=null){delete P.req[r.id];CORE.cancelConfirm("subpay:req:"+r.id,true);rr();keepFocus(`[data-spreq="${CSS.escape(r.id)}"]`)}
   else if(d.spundo!=null)undo(r,t)});
 document.addEventListener("change",e=>{const el=e.target;if(!el||!el.dataset||el.dataset.spto==null)return;const id=el.dataset.spto;const q=P.req[id];if(!q)return;
@@ -8986,7 +8965,9 @@ async function buildNow(){
   try{if(!G.db)G.db=await CORE.db().catch(()=>null);if(!G.mcp&&cl&&cl.use)G.mcp=await cl.use("mcp");const db=G.db;
     const get=async p=>{try{const s=await db.doc(p).get();return s.exists?s.data():null}catch(e){return null}};
     const all=async c=>{try{const q=await db.collection(c).get();return q.docs.map(d=>({id:d.id,...d.data()}))}catch(e){return[]}};
-    const [ji,hubJobs,hubEntries,li,lr]=db?await Promise.all([get("jobindex/current"),all("hub_jobs"),all("hub_entries"),all("lists_items"),all("lists_review")]):[null,[],[],[],[]];
+    const H=window.__hubData&&window.__hubData(),L=window.__dpListsAPI&&window.__dpListsAPI.S,LS=L&&L.itemsIn&&L.reviewIn;
+    const [ji,hubJobs,hubEntries,li,lr]=db?await Promise.all([CORE.jobIndexLoaded()?{jobs:CORE.jobIndex()}:get("jobindex/current"),H?H.jobs:all("hub_jobs"),H?H.entries:all("hub_entries"),
+      LS?Object.values(L.items):all("lists_items"),LS?Object.values(L.review):all("lists_review")]):[null,[],[],[],[]];
     const jobs=arr(ji&&ji.jobs).filter(j=>j&&typeof j==="object");const jn=sl=>{const j=jobs.find(x=>x.slug===sl)||hubJobs.find(x=>x&&x.slug===sl);return j?(j.customer||j.street||j.address||sl):sl};
     each(jobs,j=>{const nums=arr(j.jobNumbers).map(String);add(out,{k:"job",title:j.customer||j.street||j.slug,sub:[j.address||j.street,nums.length?"Job "+nums.join(", "):""].filter(Boolean).join(" · "),extra:j.slug,href:jlink(j.slug),alt:jlink(j.slug,"lists")})});
     const r=window.__dpReview&&window.__dpReview();
@@ -9160,13 +9141,14 @@ function askTools(){const T=[
    execute:async()=>{askNote("Pulling overdue invoices from JobTread…");const today=CORE.day(0);
     const docs=await DPCore.jtPages(async page=>((await jtq({organization:{$:{id:window.__dpORG},documents:{$:{where:{and:[["type","customerInvoice"],["status","pending"],["dueDate","<",today],["balance",">",0]]},size:DPCore.JT_PAGE,...(page?{page}:{})},nextPage:{},nodes:{number:{},dueDate:{},balance:{},job:{id:{},number:{},location:{address:{},account:{name:{}}},customFieldValues:{$:{size:1,where:[["customField","name"],window.DPOrg.jt().pm.name]},nodes:{value:{}}}}}}}})).organization||{}).documents,{max:12});
     const rows=docs.map(d=>{const j=d.job||{};const cf=((j.customFieldValues||{}).nodes||[])[0];
-      const days=Math.round((Date.parse(today)-Date.parse(d.dueDate))/864e5);return{jobId:j.id,jobNumber:j.number,invoice:`${j.number}-${d.number}`,client:((j.location||{}).account||{}).name||"",address:(j.location||{}).address||"",pm:(cf&&cf.value)||"Unassigned",balance:Math.round(d.balance*100)/100,dueDate:d.dueDate,daysOverdue:days,link:"https://app.jobtread.com/jobs/"+j.id}}).sort((a,b)=>b.daysOverdue-a.daysOverdue);
+      const days=Math.round((Date.parse(today)-Date.parse(d.dueDate))/864e5);return{jobId:j.id,jobNumber:j.number,invoice:`${j.number}-${d.number}`,client:((j.location||{}).account||{}).name||"",address:(j.location||{}).address||"",pm:cf&&CORE.pmOk(cf.value)?String(cf.value).trim():"Unassigned",balance:Math.round(d.balance*100)/100,dueDate:d.dueDate,daysOverdue:days,link:"https://app.jobtread.com/jobs/"+j.id}}).sort((a,b)=>b.daysOverdue-a.daysOverdue)
+      .filter(r=>!window.DPR||DPR.all()||r.pm===(window.DP_CONFIG||{}).name);
     const byPM={};rows.forEach(r=>{byPM[r.pm]=byPM[r.pm]||{total:0,count:0};byPM[r.pm].total=Math.round((byPM[r.pm].total+r.balance)*100)/100;byPM[r.pm].count++});
-    return{asOf:today,...(docs.capped?{note:"Only the first 300 overdue invoices were read."}:{}),count:rows.length,total:Math.round(rows.reduce((a,r)=>a+r.balance,0)*100)/100,byPM,invoices:rows}}});
-  const jtMe=async()=>{if(G.jtMe)return G.jtMe;try{const p=await jtq({currentGrant:{user:{name:{},emailAddress:{}}}});const u=((p.currentGrant||{}).user)||{};G.jtMe={name:String(u.name||""),email:String(u.emailAddress||"").toLowerCase()}}catch(e){G.jtMe={name:"",email:""}}return G.jtMe};window.__dpJtMe=jtMe;
+    return{liveAsOf:new Date().toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}),...(docs.capped?{note:"Only the first 300 overdue invoices were read."}:{}),count:rows.length,total:Math.round(rows.reduce((a,r)=>a+r.balance,0)*100)/100,byPM,invoices:rows}}});
+  const jtMe=()=>window.DPR.jtMe().then(m=>({name:String(m.name||""),email:String(m.email||"").toLowerCase()}),()=>({name:"",email:""}));window.__dpJtMe=jtMe;
   const OFFICE_NAMES=(n=>n.length?" such as "+n.join(" and "):"")(((window.DP_CONFIG||{}).office||[]).map(o=>String((Array.isArray(o)?o[0]:o)||"").trim().split(/\s+/)[0]).filter(Boolean).slice(0,3));
   T.push({name:"team_directory",description:"Names and email addresses of the company's internal team (project managers, owners, office staff"+OFFICE_NAMES+") from JobTread. Use it to address emails.",
-   execute:async()=>{let dom="";try{const u=await window.claude.use("user");const me=u&&await u.me();dom=String((me&&me.email)||"").split("@")[1]||""}catch(e){}if(!dom){const j=await jtMe();dom=j.email.split("@")[1]||""}const ids=(window.__dpTEAM||[]).map(t=>t[1]).filter(Boolean);const where=dom?[["user","emailAddress"],"like","%@"+dom]:(ids.length?["id","in",ids]:null);const ms=await DPCore.jtPages(async page=>((await jtq({organization:{$:{id:window.__dpORG},memberships:{$:{size:DPCore.JT_PAGE,...(page?{page}:{}),...(where?{where}:{})},nextPage:{},nodes:{id:{},user:{name:{},emailAddress:{}}}}}})).organization||{}).memberships,{max:8});return ms.map(n=>({name:(n.user||{}).name,email:String((n.user||{}).emailAddress||"").toLowerCase(),membershipId:n.id})).filter(x=>x.name&&x.email)}})}
+   execute:async()=>(await window.DPR.team()).map(t=>({name:t.name,email:t.email,membershipId:t.membershipId}))})}
  T.push({name:"find_contact",description:"Find anyone's email address and phone by name, company or job (clients, vendors, subs, designers, inspectors, anyone): searches JobTread contacts (customers and vendors) and the people in the user's past Gmail conversations. Use this for anyone who isn't on the internal team.",
    inputSchema:{type:"object",properties:{name:{type:"string",description:"A name, company, or part of an email address"}},required:["name"]},
    execute:async a=>{const q=String(a.name||"").trim();if(q.length<2)return"Give at least 2 letters of a name.";askNote(`Looking up “${q.slice(0,40)}”…`);const terms=q.toLowerCase().split(/\s+/).filter(t=>t.length>1);const hit=x=>{const l=String(x||"").toLowerCase();return terms.every(t=>l.includes(t))};const out=[];const seen=new Set();const add=o=>{const e=String(o.email||"").toLowerCase();const k=e||(o.name+"|"+o.phone);if(!k||seen.has(k))return;seen.add(k);out.push({...o,email:e})};
@@ -9287,7 +9269,7 @@ async function overdueEmails(){$("#askp").hidden=false;askPos();A.view="chat";A.
     const myMails=[String(me.email||"").toLowerCase(),jm.email].filter(Boolean),myNames=[String(me.name||"").toLowerCase(),jm.name.toLowerCase()].filter(Boolean);
     const mailOf=name=>{const n=String(name||"").toLowerCase().replace(/\s+/g," ").trim();const hits=dir.filter(d=>String(d.name).toLowerCase().replace(/\s+/g," ").trim()===n);if(!hits.length)return"";const first=n.split(" ")[0];return(hits.find(h=>h.email.startsWith(first+"@"))||hits[0]).email};
     const office=ccList.map(x=>String(x).toLowerCase());
-    const money=n=>"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    const money=n=>CORE.money(n,{cents:true});
     const by={};od.invoices.forEach(r=>(by[r.pm]=by[r.pm]||[]).push(r));let made=0;const skipped=[];
     Object.entries(by).sort((a,b)=>b[1].reduce((s,r)=>s+r.balance,0)-a[1].reduce((s,r)=>s+r.balance,0)).forEach(([pm,rows])=>{
       const to=mailOf(pm);if(pm==="Unassigned"||!to){skipped.push(pm+" (no email found)");return}
@@ -9296,7 +9278,7 @@ async function overdueEmails(){$("#askp").hidden=false;askPos();A.view="chat";A.
       const lines=rows.map(r=>`- ${r.invoice} ${r.client}, ${String(r.address).split(",")[0]}: ${money(r.balance)} (${r.daysOverdue} day${r.daysOverdue===1?"":"s"} overdue, due ${r.dueDate})`).join("\n");
       const body=`Hi ${first},\n\nThese invoices on your jobs are past due:\n\n${lines}\n\nTotal outstanding: ${money(total)}\n\nCan you let me know why each one hasn't been paid yet? Please follow up with the client and get them paid, and send me a status update by the end of the week.\n\nThanks`;
       const d={id:"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),to,cc:office.filter(e=>e!==to).join(", "),subject:`Overdue invoices on your jobs: ${money(total)} outstanding`,body,st:""};A.drafts[d.id]=d;A.log.push({r:"d",id:d.id});made++});
-    const ans=`${od.count} overdue invoice${od.count===1?"":"s"} totaling **${money(od.total)}** (live from JobTread, ${od.asOf}). I prepared **${made} email${made===1?"":"s"}**, one per PM${office.length?", each cc'ing "+(office.length>1?office.slice(0,-1).join(", ")+" and "+office[office.length-1]:office[0]):""}. Review them below, then use **Send all** or send them one at a time.${skipped.length?"\nNot emailed: "+skipped.join(", ")+".":""}`;
+    const ans=`${od.count} overdue invoice${od.count===1?"":"s"} totaling **${money(od.total)}** (live from JobTread as of ${od.liveAsOf}). I prepared **${made} email${made===1?"":"s"}**, one per PM${office.length?", each cc'ing "+(office.length>1?office.slice(0,-1).join(", ")+" and "+office[office.length-1]:office[0]):""}. Review them below, then use **Send all** or send them one at a time.${skipped.length?"\nNot emailed: "+skipped.join(", ")+".":""}`;
     A.log.splice(A.log.indexOf(qe)+1,0,{r:"a",x:ans});A.turns.push({role:"assistant",content:ans})}
   catch(e){A.log.push({r:"e",x:"Couldn't build the emails. "+(e&&e.code?emsg(e,"JobTread"):String(e&&e.message||e).slice(0,160))});A.turns.pop()}
   askPaint();askSave()}
@@ -9388,7 +9370,6 @@ header.site nav.subtabs a .n{font-size:var(--fs-caption);color:var(--count)}
 header.site nav.subtabs[hidden]{display:none!important}
 .swrow{display:none!important}
 #hubhost,#listhost{min-width:0;width:100%;flex:1 1 auto}
-.kpis.k4{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
 .dhint{margin:-4px 0 0;font-size:var(--fs-caption);color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dhint .act{min-height:30px;padding:4px 10px}
 .dcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-width:0}
 .dcard>h2{display:flex;align-items:center;gap:8px;margin:0 0 8px}
@@ -9474,7 +9455,6 @@ a.back::before{content:"";position:absolute;inset:-12px -6px}
 .prio .topitem{flex-basis:100%;list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 .inchips{margin:0 0 14px}
 .inchips button{min-height:36px}
-.opssum{margin:0 0 12px;font-size:var(--fs-footnote);color:var(--muted)}
 
 .side .sec.on a.sech{background:transparent;box-shadow:inset 3px 0 0 var(--mint)}
 li.item .irow>input[type=checkbox],li.item input[id^="cb-"]{width:24px;height:24px}
@@ -9633,7 +9613,6 @@ ul.dig.tlist span.tage{display:inline-block;font:600 var(--fs-caption)/1 var(--b
 ul.dig.tlist span.tage.warn{color:var(--warn)}ul.dig.tlist span.tage.crit{color:var(--crit)}
 ul.dig.tlist .abody span.atext{display:-webkit-box}
 
-#hd .hdm{display:none}
 @media (max-width:599px){
   .hmenu #hd,.hmenu #hd[aria-checked="true"]{border:0;background:transparent;color:var(--fg);gap:0}
   .hmenu #hd:hover,.hmenu #hd:focus-visible{background:var(--surface-2)}
@@ -9773,7 +9752,7 @@ input[type=date]:focus,input[type=time]:focus{outline:2px solid var(--focus);out
 ::placeholder{color:var(--placeholder);opacity:1}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 
-.form label,.panel .lbl,.notes h2,.fbform label,.emcomp .lbl,.adh,.ahq,.gsh,.eyebrow,.side .grp,.facts dt,.hist .lbl,.jsum .lab,
+.form label,.panel .lbl,.notes h2,.fbform label,.emcomp .lbl,.adh,.ahq,.gsh,.side .grp,.facts dt,.hist .lbl,.jsum .lab,
 .hh,h3.sec,.gh,.jx .lbl,th{font:500 var(--fs-footnote)/1.35 var(--body);letter-spacing:0;text-transform:none;color:var(--muted)}
 .gh{font-weight:600}
 .pill,.badge,.mbadge,.src,.who,.due,a.photo,.cnt,.tage,.sent{font-size:var(--fs-caption);font-weight:500;letter-spacing:0;text-transform:none}
@@ -9964,8 +9943,8 @@ li.item .form .teampick input[type=checkbox],.form .teampick input[type=checkbox
 @media (pointer:coarse){.panel .dpc-cf .dpc-cf-a .act{min-height:44px}}
 html:has(header.site:focus-within){scroll-padding-top:0}
 .jsh+.tstale{margin-top:14px}
-.wzstep,.wzr em,.wzb .go,.opsalert .opsgo,.ut-ut b,.tnxl{text-transform:none!important;letter-spacing:0!important}
-.opsalert .opsgo,.tnxl{font-size:var(--fs-footnote)!important;font-weight:600!important}
+.wzstep,.wzr em,.wzb .go,.ut-ut b,.tnxl{text-transform:none!important;letter-spacing:0!important}
+.tnxl{font-size:var(--fs-footnote)!important;font-weight:600!important}
 .side a.sech,.side .sec a{flex-wrap:nowrap!important}
 .side a.sech{gap:8px}
 .side a.sech>span:not(.n):not(.vh){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -10111,10 +10090,7 @@ ul.dig.ss-today li.st-cancelled em.ss-tag{text-decoration:none;display:inline-bl
 .lstrip{margin:0 0 var(--sp-3);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface)}
 .lstrip>summary{list-style:none;display:flex;align-items:center;gap:var(--sp-2);min-height:var(--hit);padding:6px var(--sp-3);cursor:pointer;font-size:var(--fs-subhead);color:var(--fg)}
 .lstrip>summary::-webkit-details-marker{display:none}
-.lstrip>summary>span:not(.lsdot),.lsquiet>span:not(.lsdot){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lsslot,.lsquiet{display:none!important}
-.lsquiet{display:flex;align-items:center;gap:var(--sp-2);padding:6px var(--sp-3);font-size:var(--fs-footnote);color:var(--muted)}
-.lsquiet .lsdot{background:var(--line-strong)}
+.lstrip>summary>span:not(.lsdot){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lstrip>summary .go{transition:transform .15s}.lstrip[open]>summary .go{transform:rotate(90deg)}
 .lsdot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--green)}
 .lsb{padding:0 var(--sp-3) var(--sp-3);border-top:1px solid var(--line)}
@@ -10157,7 +10133,7 @@ ul.dig.ss-today li.st-cancelled em.ss-tag{text-decoration:none;display:inline-bl
   .grid2{grid-template-columns:minmax(0,1fr);gap:18px}
   header.site .meta,header.site .logo .div,header.site .logo .app{display:none}
 }
-.chips button,.tjob,.tchip,.side a,.subtabs a,.btabs a{position:relative}
+.chips button,.tchip,.side a,.subtabs a,.btabs a{position:relative}
 .side .sech.lab{display:flex;align-items:center;gap:10px;padding:10px 12px 4px;color:var(--fg);font:700 var(--fs-subhead)/1.2 var(--body)}
 .side .sech.lab svg{color:var(--navy)}
 .side .kids{padding-left:12px;margin-left:10px}
@@ -10188,11 +10164,6 @@ body .hmenu #hd .hdv::before,body .hmenu #hd::before,body .hmenu #hd::after{disp
 .tnxb a b,.tnxb>span b{font-weight:700}
 .tnxb small{font-size:var(--fs-footnote);color:var(--muted)}
 .tnx .act{flex:none;min-height:44px;display:inline-flex;align-items:center}
-.tjobs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
-.tjobs::-webkit-scrollbar{display:none}
-.tjob{flex:none;scroll-snap-align:start;display:inline-flex;align-items:center;gap:8px;min-height:44px;box-sizing:border-box;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--fg);text-decoration:none;font:500 var(--fs-footnote)/1 var(--body);white-space:nowrap}
-.tjob:hover{background:var(--surface-2)}
-.tjob .n{font:600 var(--fs-caption)/1 var(--body);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:4px 7px}
 .tcalday{margin:-2px 0 6px;font-size:var(--fs-footnote);color:var(--muted)}
 ul.dig.tcal li.evrow{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:2px 12px;align-items:start;padding:11px 0}
 ul.dig.tcal .evtime{grid-column:1;white-space:nowrap;font:600 var(--fs-footnote)/1.35 var(--body);color:var(--muted);display:block;-webkit-line-clamp:unset;font-variant-numeric:tabular-nums}
@@ -10209,8 +10180,7 @@ ul.dig.tcal details.packet ul{margin:2px 0 4px;padding-left:18px;font-size:var(-
 @media (max-width:520px){ul.dig.tcal li.evrow{grid-template-columns:70px minmax(0,1fr);column-gap:10px}ul.dig.tcal .evdir{grid-column:2;justify-self:start;margin-top:4px}}
 @media (pointer:coarse){ul.dig.tcal .evdir,ul.dig.tcal details.packet summary{min-height:44px}}
 .tpage{padding-top:6px}
-ul.dig.plist li.prow>a,ul.dig.plist li.prow>.pnolink{display:grid;grid-template-columns:minmax(0,1fr) auto 14px;gap:2px 12px;align-items:center;padding:11px 0;color:var(--fg);text-decoration:none;min-height:44px}
-ul.dig.plist li.prow>.pnolink{grid-template-columns:minmax(0,1fr) auto}
+ul.dig.plist li.prow>a{display:grid;grid-template-columns:minmax(0,1fr) auto 14px;gap:2px 12px;align-items:center;padding:11px 0;color:var(--fg);text-decoration:none;min-height:44px}
 ul.dig.plist li.prow b{grid-column:1;grid-row:1;font:600 var(--fs-subhead)/1.3 var(--body);white-space:normal}
 ul.dig.plist .psub{grid-column:1;grid-row:2;font-size:var(--fs-footnote);color:var(--muted);-webkit-line-clamp:2}
 ul.dig.plist .pamt{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;text-align:right;-webkit-line-clamp:unset;overflow:visible}
@@ -10288,7 +10258,6 @@ ul.dig .pfu li.pfu-r,.pfu li.pfu-r{border:0;padding:0;display:block}
 const DAY=new Date().toDateString();const ST={};try{const o=JSON.parse(localStorage.getItem("dp_drawers")||"{}");if(o&&o.day===DAY&&o.m)Object.assign(ST,o.m)}catch(e){}
 const save=()=>{try{localStorage.setItem("dp_drawers",JSON.stringify({day:DAY,m:ST}))}catch(e){}};
 const H=()=>(location.hash||"#today").slice(1)||"today";
-const slugify=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
 
 const roots=()=>{const out=[{root:document,view:document.getElementById("view"),kind:"dr"}];
   const hr=window.__hubRoot;if(hr){const v=hr.querySelector("#view");if(v)out.push({root:hr,view:v,kind:"hub"})}
@@ -10498,7 +10467,6 @@ let kRaf=0;function keepTapped(){if(!K||kRaf)return;kRaf=requestAnimationFrame((
 function keepNow(fine){const k=K;if(!k)return;if(Date.now()-k.at>1800||k.hash!==location.hash){K=null;return}
   let row=k.el.isConnected&&k.el.getClientRects().length?k.el:null;if(!row&&/[#\[]/.test(k.sel)){try{row=k.root.querySelector(k.sel)}catch(e){}}if(!row||!row.getClientRects().length)return;
   const d=row.getBoundingClientRect().top-k.top;if(Math.abs(d)>(fine===true?1:6)){holdHdr();scrollBy(0,d);if(fine!==true){clearTimeout(keepNow.t);keepNow.t=setTimeout(()=>keepNow(true),320)}}}
-window.DPKeepTapped=keepTapped;
 window.DPReleaseTap=()=>{K=null};
 function findItem(root,selStr){try{return root.querySelector(selStr)}catch(e){return null}}
 let NUDGE=null;

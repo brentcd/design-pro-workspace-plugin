@@ -6,6 +6,8 @@ Times are written in the given zone, or in this computer's own zone when none is
 Optional: claude-contacts-map.csv (handle,name,organization) in the same folder labels senders.
 --state FILE: remembers what the last export held; when nothing changed and the last export is under 110 minutes old,
   prints nothing, says "unchanged" on stderr and exits 3 (the caller then has nothing to upload).
+--recent FILE: also writes FILE, the same export with only the threads whose newest message is under 6 hours old
+  ("since": the cut time, "recentHours": 6), for the light checks (a small read instead of the whole export).
 --quiet-sunday: on Sundays from 6 AM (in the given zone) it says "Sunday: not needed" on stderr and exits 4 without
   reading anything (one early-morning export a Sunday is enough).
 On a problem it prints one plain sentence to stderr and exits 1."""
@@ -13,7 +15,7 @@ import sqlite3, csv, hashlib, json, os, re, sys, datetime as dt
 HERE=os.path.dirname(os.path.abspath(__file__))
 def fail(msg):
     sys.stderr.write(msg.strip()+'\n'); sys.exit(1)
-ARGS=[];STATE=None;QUIET_SUNDAY=False
+ARGS=[];STATE=None;QUIET_SUNDAY=False;RECENT=None
 _a=sys.argv[1:]
 while _a:
     x=_a.pop(0)
@@ -21,6 +23,9 @@ while _a:
         if not _a: fail('--state needs a file name')
         STATE=_a.pop(0)
     elif x=='--quiet-sunday': QUIET_SUNDAY=True
+    elif x=='--recent':
+        if not _a: fail('--recent needs a file name')
+        RECENT=_a.pop(0)
     elif x.startswith('--'): pass  # unknown options are ignored, so a newer caller never breaks an older script (or the reverse)
     else: ARGS.append(x)
 try: hours=float(ARGS[0]) if ARGS else 48
@@ -82,7 +87,7 @@ try:
     for cid,ident,dname,last in chats:
         parts=[r[0] for r in db.execute("select h.id from chat_handle_join j join handle h on h.ROWID=j.handle_id where j.chat_id=?",(cid,))]
         if parts and all(len(key(p))<10 and '@' not in p for p in parts): continue  # short codes
-        rows=db.execute("""select m.is_from_me,m.date,m.text,m.attributedBody,h.id from message m join chat_message_join cm on cm.message_id=m.ROWID left join handle h on h.ROWID=m.handle_id where cm.chat_id=? and coalesce(m.associated_message_type,0)=0 order by m.date desc limit 6""",(cid,)).fetchall()
+        rows=db.execute("""select m.is_from_me,m.date,m.text,m.attributedBody,h.id from message m join chat_message_join cm on cm.message_id=m.ROWID left join handle h on h.ROWID=m.handle_id where cm.chat_id=? and coalesce(m.associated_message_type,0)=0 order by m.date desc limit 4""",(cid,)).fetchall()
         msgs=[]
         for fm,d,t,ab,h in reversed(rows):
             txt=body(t,ab).replace('￼','').strip()
@@ -92,11 +97,12 @@ try:
         first=parts[0] if len(parts)==1 else None
         out.append({'chat':ident,'group':len(parts)>1,'title':dname or '','handle':key(first) if first else '',
           'name':label(first) if first else ', '.join(label(p) for p in parts)[:200],
-          'known':bool(first and key(first) in names),'lastFromMe':msgs[-1]['me'],'lastAt':msgs[-1]['at'],'messages':msgs})
+          'known':bool(first and key(first) in names),'_t':rows[0][1]/1e9+EPOCH,'lastFromMe':msgs[-1]['me'],'lastAt':msgs[-1]['at'],'messages':msgs})
 except sqlite3.Error as e:
     fail('Messages database: %s'%e)
 out.sort(key=lambda x:x['lastAt'],reverse=True)
 out=out[:60]
+LAST={id(x):x.pop('_t') for x in out}
 if STATE:
     h=hashlib.sha256(json.dumps([out,len(names)],sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:16]
     try:
@@ -107,5 +113,9 @@ if STATE:
     except SystemExit: raise
     except Exception: pass
     try: json.dump({'hash':h,'writtenAt':NOW.isoformat(timespec='seconds')},open(STATE,'w'))
+    except Exception: pass
+if RECENT:
+    try: json.dump({'generatedAt':NOW.isoformat(timespec='seconds'),'hours':hours,'recentHours':6,'since':(NOW-dt.timedelta(hours=6)).isoformat(timespec='seconds'),'contacts':len(names),
+                    'threads':[x for x in out if LAST[id(x)]>=NOW.timestamp()-6*3600]},open(RECENT,'w'),ensure_ascii=False)
     except Exception: pass
 print(json.dumps({'generatedAt':NOW.isoformat(timespec='seconds'),'hours':hours,'contacts':len(names),'threads':out},ensure_ascii=False))

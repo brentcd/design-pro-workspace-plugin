@@ -78,7 +78,7 @@ try:
         rows = db.execute("""select m.ZISFROMME, m.ZMESSAGEDATE, m.ZTEXT, m.ZFROMJID, m.ZPUSHNAME, gm.ZMEMBERJID, gm.ZCONTACTNAME
             from ZWAMESSAGE m left join ZWAGROUPMEMBER gm on gm.Z_PK = m.ZGROUPMEMBER
             where m.ZCHATSESSION = ? and m.ZMESSAGEDATE > ? and coalesce(m.ZTEXT,'') <> ''
-            order by m.ZMESSAGEDATE desc limit 6""", (pk, since)).fetchall()
+            order by m.ZMESSAGEDATE desc limit 4""", (pk, since)).fetchall()
         msgs = []
         for me, d, text, frm, push, mjid, mname in reversed(rows):
             if me: who = 'Me'
