@@ -12,16 +12,22 @@ Needs in config.json (besides the build_page.py keys):
   emailDomains, and statusSheet: the shared beta status sheet's id, or empty to share no status)
 Every value is checked first (dpw_config.py); nothing is written when one is wrong.
 Writes out_dir/<task>.txt for hub_sync, morning, midday, eod, light, texts_relay and updater, and out_dir/schedules.json.
+For the six cloud tasks (THIN_KEYS) it also writes:
+  out_dir/tasks/<key>.json  the doc saved on the page as setup/task-<key>: {"version", "kit", "updatedAt", "text"}
+  out_dir/boot/<key>.txt    the task's short, fixed prompt, which reads that doc at the start of every run
 Fails if any {{PLACEHOLDER}} is left, except HUB_SYNC_TASK_ID before that task exists
 (fill_prompts can be re-run once it does).
 """
-import json, os, re, sys
+import datetime, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)  # dpw_config.py sits next to this script (python3 -I leaves the script's folder off the path)
 import dpw_config  # noqa: E402
 
 ASSETS = os.path.join(HERE, '..', 'assets')
+OWN_ASSETS = ASSETS  # the plugin's own copy: its bootstraps are used when the given assets (an older Kit) have none
+THIN_KEYS = ('morning', 'midday', 'eod', 'hub_sync', 'light', 'updater')
+BOOT_MAX = 2500
 if '--assets' in sys.argv:
     i = sys.argv.index('--assets')
     if i + 1 >= len(sys.argv):
@@ -166,6 +172,29 @@ def email_domains(org):
     ds = [d.lower() for d in names(org.get('emailDomains'), 10) if re.fullmatch(r'[a-z0-9.\-]+\.[a-z]{2,24}', d.lower())]
     return ', '.join(ds) or '(none listed)'
 
+def boot_spec(kit):
+    """The bootstrap templates: from the given prompts.json, else (an older Kit, for example on a rollback) the plugin's own."""
+    b = kit.get('boot')
+    if not isinstance(b, dict):
+        try:
+            b = json.load(open(os.path.join(OWN_ASSETS, 'prompts.json'), encoding='utf-8')).get('boot')
+        except (OSError, ValueError):
+            b = None
+    if not isinstance(b, dict) or not isinstance(b.get('template'), str) or not isinstance(b.get('tasks'), dict):
+        stop('prompts.json has no "boot" instructions for the scheduled tasks (the plugin may be older than the Kit); nothing was written.')
+    for k in THIN_KEYS:
+        t = b['tasks'].get(k)
+        if not isinstance(t, dict) or not t.get('name'):
+            stop('prompts.json "boot" has no entry for "%s"; nothing was written.' % k)
+    return b
+
+def task_doc(key, text, version, kit_version, now):
+    """setup/task-<key>: what the task's bootstrap reads. Its text must start with "PROMPTS VERSION" (the bootstrap checks);
+    an older Kit's text that doesn't gets the line added, so a rollback still works."""
+    if not text.startswith('PROMPTS VERSION'):
+        text = 'PROMPTS VERSION %d: %s' % (version, text)
+    return {'version': version, 'kit': kit_version, 'updatedAt': now, 'text': text}
+
 def main(cfg_path, out_dir):
     try:
         cfg = json.load(open(cfg_path, encoding='utf-8'))
@@ -213,14 +242,41 @@ def main(cfg_path, out_dir):
         if rest:
             left[name] = sorted(rest)
         filled[name] = s
-    if any(x != '{{HUB_SYNC_TASK_ID}}' for v2 in left.values() for x in v2):
+    # an older Kit (a rollback) may lack a task, for example the light check: that task's doc is then left as it is
+    keys = [k for k in THIN_KEYS if k in filled]
+    boot = boot_spec(kit)
+    boots = {}
+    for k in keys:
+        t = boot['tasks'][k]
+        miss = boot.get('missing_updater' if k == 'updater' else 'missing_daily') or ''
+        b = (boot['template'].replace('{{TASK_NAME}}', clean(t['name'])).replace('{{TASK_LINE}}', clean(t.get('line') or '', 200))
+             .replace('{{TASK_KEY}}', k).replace('{{BOOT_MISSING}}', miss))
+        b = fill(b)
+        rest = set(re.findall(r'\{\{[A-Z_]+\}\}', b))
+        if rest:
+            left['boot/' + k] = sorted(rest)
+        if len(b) > BOOT_MAX:
+            stop('the short instructions for "%s" are %d characters, more than %d; nothing was written.' % (k, len(b), BOOT_MAX))
+        boots[k] = b
+    if any(x != '{{HUB_SYNC_TASK_ID}}' or n.startswith('boot/') for n, v2 in left.items() for x in v2):
         print('STILL UNFILLED:', json.dumps(left))
         stop('these instructions need values this script doesn\'t fill (the plugin may be older than the Kit); nothing was written.')
-    os.makedirs(out_dir, exist_ok=True)
+    try:
+        version = int(kit.get('version') or 0)
+    except (TypeError, ValueError):
+        version = 0
+    kit_version = clean(cfg.get('kitVersion') or '', 20)
+    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+    os.makedirs(os.path.join(out_dir, 'tasks'), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, 'boot'), exist_ok=True)
     for name, s in filled.items():
         open(os.path.join(out_dir, name + '.txt'), 'w', encoding='utf-8').write(s)
+    for k in keys:
+        with open(os.path.join(out_dir, 'tasks', k + '.json'), 'w', encoding='utf-8') as f:
+            json.dump(task_doc(k, filled[k], version, kit_version, now), f, ensure_ascii=False)
+        open(os.path.join(out_dir, 'boot', k + '.txt'), 'w', encoding='utf-8').write(boots[k])
     json.dump(kit['schedules'], open(os.path.join(out_dir, 'schedules.json'), 'w'), indent=1)
-    print('wrote', ', '.join(n + '.txt' for n in kit['prompts']))
+    print('wrote', ', '.join(n + '.txt' for n in kit['prompts']) + '; tasks/ and boot/ for ' + ', '.join(keys))
     if left:
         print('STILL UNFILLED:', json.dumps(left))
 

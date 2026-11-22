@@ -920,7 +920,8 @@ window.DPTheme={get:function(){return "light"},set:function(){},paint:function()
 window.DPOrg=(function(){
   var BRAND="Design Pro Remodeling";
   var JT={pm:{name:"Project Consultant",ignore:["No preference"]},
-    flow:{name:"JOB FLOW (Kanban View)",active:["✅ Approved, Planning","⏳ Work In Progress","🔜 Final 5%"]},
+    flow:{name:"JOB FLOW (Kanban View)",active:["✅ Approved, Planning","⏳ Work In Progress","🔜 Final 5%"],
+      notLanded:"⛔️ Not Landed (Proposal Sent)",presale:["📩 Proposal Sent","⏩ Following Up (3x)","🧐 Proposal Review + Update","✍🏻 Budget"]},
     newBuild:{name:"Remodel Type",value:"New Home Construction"},
     permits:null};
   var signedIn="";
@@ -943,9 +944,10 @@ window.DPOrg=(function(){
   function utilities(){var u=obj(raw().utilities),out={};["electric","gas","water"].forEach(function(k){
       out[k]=list(u[k]).map(function(p){p=typeof p==="string"?{name:p}:obj(p);return{name:str(p.name),domain:str(p.domain),contact:str(p.contact),match:str(p.match)}}).filter(function(p){return p.name})});return out}
   function jt(){var j=obj(raw().jtFields),pm=obj(j.pm),fl=obj(j.flow),nb=obj(j.newBuild);
-    var act=strs(fl.active);
+    var act=strs(fl.active),pre=strs(fl.presale);
     return{pm:{name:str(pm.name,JT.pm.name),ignore:Array.isArray(pm.ignore)?strs(pm.ignore):JT.pm.ignore.slice()},
-      flow:{name:str(fl.name,JT.flow.name),active:act.length?act:JT.flow.active.slice()},
+      flow:{name:str(fl.name,JT.flow.name),active:act.length?act:JT.flow.active.slice(),
+        notLanded:str(fl.notLanded,JT.flow.notLanded),presale:pre.length?pre:JT.flow.presale.slice()},
       newBuild:{name:str(nb.name,JT.newBuild.name),value:str(nb.value,JT.newBuild.value)},
       permits:obj(j.permits)}}
   /* permit and inspection fields keep their standard names inside the page; a team whose JobTread uses other
@@ -2564,6 +2566,7 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 /* typing in a suggestion keeps the words (a redraw would otherwise put the old ones back) */
 document.addEventListener("input",e=>{const t=e.target;if(!t||!t.dataset||t.dataset.sgT===undefined)return;const [sid,ix]=sgKey(t.dataset.sgT);const v=state.status[sid];const s=v&&v.sugg&&v.sugg[ix];if(!s)return;if(s.k==="selection")s.choice=t.value;else s.t=t.value});
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-inkind]");if(!b)return;state.inKind=b.dataset.inkind;if(location.hash!=="#inbox")location.hash="#inbox";else render()});
+document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("select[data-injob]");if(!s)return;state.inJob=s.value;render()});
 function viewKind([k,label]){
   const list=allItems().filter(({i})=>i.kind===k);
   const sub={email:"Emails that need a reply.",text:"Texts that need a reply.",meeting:"Action items from meetings.",waiting:"People you're waiting on.",delivery:"Orders and deliveries.",money:"Payments, invoices and deposits.",jobtread:"JobTread tasks and fixes.",estimate:"Estimates to write, update or chase."}[k]||"";
@@ -2774,7 +2777,7 @@ function viewFeedback(){
     <label>Part of the app<select data-fb="area"${dis}>${opt(["Daily Review","Email","Project Hub","Job Lists","Pipeline","Operations","Utilities","Texts","Calendar","Scheduled updates","Other"],FB.form.area)}</select></label></div>
     <label>Title<input data-fb="title" maxlength="140" placeholder="e.g. Push a notification when a client emails" value="${esc(FB.form.title)}"${ro}></label>
     <label>Details (optional)<textarea data-fb="details"${ro} placeholder="What would you use it for? What happened, if something broke? For an SOP: what should the Workspace do with it?">${esc(FB.form.details)}</textarea></label>
-    ${!SOP_FOLDER?"":`<div class="fbfile">${FB.file?`<span>Attached: <b>${esc(FB.file.name)}</b></span> <button type="button" class="act ghost" data-fbfilex${dis}>Remove</button>`:`<label>Attach an SOP, checklist or document (optional)<input type="file"${dis} data-fbfile accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.heic"></label>`}<small>Files go to the shared <a href="${SOP_URL}" target="_blank" rel="noopener">SOP uploads</a> folder so the Workspace can be built around how your team already works. Up to 10 MB.</small></div>`}
+    ${!SOP_FOLDER?"":`<div class="fbfile">${FB.file?`<span>Attached: <b>${esc(FB.file.name)}</b></span> <button type="button" class="act ghost" data-fbfilex${dis}>Remove</button>`:`<label>Attach a screenshot or document (optional)<input type="file"${dis} data-fbfile accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.heic"></label>`}<small>A screenshot of what you see, or a document such as an SOP or checklist. It goes to the shared <a href="${SOP_URL}" target="_blank" rel="noopener">SOP uploads</a> folder so the Workspace can be fixed and built around how your team already works. Up to 10 MB.</small></div>`}
     ${FB.confirm?`<div class="fbconf" role="alert" style="border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;font-size:.9rem;color:var(--fg)"><b>Post “${esc(FB.form.title.trim().slice(0,140))}” to the shared list?</b> Everyone using the Workspace will see it.${FB.file?` The file <b>${esc(FB.file.name)}</b> goes to the shared SOP uploads folder.`:""}</div>`:""}
     <div class="acts" style="margin:0;align-items:center">${FB.confirm?`<button class="act primary" type="button" data-fbgo${FB.sending?" disabled":""}>Post feedback</button><button class="act ghost" type="button" data-fbback${FB.sending?" disabled":""}>Cancel</button>`:`<button class="act primary" type="submit">Submit</button>`}${FB.msg?`<span class="status" role="status">${esc(FB.msg)}</span>`:""}</div></form>
   <div class="embar"><div class="chips" role="group" aria-label="Sort">${chips}</div><span class="live${FB.err?" off":""}">${FB.busy?"Updating…":FB.err?"Offline":age!=null?"Live · updated "+(age<1?"just now":age+" min ago"):"Loading…"}</span><button class="act ghost" data-fbr type="button">Refresh</button>${((FB.email&&FB_ADMINS.includes(String(FB.email).toLowerCase()))||state.owner)?`<a class="act ghost" href="${FB_URL}" target="_blank" rel="noopener">Open sheet</a>`:""}</div>
@@ -3303,17 +3306,22 @@ function viewInbox(preset){
   if(preset)state.inKind=preset;
   const all=allItems().filter(({i})=>!isDone(i)||!state.hideDone);const cnt={};all.forEach(({i})=>{if(!isDone(i))cnt[i.kind]=(cnt[i.kind]||0)+1});
   const kind=state.inKind&&cnt[state.inKind]!==undefined?state.inKind:(preset||"all");
-  const list=kind==="all"?all:all.filter(({i})=>i.kind===kind);
+  const byKind=kind==="all"?all:all.filter(({i})=>i.kind===kind);
+  /* the job picker: one job's items alone; the choice is kept while the page is open */
+  const jobs=new Map();byKind.forEach(({c})=>{if(!c)return;const k=String(c.id||c.customer||c.address||"");if(!k)return;const o=jobs.get(k)||{k,l:c.customer||c.address||"Other",n:0};o.n++;jobs.set(k,o)});
+  const jobKey=state.inJob&&jobs.has(state.inJob)?state.inJob:"";
+  const list=jobKey?byKind.filter(({c})=>c&&String(c.id||c.customer||c.address||"")===jobKey):byKind;
+  const jobSel=jobs.size>1||jobKey?`<label class="injob"><span class="vh">Show one job</span><select data-injob aria-label="Show one job"><option value="">All jobs</option>${[...jobs.values()].sort((a,b)=>String(a.l).localeCompare(String(b.l))).map(o=>`<option value="${esc(o.k)}"${o.k===jobKey?" selected":""}>${esc(o.l)} (${o.n})</option>`).join("")}</select></label>`:"";
   const openN=all.filter(({i})=>!isDone(i)).length;const short={waiting:"Waiting"};
   const chips=[["all","All",openN],...KINDS.filter(([k])=>cnt[k]).map(([k,l])=>[k,short[k]||l,cnt[k]])].map(([k,l,n])=>`<button type="button" data-inkind="${k}" aria-pressed="${kind===k}">${esc(l)} <span class="n" aria-hidden="true">${n}</span><span class="vh">, ${n}</span></button>`).join("");
   const sub={all:"Everything open from email, texts, meetings and JobTread, grouped by job. The most urgent job is first.",email:"Emails that need a reply. All mail shows your live Gmail inbox.",text:"Texts that need a reply.",meeting:"Action items from meetings.",waiting:"People you're waiting on.",delivery:"Orders and deliveries.",money:"Payments, invoices and deposits.",jobtread:"JobTread tasks and fixes.",estimate:"Estimates to write, update or chase."}[kind]||"";
   const roll=kind==="all";
   const bar=kind==="email"?`<div class="embar ibx-bar">${emSeg("need")}</div>`:"";
   const head=roll&&window.DPPageHead?DPPageHead("Inbox",esc(sub),"",ibxAllBtn()):pageHead("Inbox",sub);
-  return head+`<div class="chips inchips" role="group" aria-label="Show">${chips}</div>`+bar+(list.length?inboxGroups(list,{roll}):`<div class="empty">Nothing here.</div>`)}
+  return head+`<div class="chips inchips" role="group" aria-label="Show">${chips}${jobSel}</div>`+bar+(list.length?inboxGroups(list,{roll}):`<div class="empty">Nothing here.</div>`)}
 
 (function(){if(document.getElementById("ibx-css"))return;const st=document.createElement("style");st.id="ibx-css";st.textContent=`
-.ibx-bar{margin:2px 0 12px}.ibx-all[hidden]{display:none!important}
+.injob select{min-height:44px;max-width:100%;border:1px solid var(--field-border);border-radius:10px;padding:0 10px;font:inherit;background:var(--surface);color:var(--fg)}.ibx-bar{margin:2px 0 12px}.ibx-all[hidden]{display:none!important}
 .ibx .igrp>h2 .ibx-c,.ibx .igrp .dpd-b .ibx-c{font:500 var(--fs-footnote)/1.3 var(--body)!important;color:var(--muted)!important;background:none!important;padding:0!important}
 .ibx li.item.ibx-q:not(.ibx-on) .ibody>.acts:not(:focus-within){max-height:0;overflow:hidden;margin:0;padding:0;opacity:0;pointer-events:none}
 .ibx li.item.ibx-q:not(.ibx-on) .ibody{cursor:pointer}
@@ -3403,7 +3411,7 @@ function formHtml(i,c){
   if(f.type==="assign"){const cur=state.assigns[safeId(i.id)];
     return `<div class="panel"><span class="lbl">Assign to a teammate</span>${cur?`<div class="acts" style="margin:0"><span class="badge who">Now: ${esc(cur.to===state.me?"you":personName(cur.to))}</span><button class="act ghost" data-a="as-clear">Unassign</button></div>`:""}
     <div class="form"><label class="wide">Search people<input name="pq" value="${esc(f.pq||"")}" placeholder="Type a name" autocomplete="off"></label></div>
-    <div class="people">${(f.hits||[]).map(p=>`<button data-a="as-pick" data-uid="${esc(p.id)}"><span class="av" style="background:${esc(p.color||"#1d5fbf")}">${esc((p.name||"?").slice(0,1))}</span>${esc(p.name||"Someone")}${p.isMe?" (you)":""}</button>`).join("")||'<span class="status">Only people the dashboard is shared with appear here.</span>'}</div>
+    <div class="people">${(f.hits||[]).map(p=>`<button data-a="as-pick" data-uid="${esc(p.id)}"><span class="av" style="background:${esc(p.color||"#1d5fbf")}">${esc((p.name||"?").slice(0,1))}</span>${esc(p.name||"Someone")}${p.isMe?" (you)":""}</button>`).join("")||`<span class="status" role="status">${!f.loaded?"Looking for teammates…":f.pq?`No teammate matches "${esc(f.pq)}". Clear the box to see everyone this Workspace is shared with.`:"No teammates are available yet. Teammates appear here once this Workspace is shared with them in claude.ai: choose Share, then Can use. Until then you can't assign this to anyone else."}</span>`}</div>
     <div class="acts">${cancel}</div>${st}</div>`}
   return"";
 }
@@ -3502,7 +3510,7 @@ function setLater(id,until){const sid=safeId(id);const f=findItem(id);const prev
 function clearLater(id){const sid=safeId(id);const prev=state.later[sid];delete state.later[sid];
   if(state.db)state.db.doc("later/"+sid).delete().catch(()=>{if(!state.later[sid])undoFail(sid,state.later,prev,"Couldn't bring that item back, so it's still snoozed.",()=>clearLater(id))});render()}
 let searchSeq=0;
-async function peopleSearch(id,q){const n=++searchSeq;let hits=[];try{hits=await state.user.search(q)}catch(e){}if(n!==searchSeq||!state.forms[id])return;hits.forEach(p=>state.people[p.id]=p);state.forms[id]={...state.forms[id],hits,pq:q};
+async function peopleSearch(id,q){const n=++searchSeq;let hits=[];try{hits=await state.user.search(q)}catch(e){}if(n!==searchSeq||!state.forms[id])return;hits.forEach(p=>state.people[p.id]=p);state.forms[id]={...state.forms[id],hits,pq:q,loaded:true};
   const slot=document.querySelector(`li.item[data-item="${CSS.escape(id)}"] .people`);if(slot){const tmp=document.createElement("div");tmp.innerHTML=formHtml(findItem(id).i,findItem(id).c);slot.replaceWith(tmp.querySelector(".people"))}else rerenderItem(id)}
 async function assignTo(id,uid){const sid=safeId(id);const {i,c}=findItem(id);const v={to:uid,by:state.me,at:Date.now(),itemId:id,text:i.text||"",customer:c.customer||""};state.assigns[sid]=v;setForm(id,null);
   if(!state.db)return;try{await state.db.doc("assignments/"+sid).set(v);try{if(uid!==state.me&&window.__dpAssigned)window.__dpAssigned(id,uid,personName(uid),i,c)}catch(x){}}catch(e){if(state.assigns[sid]===v)undoFail(sid,state.assigns,undefined,"Couldn't save the assignment. You may only have view access.",()=>assignTo(id,uid))}}
@@ -3522,7 +3530,7 @@ const pErr=m=>{const e=new Error(m);e.plain=m;return e};
 /* the amount still owed on an invoice: its balance (or amount due) when the update has it, else the invoice amount */
 function pipeDue(x){const v=x.balance!=null&&x.balance!==""?x.balance:x.amountDue!=null&&x.amountDue!==""?x.amountDue:x.amount;return amt(v)}
 /* a proposal row is a "Proposal" or a "Change Order" (older reviews have no kind: they count as proposals) */
-function pipeKind(x){return /change/i.test(String(x.kind||""))?"Change Order":"Proposal"}
+function pipeKind(x){return /change order/i.test(String(x.title||x.docName||x.documentName||""))||/change/i.test(String(x.kind||""))?"Change Order":"Proposal"}
 const pipeQB=x=>/quickbooks/i.test(String(x.source||""));
 /* the latest comments first (the updates write comments:[{by, at, text}]) */
 function pipeCmts(x){return (Array.isArray(x.comments)?x.comments:[]).filter(c=>c&&c.text).slice().sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0))}
@@ -3556,7 +3564,7 @@ const pipeJid=x=>x.jobId||((String(x.link||"").match(/app\.jobtread\.com\/jobs\/
 function pipeJTUrl(x){if(pipeQB(x))return "";const jid=pipeJid(x);
   if(x.docId&&jid)return `https://app.jobtread.com/jobs/${jid}/documents/${x.docId}`;return /^https:\/\/\S+$/i.test(String(x.link||"").trim())?String(x.link).trim():jid?`https://app.jobtread.com/jobs/${jid}`:""}
 function pipeKey(kind,x){return safeId(kind+"-"+(x.docId||x.number||x.customer||""))}
-const PIPE={open:{},box:{},text:{},posted:{},did:{},err:{},depErr:{},dep:"",jid:{}};
+const PIPE={kind:"all",open:{},box:{},text:{},posted:{},did:{},err:{},depErr:{},dep:"",jid:{}};
 /* rows the update wrote without a JobTread job id: look their jobs up once by number (a read, 25 at a time), so
    "Open in JobTread" can link to the job */
 function pipeResolveJobs(rows){if(!state.mcp||!ORG)return;const nums=[...new Set(rows.filter(x=>!pipeQB(x)&&!pipeJid(x)).map(pipeJobNo).filter(n=>/^\d{3,6}$/.test(n)&&PIPE.jid[n]===undefined))].slice(0,25);
@@ -3588,14 +3596,15 @@ function pipeExtra(inv,x){
     (open&&x.docId&&!state.mcp?`<p class="pcm-s">Open the page signed in to claude.ai to read the latest comments from JobTread.</p>`:"")+
     (open&&!x.docId?`<p class="pcm-s">This row has no JobTread document yet, so only the comments from your updates show here.</p>`:""):"";
   const url=pipeJTUrl(x);
+  const closable=!inv&&!qb&&!!x.docId&&!pipeAppr(x),cl=closable?pipeCloseUi(x):null;
   const acts=qb?`<p class="pcm-s">In QuickBooks only, so there are no JobTread actions for it.</p>`:`<div class="pacts2">`+
     (inv?`<button type="button" class="act ghost" data-pcm-open="${esc(k)}" aria-expanded="${open}" aria-label="${open?"Fewer comments":"Comments"}: ${esc(docLabel)}, ${esc(x.customer||"")}">${open?"Fewer comments":hidden?"More comments ("+hidden+")":"Comments"}</button>`:"")+
     (url?`<a class="act ghost" href="${esc(DPCore.safeUrl(url))}" target="_blank" rel="noopener" aria-label="Open in JobTread (new tab): ${esc(docLabel)}, ${esc(x.customer||"")}">Open in JobTread</a>`:"")+
-    `<button type="button" class="act ghost" data-pcm-box="${esc(k)}" aria-expanded="${!!PIPE.box[k]}" aria-label="Add comment: ${esc(docLabel)}, ${esc(x.customer||"")}">Add comment</button></div>`;
+    `<button type="button" class="act ghost" data-pcm-box="${esc(k)}" aria-expanded="${!!PIPE.box[k]}" aria-label="Add comment: ${esc(docLabel)}, ${esc(x.customer||"")}">Add comment</button>`+(closable?cl.btn:"")+`</div>`+(closable?cl.extra:"");
   const box=PIPE.box[k]&&!qb?`<div class="pcbox"><label class="vh" for="pcm-${esc(k)}">Comment on ${esc(docLabel)}</label><textarea id="pcm-${esc(k)}" data-pcm-t="${esc(k)}" rows="2" placeholder="Write a comment for your team">${esc(PIPE.text[k]||"")}</textarea>
     <div class="acts"><button type="button" class="act primary" data-pcm-post="${esc(k)}">Post comment</button><button type="button" class="act ghost" data-pcm-x="${esc(k)}">Cancel</button></div></div>`:"";
   const err=PIPE.err[k]?`<p class="pcm-s err" role="alert">${esc(PIPE.err[k])}</p>`:"";
-  return `<div class="pext" data-pk="${esc(k)}">${chips.filter(Boolean).length?`<div class="pchips">${chips.join("")}</div>`:""}${cmts}${acts}${box}${err}${DPCore.confirmHtml("pipe:cm:"+k)}${chk?pipeFollowUps(k,x):""}</div>`;
+  return `<div class="pext" data-pk="${esc(k)}"${closable?` data-doc="${esc(x.docId)}"`:""}>${chips.filter(Boolean).length?`<div class="pchips">${chips.join("")}</div>`:""}${cmts}${acts}${box}${err}${DPCore.confirmHtml("pipe:cm:"+k)}${chk?pipeFollowUps(k,x):""}</div>`;
 }
 /* the team for "who deposits checks": the page's office staff and project managers, plus you */
 function pipeTeam(){const seen=new Set(),out=[];const add=(n,id)=>{n=String(n||"").trim();if(!n||!id||seen.has(id))return;seen.add(id);out.push([n,id])};
@@ -3663,7 +3672,8 @@ function pipeFU(k,what,from){const f=pipeFind(k);if(!f)return;delete PIPE.err[k]
     DPCore.confirm({key:"pipe:dep:"+k,what:`Create a JobTread to-do asking ${who.replace(/ \(you\)$/,"")} if the check for ${lab} was deposited`,to:who,target:"JobTread · job #"+job,note:"Due tomorrow. Only your team sees it.",label:"Create to-do",busy:"Creating…",done:"To-do created in JobTread",from,
       sig:()=>{const s=document.querySelector(`[data-pdep="${CSS.escape(k)}"]`);return s?s.value:id},
       onConfirm:async()=>{await pipeTodo(x,`Was the check for ${lab} (${x.customer||""}) deposited?`,desc,id);PIPE.did[k+":dep"]="To-do created";render()}})}}
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pcm-open],[data-pcm-box],[data-pcm-x],[data-pcm-post],[data-pfu]");if(!b)return;e.preventDefault();const d=b.dataset;
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pcm-open],[data-pcm-box],[data-pcm-x],[data-pcm-post],[data-pfu],[data-pkind]");if(!b)return;e.preventDefault();const d=b.dataset;
+  if(d.pkind!==undefined){PIPE.kind=d.pkind;return render()}
   if(d.pcmOpen!==undefined)return pipeOpen(d.pcmOpen);if(d.pcmBox!==undefined)return pipeBox(d.pcmBox,!PIPE.box[d.pcmBox]);if(d.pcmX!==undefined)return pipeBox(d.pcmX,false);
   if(d.pcmPost!==undefined)return pipePost(d.pcmPost,b);if(d.pfu)return pipeFU(d.pk2,d.pfu,b)});
 /* typing keeps the words (a redraw would otherwise put the old ones back) and closes a confirm for older words */
@@ -3678,48 +3688,104 @@ function viewPipeline(){
   let pm=state.pm==="All"||cnt[state.pm]||state.pm===ME?state.pm:ME;if(window.DPR&&DPR.role==="ops"&&pm===ME)pm="All";if(!ALL)pm=ME;
   const first=n=>n.split(" ")[0];
   const chips=`<div class="chips" role="group" aria-label="Project consultant">${[...(window.DPR&&DPR.role==="ops"?[]:[[ME,"Mine"]]),...pms.map(n=>[n,first(n)+" "+n.split(" ").slice(1).join(" ").slice(0,1)+"."]),...(ALL?[["All","All PMs"]]:[])].map(([v,l])=>{const n=v==="All"?all.length:(cnt[v]||0);return `<button data-pm="${esc(v)}" aria-pressed="${pm===v}">${esc(l)} <span class="n" aria-hidden="true">${n}</span><span class="vh">, ${n}</span></button>`}).join("")}</div>`;
-  const s=pipeStats(p,pm);pipeResolveJobs(s.props.concat(s.inv,pm===ME?p.stale||[]:[]));const kpi=(v,l,c)=>`<div class="kpi${c?" "+c:""}"><b>${v}</b> <span>${l}</span></div>`;
+  const KIND=PIPE.kind||"all";const kf=x=>KIND==="all"||(KIND==="prop"&&pipeKind(x)==="Proposal")||(KIND==="co"&&pipeKind(x)==="Change Order");
+  const staleXs=(p.stale||[]).filter(x=>pm===ME&&!pmOf(x).length?true:inPm(x,pm)).filter(kf);
+  const s=pipeStats(p,pm);pipeResolveJobs(s.props.concat(s.inv,staleXs));const kpi=(v,l,c)=>`<div class="kpi${c?" "+c:""}"><b>${v}</b> <span>${l}</span></div>`;
   const props=s.props.slice().sort((a,b)=>(b.days||0)-(a.days||0));const inv=s.inv.slice().sort((a,b)=>(b.daysOverdue||0)-(a.daysOverdue||0));
   /* the project manager's name is on every row, except a row that is only yours (your own view needn't repeat your name) */
   const who=x=>{const n=pmOf(x);return n.length&&!(n.length===1&&n[0]===ME)?"PM "+n.join(" / "):""};
-  const pend=props.filter(x=>!pipeAppr(x)&&!pipeGone(x));
-  const appr=props.filter(pipeAppr);
+  const pend=props.filter(x=>!pipeAppr(x)&&!pipeGone(x)&&kf(x));
+  const appr=props.filter(pipeAppr).filter(kf);
   const title=pm===ME?"My pipeline":pm==="All"?"Pipeline · all PMs":"Pipeline · "+pm;
   const F=freshness();const upd=F.has?"Updated "+(F.days>=2?F.dayLong:F.when)+".":p.asOf?"Updated "+p.asOf+".":"";
   const PMF=esc(window.DPOrg.jt().pm.name);const sub=(pm===ME?`Jobs where you're the ${PMF} in JobTread.`:pm==="All"?"Every project manager's jobs in JobTread.":`Jobs where ${esc(pm)} is the ${PMF} in JobTread.`)+(upd?" "+upd:"");
   const days=n=>n==null?"":n===1?"1 day":n+" days";
   const card=(key,t,n,body,foot)=>`<section class="dcard pcard" data-dkey="pipe-${key}"><h2>${t}${n!=null?`<span class="cnt" aria-hidden="true">${n}</span><span class="vh">, ${n}</span>`:""}</h2>${body}${foot||""}</section>`;
-  const cProps=card("props","Proposals waiting",pend.length,pend.length?`<p class="pnote pcount">${esc(pipeCountText(pend))}</p><ul class="dig plist">${pend.map(x=>pipeRow(pipeKind(x),x,money(amt(x.amount)),x.days!=null?"waiting "+days(x.days):"",[x.address,x.number?"#"+x.number:"",x.sentDate?"sent "+x.sentDate:"",who(x)].filter(Boolean).join(" · "),(x.days||0)>=7)).join("")}</ul>`:`<div class="empty">No proposals waiting.</div>`);
+  const cProps=card("props","Proposals waiting",pend.length,pend.length?`<p class="pnote pcount">${esc(pipeCountText(pend))}</p><ul class="dig plist">${pend.map(x=>pipeRow(pipeKind(x),x,money(amt(x.amount)),x.days!=null?"waiting "+days(x.days):"",[x.address,x.number?"#"+x.number:"",x.sentDate?"sent "+x.sentDate:"",who(x)].filter(Boolean).join(" · "),(x.days||0)>=7)).join("")}</ul>`:`<div class="empty">${KIND==="co"?"No change orders waiting.":"No proposals waiting."}</div>`);
   const cAppr=appr.length?card("appr","Recently approved",appr.length,`<ul class="dig plist">${appr.map(x=>pipeRow("Approved "+pipeKind(x).toLowerCase(),x,money(amt(x.amount)),"",[x.address,x.number?"#"+x.number:"",x.approvedDate?"approved "+x.approvedDate:"",who(x)].filter(Boolean).join(" · "),false)).join("")}</ul>`):"";
   const occ=ALL?`<div class="pacts"><button class="act primary" type="button" data-oemail>Email PMs about overdue</button><button class="act" type="button" data-occ aria-label="Choose who is copied on the overdue-invoice emails">Choose who's copied</button><p class="pnote">Builds one email per project manager from JobTread. You check each one before it's sent.</p></div>`:"";
   /* an overdue invoice shows what's still owed; "of $X" when that's less than the invoice */
   const invAmt=x=>x.daysOverdue>0?money(pipeDue(x)):money(amt(x.amount));
   const invWhen=x=>x.daysOverdue>0?"overdue"+(x.amount!=null&&pipeDue(x)!==(+x.amount||0)?" of "+money(amt(x.amount)):"")+" · "+days(x.daysOverdue)+" late":String(x.status||"");
   const cInv=card("inv","Invoices",inv.length,inv.length?`<ul class="dig plist">${inv.map(x=>pipeRow("Invoice",x,invAmt(x),invWhen(x),[x.address,x.number?"#"+x.number:"",x.dueDate?"due "+x.dueDate:"",who(x)].filter(Boolean).join(" · "),x.daysOverdue>0)).join("")}</ul>`:`<div class="empty">No open invoices.</div>`,occ);
-  return pageHead(title,esc(sub))+chips+
+  const kinds=`<div class="chips" role="group" aria-label="Show">${[["all","All"],["prop","Proposals"],["co","Change orders"],["inv","Invoices"]].map(([v,l])=>`<button type="button" data-pkind="${v}" aria-pressed="${KIND===v}">${l}</button>`).join("")}</div>`;
+  const left=KIND==="inv"?"":cProps+cAppr,right=KIND==="prop"||KIND==="co"?"":cInv;
+  return pageHead(title,esc(sub))+chips+kinds+
   `<section class="kpis">${kpi(money(s.openValue),"Open proposals")}${kpi(s.openCount??pend.length,"Pending")}${kpi(money(s.approved30Value),"Approved, 30 days")}${s.winRate!=null?kpi(Math.round(s.winRate*100)+"%","Win rate, 90 days"):""}${kpi(money(s.arOverdue),"Overdue invoices",s.arOverdue>0?"crit":"")}</section>
   ${p.weekly&&pm==="All"?`<div class="note"><b>This week:</b> ${esc(p.weekly)}</div>`:""}
-  <div class="grid2 pgrid"><div class="stack">${cProps}${cAppr}</div><div class="stack">${cInv}</div>${pm===ME?staleHtml(p):""}</div>`;
+  <div class="grid2 pgrid">${left?`<div class="stack">${left}</div>`:""}${right?`<div class="stack">${right}</div>`:""}${KIND==="inv"?"":staleHtml(staleXs,who)}</div>`;
 }
-function staleHtml(p){
-  const xs=(p.stale||[]);if(!xs.length)return "";
+/* "Close proposal": the same action on a stale proposal and on a waiting proposal. It closes the document in JobTread
+   WITHOUT telling the customer, and moves the job to the not-landed stage only when that is safe (see pipeClose). */
+const pipeNorm=v=>String(v||"").replace(/[︎️]/g,"").replace(/\s+/g," ").trim().toLowerCase();
+function pipeCloseUi(x){const id=x.docId,st=state.stale[id]||{},gone=st.status==="denied",noun=pipeKind(x)==="Change Order"?"change order":"proposal",lab=esc((x.customer||"")+(x.number?" #"+x.number:""));
+  const btn=gone?`<span class="badge ok">Closed in JobTread</span><button type="button" class="act ghost" data-stale="undo"${st.busy?" disabled":""} aria-label="Undo close: ${lab}">Undo</button>`
+    :`<button type="button" class="act" data-stale="ask" aria-label="Close ${noun}: ${lab}">Close ${noun}</button>`;
+  const extra=(st.msg?`<div class="why pcm-s">${esc(st.msg)}</div>`:"")+(st.err?`<div class="why pcm-s" style="color:var(--crit)">${esc(st.err)}</div>`:"")+DPCore.confirmHtml("pipe:close:"+id)+DPCore.confirmHtml("pipe:undo:"+id);
+  return{btn,extra}}
+function staleHtml(xs,who){
+  if(!xs.length)return "";
   const live=xs.filter(x=>!(state.stale[x.docId]&&state.stale[x.docId].status==="denied"));
   const tot=live.reduce((a,x)=>a+(+x.amount||0),0);
-  const row=x=>{const st=state.stale[x.docId]||{};const gone=st.status==="denied";const conf=st.confirm;const busy=st.busy;
-    return `<div class="row${gone?" gone":""}" data-doc="${esc(x.docId)}"><div style="min-width:0"><b>${esc(x.customer)}</b><div class="sub">${esc([x.address,"#"+x.number,x.sentDate?"sent "+x.sentDate:"",x.jobClosed?"job closed":""].filter(Boolean).join(" · "))}</div>
-      <div class="acts">${gone?`<span class="badge ok">Declined in JobTread</span><button class="act ghost" data-stale="undo">Undo</button>`:conf?`<button class="act primary" data-stale="confirm"${busy?" disabled":""}>Confirm decline</button><button class="act ghost" data-stale="cancel">Cancel</button>`:`<button class="act" data-stale="ask" aria-label="Mark declined: ${esc(x.customer)}${x.number?" #"+esc(x.number):""}">Mark declined</button>`}${pipeJTUrl(x)?`<a class="act ghost" href="${esc(DPCore.safeUrl(pipeJTUrl(x)))}" target="_blank" rel="noopener" aria-label="Open in JobTread (new tab): ${esc(x.customer)}${x.number?" #"+esc(x.number):""}">Open in JobTread</a>`:""}</div>${st.err?`<div class="why" style="color:var(--crit)">${esc(st.err)}</div>`:""}</div>
+  const row=x=>{const st=state.stale[x.docId]||{};const gone=st.status==="denied";const cl=pipeCloseUi(x);
+    return `<div class="row${gone?" gone":""}" data-doc="${esc(x.docId)}"><div style="min-width:0"><b>${esc(x.customer)}</b><div class="sub">${esc([x.address,"#"+x.number,x.sentDate?"sent "+x.sentDate:"",x.jobClosed?"job closed":"",who(x)].filter(Boolean).join(" · "))}</div>
+      <div class="acts">${cl.btn}${pipeJTUrl(x)?`<a class="act ghost" href="${esc(DPCore.safeUrl(pipeJTUrl(x)))}" target="_blank" rel="noopener" aria-label="Open in JobTread (new tab): ${esc(x.customer)}${x.number?" #"+esc(x.number):""}">Open in JobTread</a>`:""}</div>${cl.extra}</div>
       <div class="amt">${money(amt(x.amount))}<small>${x.days!=null?x.days+(x.days===1?" day":" days"):""}</small></div></div>`};
-  return `<section class="dcard pcard pstale" data-dkey="pipe-stale"><h2>Stale proposals<span class="cnt" aria-hidden="true">${live.length}</span><span class="vh">, ${live.length}</span></h2><p class="pnote">Yours, sent 30+ days ago and still pending in JobTread, ${money(tot)} in all. Declining one updates JobTread, your pipeline and win rate. You confirm each one, and Undo sets it back to pending.</p><div class="rows">${xs.map(row).join("")}</div></section>`;
+  return `<section class="dcard pcard pstale" data-dkey="pipe-stale"><h2>Stale proposals<span class="cnt" aria-hidden="true">${live.length}</span><span class="vh">, ${live.length}</span></h2><p class="pnote">Sent 30+ days ago and still pending in JobTread, ${money(tot)} in all. Closing one updates JobTread, your pipeline and win rate, and the customer is not notified. You confirm each one, and Undo sets it back to pending.</p><div class="rows">${xs.map(row).join("")}</div></section>`;
 }
-async function staleAct(docId,what){
-  const cur=state.stale[docId]||{};
-  if(what==="ask"){state.stale[docId]={...cur,confirm:true,err:""};return render()}
-  if(what==="cancel"){state.stale[docId]={...cur,confirm:false};return render()}
+const pipeDocRow=id=>{const p=(state.review||{}).pipeline||{};return(p.proposals||[]).concat(p.stale||[]).find(x=>x&&x.docId===id)};
+/* the document's job, read live: its id, number and the current value of the job-flow field */
+async function pipeDocJob(docId){const F=window.DPOrg.jt().flow.name;
+  const r=await jtq({document:{$:{id:docId},id:{},name:{},status:{},job:{id:{},number:{},customFieldValues:{$:{size:1,where:[["customField","name"],F]},nodes:{value:{}}},documents:{$:{size:25,where:[["type","customerOrder"]]},nodes:{id:{},status:{},name:{}}}}}});
+  const d=r&&r.document,j=d&&d.job;if(!j||!j.id)throw pErr("JobTread didn't return the job.");
+  const v=((j.customFieldValues||{}).nodes||[])[0];
+  if(!j.documents||!Array.isArray(j.documents.nodes))throw pErr("JobTread didn't return the job's other documents.");
+  const other=j.documents.nodes.some(o=>o&&o.id!==docId&&/^(pending|approved)$/i.test(String(o.status||"")));
+  return{name:String(d.name||""),jobId:j.id,jobNo:j.number,stage:(v&&v.value)||"",other}}
+/* the job's flow stage (updateJob has no notify flag, so only the field is sent) */
+const pipeSetStage=(jobId,val)=>jtq({updateJob:{$:{id:jobId,customFieldValues:{[window.DPOrg.jt().flow.name]:val}},job:{$:{id:jobId},id:{}}}});
+function pipeCloseAsk(docId,from){
+  const x=pipeDocRow(docId);if(!x)return;const cur=state.stale[docId]||{};
   if(!state.mcp){state.stale[docId]={...cur,err:"This needs the JobTread connector. Open the page signed in to claude.ai."};return render()}
-  const to=what==="undo"?"pending":"denied";state.stale[docId]={...cur,busy:true};render();
-  try{await jtq({updateDocument:{$:{id:docId,status:to},document:{$:{id:docId},id:{},status:{}}}});
-    const v={status:to,at:Date.now()};state.stale[docId]=v;if(state.db)state.db.doc("actions/stale-"+docId).set({type:"stale",...v}).catch(()=>{});render();
-  }catch(e){state.stale[docId]={...cur,busy:false,err:errMsg(e)};render()}
+  const FL=window.DPOrg.jt().flow,co=pipeKind(x)==="Change Order",noun=co?"change order":"proposal";
+  DPCore.confirm({key:"pipe:close:"+docId,what:`Close this ${noun} for ${x.customer||"the client"} in JobTread`,target:"JobTread · "+noun+(x.number?" "+x.number:""),
+    note:`The ${noun} is closed in JobTread and the customer is not notified. `+(co?"This is a change order, so the job's stage is not changed.":`If the job is still at a pre-approval stage, it also moves to “${FL.notLanded}”. At any other stage, the job's stage is left as it is.`)+" Undo puts it back.",
+    label:"Close "+noun,busy:"Closing…",from,
+    onConfirm:async()=>{
+      let info=null;try{info=await pipeDocJob(docId)}catch(e){info=null}
+      await jtq({updateDocument:{$:{id:docId,status:"denied",notify:false},document:{$:{id:docId},id:{},status:{}}}});
+      const isProp=!co&&!(info&&/change order/i.test(info.name));let msg,moved=false;
+      if(!info)msg="Closed in JobTread. The job couldn't be checked, so its stage was left as it is.";
+      else if(!isProp)msg="Closed in JobTread. This is a change order, so the job's stage was left as it is.";
+      else if(info.other)msg="Closed in JobTread. The job has another customer order that is still pending or approved, so its stage was left as it is.";
+      else if(!FL.presale.some(n=>pipeNorm(n)===pipeNorm(info.stage)))msg=`Closed in JobTread. The job is at “${info.stage||"no stage"}”, so its stage was left as it is.`;
+      else{try{await pipeSetStage(info.jobId,FL.notLanded);moved=true;msg=`Closed in JobTread. The job moved to “${FL.notLanded}”.`}
+        catch(e){msg="Closed in JobTread, but the job's stage couldn't be changed, so it was left as it is."}}
+      const v={status:"denied",at:Date.now()};if(moved){v.jobId=info.jobId;v.prevStage=info.stage;v.stageTo=FL.notLanded}
+      state.stale[docId]={status:"denied",at:v.at,jobId:v.jobId||"",from:v.prevStage||"",to:v.stageTo||"",msg};
+      if(state.db)state.db.doc("actions/stale-"+docId).set({type:"stale",...v}).catch(()=>{});
+      DPCore.toast(msg);render()}})}
+async function staleAct(docId,what,from){
+  const cur=state.stale[docId]||{};
+  if(what==="ask")return pipeCloseAsk(docId,from);
+  if(what!=="undo")return;
+  if(!state.mcp){state.stale[docId]={...cur,err:"This needs the JobTread connector. Open the page signed in to claude.ai."};return render()}
+  const x=pipeDocRow(docId)||{},noun=pipeKind(x)==="Change Order"?"change order":"proposal";
+  DPCore.confirm({key:"pipe:undo:"+docId,what:`Reopen this ${noun} for ${x.customer||"the client"} in JobTread`,target:"JobTread · "+noun+(x.number?" "+x.number:""),
+    note:`The ${noun} goes back to pending and the customer is not notified. `+(cur.to?`The job's stage goes back to “${cur.from}” if it is still at “${cur.to}”.`:"The job's stage is not changed."),
+    label:"Reopen "+noun,busy:"Reopening…",from,onConfirm:()=>pipeUndo(docId)})}
+async function pipeUndo(docId){
+  const cur=state.stale[docId]||{};
+  state.stale[docId]={...cur,busy:true,err:""};render();
+  try{await jtq({updateDocument:{$:{id:docId,status:"pending",notify:false},document:{$:{id:docId},id:{},status:{}}}});
+    let msg="";
+    if(cur.to&&cur.jobId){
+      try{const info=await pipeDocJob(docId);
+        if(pipeNorm(info.stage)===pipeNorm(cur.to)){await pipeSetStage(cur.jobId,cur.from);msg=`The job's stage is back to “${cur.from}”.`}
+        else msg="The job's stage has changed since, so it was left as it is."}
+      catch(e){msg="The job's stage couldn't be checked, so it was left as it is."}}
+    const v={status:"pending",at:Date.now()};state.stale[docId]={...v,msg};if(state.db)state.db.doc("actions/stale-"+docId).set({type:"stale",...v}).catch(()=>{});render();
+  }catch(e){state.stale[docId]={...cur,busy:false,err:errMsg(e)};render();throw e}
 }
 function viewAssigned(){
   const head=pageHead("Assigned to me","Things teammates handed to you, and things you handed off.");
@@ -4001,6 +4067,12 @@ window.__dpPtr={go,threshold:PTR_GO};
    Status is always a shape plus words, never color alone. Read-only: nothing here writes except "dismiss". */
 const SYS_SAY={check:"Check my Design Pro Workspace",tasks:"Update my scheduled tasks",update:"Update my Design Pro Workspace",texts:"Add texts to my Design Pro Workspace",autoOn:"Turn automatic updates on",setup:"Set up my Design Pro Workspace"};
 const SYS_WHERE="Start a new task in the Claude desktop app and say: ";
+/* problems about how the scheduled tasks get their instructions: each task holds short fixed instructions that read its steps from
+   setup/task-<key> on this page. "tasks-convert": the person's tasks still hold the old full steps, so one Update they start themselves
+   switches them over; "instructions-missing": a task found no steps on the page and did nothing. Plain words when the check sends none. */
+const SYS_PLAIN={"tasks-convert":{text:"Your scheduled tasks need a one-time switch. After it, every update installs on its own.",fix:"One time only: start a new task in the Claude desktop app and say: "+SYS_SAY.update},
+  "instructions-missing":{text:"A scheduled task couldn't find its instructions on your page, so it did nothing.",fix:SYS_WHERE+SYS_SAY.update}};
+const sysPlain=p=>{const d=SYS_PLAIN[p.key];return d?{...p,text:p.text||d.text,fix:p.fix||d.fix}:p};
 const SYS_WORD={ok:"Working",warn:"Needs a look",bad:"Needs attention",off:"Off",wait:"Starting",unknown:"Not checked yet"};
 const SYS_RANK={bad:5,warn:4,wait:3,unknown:2,off:1,ok:0};
 const SYS_SVG={ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',warn:'<path d="M12 6v7"/><path d="M12 17.5v.5"/>',bad:'<path d="M7 7l10 10M17 7 7 17"/>',off:'<path d="M7 12h10"/>',wait:'<circle cx="12" cy="12" r="7"/><path d="M12 8.5V12l2.5 1.5"/>',unknown:'<path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8"/><path d="M12 17v.5"/>'};
@@ -4017,7 +4089,7 @@ function sysSay(fix){const m=/\bsay:\s*["“]?([^"”]+?)["”]?\.?\s*$/i.exec(S
 function sysTaskIds(){const t=sysObj(DPC.tasks);return{morning:t.morning||"",midday:t.midday||DPC.middayTask||"",eod:t.eod||"",hubSync:t.hubSync||DPC.hubSyncTask||"",light:t.light||"",texts:t.texts||"",updater:t.updater||""}}
 function sysHasTasks(){return Object.values(sysTaskIds()).some(Boolean)}
 function sysHealth(){const h=state.health;if(!h||typeof h!=="object"||Array.isArray(h))return null;return{at:sysMs(h.at),kit:sysTxt(h.kit,40),page:sysTxt(h.page,40),autoUpdate:typeof h.autoUpdate==="boolean"?h.autoUpdate:null,tasks:sysObj(h.tasks),
-  problems:(Array.isArray(h.problems)?h.problems:[]).filter(p=>p&&typeof p==="object"&&sysTxt(p.text)).map(p=>({key:sysTxt(p.key,60)||"other",text:sysTxt(p.text),fix:sysTxt(p.fix),sev:p.sev==="warn"?"warn":"bad",src:"check"})),
+  problems:(Array.isArray(h.problems)?h.problems:[]).filter(p=>p&&typeof p==="object"&&(sysTxt(p.text)||SYS_PLAIN[sysTxt(p.key,60)])).map(p=>sysPlain({key:sysTxt(p.key,60)||"other",text:sysTxt(p.text),fix:sysTxt(p.fix),sev:p.sev==="warn"?"warn":"bad",src:"check"})),
   lastUpdate:h.lastUpdate&&typeof h.lastUpdate==="object"?{at:sysMs(h.lastUpdate.at),from:sysTxt(h.lastUpdate.from,40),to:sysTxt(h.lastUpdate.to,40),result:sysTxt(h.lastUpdate.result,200)}:null}}
 const sysTextsOn=()=>DPC.texts==="enabled";
 function sysTextsFix(err){
@@ -4041,7 +4113,9 @@ function sysLocal(){const out=[];const r=state.review;const now=Date.now();
     else if(sysOld(at,3*3600e3))out.push({key:"texts",sev:sysOld(at,26*3600e3)?"bad":"warn",src:"page",text:"Texts haven't arrived since "+sysWhen(at)+".",fix:sysTextsFix("")});
     else if(!t&&r)out.push({key:"texts",sev:"warn",src:"page",text:"No texts have arrived yet.",fix:sysTextsFix("")})}
   if(window.__dpConnProblems)out.push(...window.__dpConnProblems());
-  if(tasksBehind(r).length)out.push({key:"tasks",sev:"bad",src:"page",text:"Your scheduled updates are still on older instructions, so some new features won't fill in yet.",fix:SYS_WHERE+SYS_SAY.tasks});
+  /* the daily check's one-time switch says the same thing better, with the right words to say */
+  const hp=state.health&&state.health.problems;const conv=Array.isArray(hp)&&hp.some(p=>p&&p.key==="tasks-convert");
+  if(!conv&&tasksBehind(r).length)out.push({key:"tasks",sev:"bad",src:"page",text:"Your scheduled updates are still on older instructions, so some new features won't fill in yet.",fix:SYS_WHERE+SYS_SAY.tasks});
   return out}
 /* tasks turned off on purpose (to save Claude usage): the page's settings/paused, plus what the daily check reported */
 const SYS_PAUSE={m:null};
@@ -4072,7 +4146,7 @@ const SYS_TASKS=[["morning","Morning update"],["midday","Midday update"],["eod",
 function sysProblems(){const local=sysLocal();const h=sysHealth();const out=local.slice();
   if(h){const tAt=state.texts?sysMs(state.texts.generatedAt):0,rAt=state.review?sysMs(state.review.generatedAt):0;
     h.problems.forEach(p=>{const row=sysRowOf(p.key);if(local.some(l=>l.key===p.key))return;
-      if(local.some(l=>sysRowOf(l.key)===row&&(row==="texts"||row==="review"||/prompt|instr|version/i.test(p.key))))return;
+      if(!SYS_PLAIN[p.key]&&local.some(l=>sysRowOf(l.key)===row&&(row==="texts"||row==="review"||/prompt|instr|version/i.test(p.key))))return;
       if(row==="texts"&&(!sysTextsOn()||(tAt>h.at&&!(state.texts||{}).error)))return;
       if(row==="review"&&rAt>h.at)return;
       const off=/^task-off-(\w+)$/.exec(p.key);if(off&&sysPaused().has(off[1]))return;
@@ -4328,7 +4402,7 @@ document.addEventListener("toggle",e=>{const t=e.target;if(!t||!t.matches||!t.ma
    When a newer version is out, a slim banner says so: this version keeps working, here's what's new, Update now, Dismiss.
    Update now runs the Updater right away (a tap, then a confirm); a version that needs new permissions gives the one sentence to say instead.
    Dismiss hides it until the next version; it goes away by itself once the page is updated. DP_CHANGES (built in) is this version's own changelog. */
-window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]},{"version":"2026-11-17a","highlights":["If your texts stop because the Messages folder on your Mac isn't connected to the texts task, System status now tells you to say \"Move texts to this Mac\" from a new task on your Mac, instead of only pointing to Full Disk Access.","Other texts problems, such as Full Disk Access being off or your Mac being asleep, keep their usual fix.","No new permissions: installs on its own."]},{"version":"2026-11-15b","highlights":["Every open item has a Note button: write what happened, for example \"Talked to Sonia on site, she is mailing a check\", without closing the item. The note shows on the item, on Today and on the job.","After you save a note, Claude suggests what should follow, already filled in: a selection for the job's Selections tab, a Punch list, To order, To do or Waiting on item, or a JobTread to-do such as writing a change order. Edit it, tap Add, or tap Not needed.","You can also add any of those yourself from the note. Nothing is added until you tap, and a JobTread to-do asks you to confirm first.","Your scheduled updates read notes on open items too, so they won't draft a reply that the note already handled.","No new permissions: installs on its own."]},{"version":"2026-11-15a","highlights":["When you check off an item, tap Add note to say why it is done, for example \"Met Chris on site, a 25 in. base with drawers fits; no email needed.\"","Each job has a new Completed tab under To do: everything you or your scheduled updates checked off, newest first, with its note. Edit a note or reopen an item from there.","Post to JobTread puts a note on the job as a team-only comment, after you confirm, so the rest of the team can see it too.","Your scheduled updates read your notes: an item you closed with a note does not come back as a follow-up.","No new permissions: installs on its own."]},{"version":"2026-11-13e","highlights":["A fresh look from the Design Pro brand book: page titles and big numbers in Playfair Display, everything else in Montserrat, with the exact brand navy and greens. Everything is where it was.","Team activity and Admin day: operations see every project manager's site schedule, selections, orders, open asks and follow-ups, just like owners. If your company's team roll-up is already on, tap Connect to team roll-up once.","Operations can also turn the team roll-up on, and add themselves as a reader if they joined after it was turned on. Only job-level summaries are shared, never personal messages.","No new permissions: installs on its own."]}];
+window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-21a","highlights":["Updates install on their own from now on. Your scheduled tasks read their steps from your page, so a new version no longer needs to change them.","One time only: start a new task in the Claude desktop app and say \"Update my Design Pro Workspace\". System status tells you if you still need to.","Close proposal: one button closes a stale or waiting proposal in JobTread without notifying the customer, and moves the job to Not Landed when it is safe to. Undo puts both back.","Stale proposals show for every project manager, and Pipeline has a filter for proposals, change orders and invoices.","Weekly closeout: type a job number, street or customer to find a job in any stage, including Completed, Paid In Full.","Admin day: an Overdue / All open switch for to-dos, and sections with nothing in them fold into one line.","Jobs and Job costing show each job's project manager. Inbox has a job picker.","Assigning: the page now says why no teammates are listed, and Job Lists uses the office team you already set up."]},{"version":"2026-11-18a","highlights":["Pipeline has its own menu, and its numbers are right: win rate stays between 0 and 100%, overdue and approved totals add up the rows listed, and every pending proposal is counted.","Each Pipeline row shows what's still owed and the project manager, labels proposals and change orders, shows the latest invoice comments, and has Open in JobTread and Add comment. Checks people say are in the mail get follow-ups, and overdue invoices from QuickBooks show too.","Admin day adds low-margin jobs, the last invoice sent per job, work orders committed vs paid per vendor, jobs paid in full this week, notes, change orders apart from proposals, and open jobs you can add to the weekly closeout.","\"Move to\" job menus name each job by street and job number first, then the customer.","Team add-on modules, switched on in your company's team settings: a shared lead tracker with Tuesday and Friday follow-ups and Create job in JobTread; a weekly closeout list that goes to accounting and back; and quarterly Rocks kept apart from regular to-dos, with suggested Rocks per project manager.","No new permissions: installs on its own."]},{"version":"2026-11-17d","highlights":["Automatic updates can refresh your scheduled tasks again: a privacy check in Claude was blocking that step because the tasks' instructions contained your email address.","Your scheduled tasks now read your email address from your page's saved settings when they run, so it is never written into their instructions.","Notes to yourself are found with Gmail's own from:me to:me, and calendar steps use your primary calendar.","No new permissions: installs on its own."]},{"version":"2026-11-17c","highlights":["Feedback works again: your updates now copy your company's feedback sheet from the team settings into your own settings, so the Feedback board opens instead of saying it isn't set up.","The daily status line for the beta status sheet is back for everyone who shares it.","Only settings you don't have yet are copied, and only from your company's own team settings file. Nothing you already set is changed.","If Feedback still isn't set up, the page now says what to do: ask your Workspace owner to add the feedback sheet to the team settings, then say \"Update my Design Pro Workspace\".","No new permissions: installs on its own."]},{"version":"2026-11-17b","highlights":["Reply all now goes to exactly the people the Confirm names, and never to anyone you removed. Replies never go back to yourself, and Send all never sends an email twice.","Your page's private parts (texts, Ask history, notes, settings and status) can now be read and changed only by you, even if you share the page. Job Lists stay shared with anyone you share the page with. Your page asks for your OK once to switch this on.","Much faster on busy days: Today opens about 30 times faster with a lot of items, and the page starts in about 2 seconds on a phone instead of 40.","The team roll-up updates once a day after work, and shares only with owners and operations people at your company whom the owner chose, at most 3 new people a day, each listed on System status.","Automatic updates install only files that match the release exactly, and wait for your OK when something needs it.","Texts: if your Mac has the Claude Texts Export helper, your page now simply passes along what it saves, with no extra Mac settings; if the helper stops, System status says to keep your Mac on and awake with Claude open. Without the helper, Claude opens the Full Disk Access setting for you (switch on both \"Claude\" and lowercase \"claude\") and says plainly when the Messages folder is disconnected. Texts are checked about 40% less often.","Change your role in one tap from the More menu. Tap a Permits, Office to-do or Utilities row to open its job; office to-dos get a \"+1 week\" button.","Lists and Jobs: check-offs made while Claude sorts are kept, every sheet works with the keyboard and Escape, search matches every word, and long punch-list PDFs continue on the next page."]},{"version":"2026-11-17a","highlights":["If your texts stop because the Messages folder on your Mac isn't connected to the texts task, System status now tells you to say \"Move texts to this Mac\" from a new task on your Mac, instead of only pointing to Full Disk Access.","Other texts problems, such as Full Disk Access being off or your Mac being asleep, keep their usual fix.","No new permissions: installs on its own."]},{"version":"2026-11-15b","highlights":["Every open item has a Note button: write what happened, for example \"Talked to Sonia on site, she is mailing a check\", without closing the item. The note shows on the item, on Today and on the job.","After you save a note, Claude suggests what should follow, already filled in: a selection for the job's Selections tab, a Punch list, To order, To do or Waiting on item, or a JobTread to-do such as writing a change order. Edit it, tap Add, or tap Not needed.","You can also add any of those yourself from the note. Nothing is added until you tap, and a JobTread to-do asks you to confirm first.","Your scheduled updates read notes on open items too, so they won't draft a reply that the note already handled.","No new permissions: installs on its own."]},{"version":"2026-11-15a","highlights":["When you check off an item, tap Add note to say why it is done, for example \"Met Chris on site, a 25 in. base with drawers fits; no email needed.\"","Each job has a new Completed tab under To do: everything you or your scheduled updates checked off, newest first, with its note. Edit a note or reopen an item from there.","Post to JobTread puts a note on the job as a team-only comment, after you confirm, so the rest of the team can see it too.","Your scheduled updates read your notes: an item you closed with a note does not come back as a follow-up.","No new permissions: installs on its own."]}];
 const updTask=()=>(DPC.tasks&&DPC.tasks.updater)||(window.__DP_DEMO?"demo-updater":"");
 const UPD={open:false,confirm:false,busy:false,msg:""};
 const updTxt=(v,n)=>String(v==null?"":v).replace(/[\u0000-\u001f<>]/g," ").trim().slice(0,n||200);
@@ -4339,7 +4413,9 @@ function updNotes(h){const raw=h&&h.latest&&Array.isArray(h.latest.notes)?h.late
 function updState(){const h=state.health;if(!h||typeof h!=="object")return null;
   const kit=updTxt(h.kit,20),cur=updTxt(DPC.kitVersion||h.page,20);if(!kit||!cur||!(kit>cur))return null;
   const hold=updTxt(h.holdVersion||DPC.holdVersion||"",20);if(hold&&kit<=hold)return null;
-  return {kit,cur,needsOk:h.needsOk===true,notes:updNotes(h),beta:(h.channel||DPC.channel)==="beta"}}
+  /* tasks still on the old full instructions: the page installs on its own, the tasks wait for one Update the person starts */
+  const convert=Array.isArray(h.problems)&&h.problems.some(p=>p&&p.key==="tasks-convert");
+  return {kit,cur,needsOk:h.needsOk===true,notes:updNotes(h),beta:(h.channel||DPC.channel)==="beta",convert}}
 const updOff=v=>{try{return localStorage.getItem("dp_upd_off")===v}catch(e){return false}};
 function updHtml(){const u=updState();if(!u||updOff(u.kit))return "";
   const say="Update my Design Pro Workspace";const updater=updTask();
@@ -4357,6 +4433,7 @@ function updHtml(){const u=updState();if(!u||updOff(u.kit))return "";
   return `<section class="updbar" aria-label="New version" data-updbar="${esc(u.kit)}">${ic("megaphone")}<div class="updm">
     <p><b>Version ${esc(u.kit)}${u.beta?" (beta)":""} is ready.</b> You're on ${esc(u.cur)}, which keeps working fine. Update to get the newest features.</p>
     ${UPD.msg?`<p class="updmsg" role="status">${esc(UPD.msg)}</p>`:""}
+    ${u.convert?`<p data-updconvert>Your scheduled tasks also need a one-time switch so later updates install on their own. To do it, start a new task in the Claude desktop app and say: ${esc(say)}</p>`:""}
     <div class="updb"><button type="button" class="act" data-upd="new" aria-expanded="${UPD.open}" aria-controls="updnotes">What's new</button>${!UPD.confirm&&(!UPD.msg||UPD.failed)?`<button type="button" class="act primary" data-upd="now">Update now</button>`:""}<button type="button" class="act ghost" data-upd="off">Dismiss</button></div>
     <div id="updnotes" class="updnotes"${UPD.open?"":" hidden"}>${notes}</div>${UPD.confirm||UPD.wantHow?how:""}</div></section>`}
 function updPaint(){const el=document.getElementById("dpupd");if(!el)return;const h=updHtml();if(el.__h===h)return;
@@ -4383,7 +4460,7 @@ window.__dpChangesHtml=function(){const c=Array.isArray(window.DP_CHANGES)?windo
 /* Things you can say to Claude (Help page), with the full Workspace guide (the Kit page) one tap away */
 window.DP_GUIDE_URL=window.DP_GUIDE_URL||"https://claude.ai/artifact/KP7mn3ziHWnJVmpazJGF1e";
 const DP_SAYS=[["Check my Design Pro Workspace","Looks everything over and fixes what it can: your page, scheduled updates and connections."],
-  ["Update my Design Pro Workspace","Installs the newest version now. Needed only when the banner says an update needs your OK."],
+  ["Update my Design Pro Workspace","Installs the newest version now. Needed only when the banner says an update needs your OK, or once when System status asks for a one-time switch."],
   ["Add texts to my Design Pro Workspace","Adds your text messages. Needs an iPhone and a Mac."],
   ["Turn automatic updates off","Stops new versions installing overnight (say \"on\" to turn them back on). The banner still tells you when one is out."],
   ["Turn the hourly check off","Stops the quick hourly check during work hours (say \"on\" to turn it back on)."],
@@ -4434,7 +4511,7 @@ document.addEventListener("click",e=>{
   const hb=e.target.closest("[data-hist]");if(hb){loadHist(hb.dataset.hist);return}
   const ha=e.target.closest("[data-histam]");if(ha){state.histAm=ha.dataset.histam==="1";render();return}
   const un=e.target.closest("[data-unsnooze]");if(un){clearLater(un.dataset.unsnooze);return}
-  const sb=e.target.closest("[data-stale]");if(sb){const row=sb.closest("[data-doc]");if(row)staleAct(row.dataset.doc,sb.dataset.stale);return}
+  const sb=e.target.closest("[data-stale]");if(sb){const row=sb.closest("[data-doc]");if(row)staleAct(row.dataset.doc,sb.dataset.stale,sb);return}
   const pb=e.target.closest("[data-pm]");if(pb){state.pm=pb.dataset.pm;render();return}
   const pk=e.target.closest("[data-a=as-pick]");if(pk){const li=pk.closest("li.item");if(li)assignTo(li.dataset.item,pk.dataset.uid);return}
   const b=e.target.closest("button.act");if(!b)return;
@@ -4507,7 +4584,7 @@ function syncColl(obj,prev,q,put,keep,gone){const now=new Set();q.docs.forEach(d
   let noteIds=new Set(),actIds=new Set();
   const typing=id=>{const el=document.activeElement;return !!(el&&el.dataset&&safeId(el.dataset.note||"")===id)};
   db.collection("notes").onSnapshot(q=>{noteIds=syncColl(state.notes,noteIds,q,d=>{if(!typing(d.id))state.notes[d.id]=d.data()},typing);drawSoon()},()=>{});
-  db.collection("actions").onSnapshot(q=>{actIds=syncColl(state.actions,actIds,q,d=>{const v=d.data();state.actions[d.id]=v;if(d.id.startsWith("stale-")&&!(state.stale[d.id.slice(6)]||{}).busy)state.stale[d.id.slice(6)]={status:v.status,at:v.at}},null,
+  db.collection("actions").onSnapshot(q=>{actIds=syncColl(state.actions,actIds,q,d=>{const v=d.data();state.actions[d.id]=v;if(d.id.startsWith("stale-")&&!(state.stale[d.id.slice(6)]||{}).busy)state.stale[d.id.slice(6)]={status:v.status,at:v.at,jobId:v.jobId||"",from:v.prevStage||"",to:v.stageTo||"",msg:(state.stale[d.id.slice(6)]||{}).msg||""}},null,
     id=>{const k=id.slice(6);if(id.startsWith("stale-")&&!(state.stale[k]||{}).busy)delete state.stale[k]});drawSoon()},()=>{});
   db.collection("noticeoff").onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=1);state.noticeOff=o;drawSoon()},()=>{});
   db.collection("later").onSnapshot(q=>{state.later={};q.docs.forEach(d=>state.later[d.id]=d.data());drawSoon()},()=>{});
@@ -5147,7 +5224,9 @@ function kwTrade(t){t=String(t||"").toLowerCase();
   for(const [k,re] of R)if(re.test(t))return k;return"general"}
 const slugT=s=>"x-"+String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24);
 const tradeLabel=(k,i)=>TRADES[k]||(i&&i.tradeLabel)||(S.tlabels[k])||String(k).replace(/^x-/,"").replace(/-/g," ").replace(/^./,c=>c.toUpperCase());
-const OFFICE=()=>(window.DP_OFFICE||(window.DP_CONFIG&&window.DP_CONFIG.office)||[]).filter(x=>x&&x[1]);
+/* the office team: the page's config first, then the team saved for Office to-dos (settings/office, chosen in Setup) */
+const OFFICE=()=>{const c=(window.DP_OFFICE||(window.DP_CONFIG&&window.DP_CONFIG.office)||[]).filter(x=>x&&x[1]);if(c.length)return c;
+  const sv=window.__dpOffice&&window.__dpOffice.get&&window.__dpOffice.get();return sv&&Array.isArray(sv.members)?sv.members.map(m=>[String((m&&m.name)||"").trim()||"Office",String((m&&m.membershipId)||m||"")]).filter(x=>x[1]):[]};
 const officeNames=()=>{const o=OFFICE().map(x=>x[0]);return o.length>1?o.slice(0,-1).join(", ")+" and "+o[o.length-1]:o.join("")};
 const tradeOf=i=>(i.trade&&(TRADES[i.trade]||/^x-/.test(i.trade)))?i.trade:kwTrade(i.text);
 /* Sort by trade (Smart tagging): an explicit per-job choice wins; otherwise it turns itself on once a punch list is long enough to split between subs */
@@ -5256,7 +5335,7 @@ function item(i,hideSent){const meta=SRC[i.src]&&i.src!=="you"?[`<span class="sr
    <input type="date" data-e="due" value="${esc(i.due||"")}" aria-label="Due date"><input type="text" data-e="room" value="${esc(i.room||"")}" placeholder="Room or area" aria-label="Room or area"><input type="text" data-e="who" value="${esc(i.who||"")}" placeholder="Who (sub, client)" aria-label="Who">
    <button class="btn" data-e="save">Save</button>${px("editBtns",i)}${!i.office&&!i.done&&!(jobOf(i.job)||{}).own?`<button class="btn office" data-e="office">Assign to office</button>`:""}<button class="btn ghost" data-e="del">Delete</button></div>`:""}
   ${open&&S.confirmOffice===i.id?`<div class="confirm">${OFFICE().length?`<span>Create a JobTread to-do on this job for <b>${esc(officeNames())}</b>?${i.due?" Due "+fmt(i.due)+".":""} They'll get JobTread's usual notification.</span>
-   <div class="row"><button class="btn pri" data-e="officeGo" ${S.busyOffice?"disabled":""}>${S.busyOffice?"Creating…":"Create to-do"}</button><button class="btn ghost" data-e="officeNo">Cancel</button></div>`:`<span>No office team is set up yet. Ask Claude: "Set my office team for Job Lists."</span><div class="row"><button class="btn ghost" data-e="officeNo">OK</button></div>`}</div>`:""}</li>`}
+   <div class="row"><button class="btn pri" data-e="officeGo" ${S.busyOffice?"disabled":""}>${S.busyOffice?"Creating…":"Create to-do"}</button><button class="btn ghost" data-e="officeNo">Cancel</button></div>`:`<span>No office team is chosen yet, so there is no one to give this to. Choose one in Setup (the Office team step), then try again. If you don't see Setup, ask the person who owns this Workspace to do it.</span><div class="row"><button class="btn ghost" data-e="officeNo">OK</button></div>`}</div>`:""}</li>`}
 const CHIP={punch:"Punch",order:"To order",todo:"To do",wait:"Waiting on"};
 const CHEV=`<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
 const tgId=t=>"tg-"+String(t).replace(/[^a-z0-9-]/gi,"_");
@@ -5416,7 +5495,7 @@ R.addEventListener("click",async e=>{
     const ed=e.target.dataset.e;
     if(ed==="save"){const tsel=li.querySelector('[data-e="trade"]');const f=Object.assign(tsel?Object.assign({trade:tsel.value,tradeBy:"you"},TRADES[tsel.value]?{}:{tradeLabel:tradeLabel(tsel.value)}):{},{list:li.querySelector('[data-e="list"]').value,due:li.querySelector('[data-e="due"]').value||null,who:li.querySelector('[data-e="who"]').value.trim()||null,room:((li.querySelector('[data-e="room"]')||{}).value||"").trim().slice(0,40)||null});S.open=null;R.activeElement&&R.activeElement.blur();if(await upd(it.id,f))toast("Saved")}
     if(ed==="del"){S.open=null;await removeItem(it)}
-    if(ed==="office"){S.confirmOffice=it.id;render(true)}
+    if(ed==="office"){S.confirmOffice=it.id;render(true);const OF=window.__dpOffice;if(OF&&OF.get()===undefined&&OF.load)OF.load().then(()=>render(true),()=>{})}
     if(ed==="officeNo"){S.confirmOffice=null;render(true)}
     if(ed==="officeGo")await assignOffice(it)
     return}
@@ -6655,6 +6734,8 @@ const asOfOf=j=>(j.costing||{}).asOf||j.billsAsOf||j.syncedAt||"";
 /* "My jobs": the job record's PM (or PMs) matches this person's name from their settings */
 const meName=()=>String((window.DP_CONFIG||{}).name||"").trim().toLowerCase();
 function pmsOf(j){return [].concat(j.pm||[],j.pms||[]).map(x=>String(x||"").trim()).filter(Boolean)}
+/* "PM <name>" from the same PM value the Mine / All filter uses; nothing when a job has none */
+function pmTag(j){const p=pmsOf(j);return p.length?`<div class="small pmtag">PM ${esc(p.join(", "))}</div>`:""}
 function isMine(j){const me=meName();if(!me||me.indexOf("{{")===0)return false;return pmsOf(j).some(p=>{p=p.toLowerCase();return p===me||p.split(/\s*[,&]\s*/).includes(me)})}
 /* ---------- job stage, live from JobTread: what the Jobs list shows by default ----------
    Default = ACTIVE jobs only (open jobs at one of the team's active job-flow stages: approved, in progress,
@@ -6762,7 +6843,7 @@ function viewJobs(inv){
   <div class="jobs">${list.map(j=>{const c=costOf(j);const bpct=c.b?Math.min(100,c.a/c.b*100):0;const ib=inboxOf(j).length;
     const sel=rows(j,"selections"),ap=sel.filter(s=>["approved","ordered","installed"].includes(s.status)).length;
     const docs=rows(j,"documents").length,ords=rows(j,"orders").length;const ao=asOfOf(j);
-    return `<article class="jcard"><h2><a class="jlink" href="${esc(hubHref(j))}" data-raw>${esc(j.customer)}</a></h2><span class="addr">${esc(j.address)}</span>
+    return `<article class="jcard"><h2><a class="jlink" href="${esc(hubHref(j))}" data-raw>${esc(j.customer)}</a></h2><span class="addr">${esc(j.address)}</span>${pmTag(j)}
     <div class="foot">${(j.jobs||[]).map(x=>`<span class="jobno">#${esc(x.number)}</span>`).join("")}${(()=>{const sp=inv?"":stagePill(j);return sp||(j.phase?`<span class="pill acc">${esc(j.phase)}</span>`:"")})()}${j.designer?`<span class="pill">${esc(j.designer)}</span>`:""}${ib?`<span class="pill crit">${ib} to sort</span>`:""}${(()=>{const o=window.DPX&&window.DPX.openFor(j.slug);const n=o?o.items.length:0;const ln=((window.__listItems&&window.__listItems())||[]).filter(x=>x.job===j.slug&&!x.done).length;return (n?`<span class="pill acc">${plural(n,"open item")}</span>`:"")+(ln?`<span class="pill">${ln} on lists</span>`:"")})()}</div>
     <div class="small">${sel.length?`${ap}/${sel.length} selections approved`:"No selections yet"} · ${plural(docs,"doc")} · ${plural(ords,"order")}</div>
     ${c.b?`<div class="bar${c.a>c.b?" over":""}"><i style="width:${bpct.toFixed(1)}%"></i></div><div class="mrow"><span class="small">${money(c.a)} spent of ${money(c.b)} budget</span>${c.p?mBadge(mOf(j)):""}</div>${c.p?`<div class="small">Approved price ${money(c.p)} incl. change orders</div>`:""}<div class="src">JobTread job costing${ao?" · "+esc(nice(ao)):""}</div>`:`<div class="small">${j.syncedAt?"No approved budget yet":"Waiting for first sync"}</div>`}</article>`}).join("")||`<div class="empty">${q?"No job matches that search.":stgOn&&pool0.some(j=>(scope!=="mine"||isMine(j))&&!stageShown(j))&&!pool.length?`No jobs at the checked stages. <button type="button" class="act" data-stgall="1">Show every stage</button>`:scope==="mine"&&S.filter==="all"&&!S.need?`None of the jobs list you as PM. <button type="button" class="act" data-scope="all">Show all jobs</button>`:"No projects match."}</div>`}</div>
@@ -7263,7 +7344,7 @@ function viewCosting(){
   const texp=priced.reduce((s,j)=>s+Math.max(costOf(j).b,costOf(j).a),0);const blended=tp?(tp-texp)/tp*100:null;const under=priced.filter(j=>mOf(j).fc<GOOD).length;
   return head("Job costing","Approved price (proposals plus change orders), expected budget and current spend for every project, with the profit margin each one is on track for. Target 35%, 30% still good.")+
   (priced.length?`<section class="kpis"><div class="kpi"><b>${money(tp)}</b><span>Approved price, ${priced.length} client jobs</span></div><div class="kpi"><b>${money(tbud)}</b><span>Expected budget</span></div><div class="kpi"><b>${money(tsp)}</b><span>Spent so far</span></div><div class="kpi ${blended>=TARGET?"ok":blended<GOOD?"crit":""}"><b>${pct(blended)}</b><span>Blended margin</span></div><div class="kpi${under?" crit":""}"><b>${under}</b><span>Jobs below 30%</span></div></section>`:"")+
-  (js.length?`<div class="box tscroll"><table><thead><tr><th>Project</th><th class="num">Approved price</th><th class="num">Expected budget</th><th class="num">Current spend</th><th class="num">Spent</th><th class="num">Budget left</th><th>Margin</th></tr></thead><tbody>${js.sort((a,b)=>{const x=mOf(a),y=mOf(b);return (x.na-y.na)||((x.fc??0)-(y.fc??0))||(costOf(b).b-costOf(a).b)}).map(j=>{const c=costOf(j);const m=mOf(j);return `<tr><td><a href="${esc(hubHref(j,"costing"))}" data-raw>${esc(j.customer)}</a><div class="small">${esc(j.address)}</div></td><td class="num">${c.p?money(c.p):"—"}</td><td class="num">${money(c.b)}</td><td class="num" style="color:${c.b&&c.a>c.b?"var(--crit)":"inherit"}">${money(c.a)}</td><td class="num">${c.b?Math.round(c.a/c.b*100)+"%":"—"}</td><td class="num" style="color:${c.b&&c.a>c.b?"var(--crit)":"inherit"}">${c.b?money(c.b-c.a):"—"}</td><td>${mBadge(m,true)}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty">Costs fill in after the first sync.</div>`)+
+  (js.length?`<div class="box tscroll"><table><thead><tr><th>Project</th><th class="num">Approved price</th><th class="num">Expected budget</th><th class="num">Current spend</th><th class="num">Spent</th><th class="num">Budget left</th><th>Margin</th></tr></thead><tbody>${js.sort((a,b)=>{const x=mOf(a),y=mOf(b);return (x.na-y.na)||((x.fc??0)-(y.fc??0))||(costOf(b).b-costOf(a).b)}).map(j=>{const c=costOf(j);const m=mOf(j);return `<tr><td><a href="${esc(hubHref(j,"costing"))}" data-raw>${esc(j.customer)}</a><div class="small">${esc(j.address)}</div>${pmTag(j)}</td><td class="num">${c.p?money(c.p):"—"}</td><td class="num">${money(c.b)}</td><td class="num" style="color:${c.b&&c.a>c.b?"var(--crit)":"inherit"}">${money(c.a)}</td><td class="num">${c.b?Math.round(c.a/c.b*100)+"%":"—"}</td><td class="num" style="color:${c.b&&c.a>c.b?"var(--crit)":"inherit"}">${c.b?money(c.b-c.a):"—"}</td><td>${mBadge(m,true)}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty">Costs fill in after the first sync.</div>`)+
   (catRows.length?`<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">Where we run over or under, by category</b><span class="small">Across projects with both budget and actuals</span></div><div class="tscroll"><table><thead><tr><th>Category</th><th class="num">Jobs</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Variance</th></tr></thead><tbody>${catRows.map(([k,v])=>{const d=v.a-v.b;return `<tr><td>${esc(k)}</td><td class="num">${v.n}</td><td class="num">${money(v.b)}</td><td class="num">${money(v.a)}</td><td class="num" style="color:${d>0?"var(--crit)":"var(--ok)"}">${d>0?"+":""}${money(d)} (${Math.round(d/v.b*100)}%)</td></tr>`}).join("")}</tbody></table></div></section>`:"");
 }
 function viewHow(){return head("How the hub works","")+`<section class="panel"><p style="margin:0">A Claude sync reads <b>Gmail, JobTread, Granola meetings and your Mac's texts</b> for each of your active jobs, going back through the whole history of the job, and files what it finds:</p>
@@ -8390,6 +8471,11 @@ details.tm-clr ul{margin:0 0 12px;padding-left:18px;color:var(--muted);font-size
 /* the owner's reader list (21-team.js readersBox) */
 .tm-rlist{list-style:none;margin:0;padding:0;flex:1 1 100%;display:flex;flex-direction:column;gap:6px}
 .tm-rlist li{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}.tm-rlist li>span{flex:1 1 200px;min-width:0;overflow-wrap:anywhere}.tm-rlist small{color:var(--muted)}
+.tm-coadd{display:block}.tm-coadd .tm-radd{display:block;font-weight:600;margin-bottom:6px}
+.tm-q{width:100%;min-height:44px;box-sizing:border-box;border:1px solid var(--field-border);border-radius:10px;padding:0 12px;font:inherit}
+.tm-res{display:flex;flex-direction:column;gap:6px;margin:8px 0;max-height:260px;overflow:auto}
+.tm-res .tm-pick{text-align:left;justify-content:flex-start;min-height:44px;white-space:normal}.tm-res .tm-pick.on{border-color:var(--navy);background:var(--tint)}
+.tm-coadd .opsmeta{margin:6px 0}.tm-coadd .opsb[disabled]{opacity:.5}
 .tm-radd{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}.tm-radd select{min-height:44px;max-width:100%}
 /* Admin day's live JobTread sections, the Weekly closeout list and Rocks (21-team.js) */
 .tm-acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
@@ -8418,6 +8504,8 @@ span.co-chk{cursor:default}span.co-chk:has(.bx:not(:empty)){background:var(--ok-
 .tm-sug h3{margin:8px 0 0;font:700 var(--fs-subhead) var(--display)}
 .opsrocks{margin-top:20px;display:grid;gap:10px}
 .opsrocks h2{display:flex;gap:8px;align-items:baseline;margin:0}
+
+.tm-tdtog{margin:0 0 8px}.tm-nonelist{list-style:none;padding:0!important;margin:0 0 12px}.tm-nonelist li{padding:8px 0;border-top:1px solid var(--navy-muted)}.tm-nonelist li span{color:var(--muted)}
 </style>
 <script>
 /* ---------- Team views: Admin day and Team activity (owners, operations, and PMs who also handle operations) ----------
@@ -8557,6 +8645,15 @@ async function loadTodos(){
   out.capped=nodes.capped;return out}
 function needTodos(force){return CORE.load(KTODO,loadTodos,Object.assign({ttl:TTL,force:!!force},JT))}
 
+/* ---- every open to-do on one project manager's open jobs ("All open" on Admin day), 25 at a time ---- */
+const KTALL="team:todosall:";
+async function loadTodosAll(pm){const L=liveOf(pm)||await loadLive(pm);const jobs=L.jobs||[];
+  if(CORE.demo){await wait(100);const ids=new Set(jobs.map(j=>j.id));return (DEMO.openTodos?DEMO.openTodos(CORE.day):[]).filter(t=>t.job&&ids.has(t.job.id)).map(t=>Object.assign({people:[]},t))}
+  const jq=P().jq;const out=await CORE.jtChunks(jobs.map(j=>j.id),async ch=>(await CORE.jtPages(async page=>(await jq({organization:{$:{id:window.__dpORG},tasks:{$:{size:CORE.JT_PAGE,...(page?{page}:{}),where:{and:[["isToDo",true],["completed",0],[["job","id"],"in",ch]]}},nextPage:{},
+    nodes:{id:{},name:{},endDate:{},job:{id:{},number:{}}}}}})).organization.tasks,{max:8})));
+  return out.map(t=>({id:t.id,name:t.name,due:t.endDate||"",job:t.job?{id:t.job.id,number:t.job.number}:null,people:[]}))}
+function needTodosAll(pm,force){if(!pm)return;return CORE.load(KTALL+pm,()=>loadTodosAll(pm),Object.assign({ttl:TTL,force:!!force},JT))}
+
 /* ---- admin days (from the calendar, written by the morning update) and "last reviewed" snapshots ---- */
 async function loadMeta(){
   if(CORE.demo){await wait(60);return{days:[{pm:"Jordan Lee",date:CORE.day(1),time:"10:00 AM",title:"Admin day: Jordan"},{pm:"Sam Patel",date:CORE.day(3),time:"2:00 PM",title:"Admin day: Sam"}],snaps:T.snaps||demoSnaps()}}
@@ -8594,6 +8691,10 @@ function gather(pm){const pl=pipe(),ro=roll(),td=CORE.get(KTODO).data||[];
 const kpi=(v,l,c)=>`<div class="kpi${c?" "+c:""}"><b>${v}</b><span>${esc(l)}</span></div>`;
 const chips=(names,cur,attr,all)=>`<div class="chips tm-chips" role="group" aria-label="Project manager">${(all?[["All","Everyone"]]:[]).concat(names.map(n=>[n,n])).map(([v,l])=>`<button type="button" data-${attr}="${esc(v)}" aria-pressed="${cur===v}">${esc(l)}</button>`).join("")}</div>`;
 const sec=(title,n,body,empty)=>`<section class="tm-sec"><h2>${esc(title)}${n?`<span class="cnt">${n}</span>`:""}</h2>${n?`<div class="tm-list">${body}</div>`:`<div class="empty">${esc(empty)}</div>`}</section>`;
+/* Admin day only: a section with nothing in it takes no room; it is gathered into one compact "Nothing to review" group at the bottom */
+let EQ=[];
+const asec=(title,n,body,empty)=>{if(!n&&!/^Loading/.test(String(empty||""))){EQ.push([title,empty]);return ""}return sec(title,n,body,empty)};
+const noneGroup=()=>EQ.length?`<details class="tm-clr tm-none" data-tmnone${T.noneOpen?" open":""}><summary>Nothing to review (${EQ.length})</summary><ul class="tm-nonelist">${EQ.map(([t,e])=>`<li><b>${esc(t)}</b><span> ${esc(e||"")}</span></li>`).join("")}</ul></details>`:"";
 const jobBit=x=>[x.customer,x.address,x.job?"Job "+x.job:""].filter(Boolean).map(esc).join(" · ");
 const cap=v=>{v=String(v||"");return v?v.charAt(0).toUpperCase()+v.slice(1):v};
 const srcWord=s=>({email:"Email",text:"Text",call:"Call",meeting:"Meeting",jobtread:"JobTread"}[String(s||"").toLowerCase()]||"");
@@ -8611,7 +8712,21 @@ const offNote=()=>{const ro=CORE.get(KEY);const d=ro.data;
   return ""};
 
 /* ---------- Admin day ---------- */
-function vAdmin(){needRoll();needTodos();needMeta();needCleared();
+/* the to-dos section is never collapsed away: it carries the Overdue / All open switch */
+/* Overdue and All open come from two reads (assigned to the PM, company-wide; and on the PM's jobs). Both views use the union, so Overdue is always exactly the overdue part of All open */
+function todoLists(pm,g){needTodosAll(pm);const d=CORE.get(KTALL+pm).data;const seen=new Set(),all=[];const ok=t=>!(window.DPRocks&&DPRocks.is(t.name));
+  g.todos.map(t=>t.x).concat(d||[]).forEach(x=>{if(!x||seen.has(x.id)||!ok(x))return;seen.add(x.id);all.push({k:"todo:"+x.id,x})});
+  const by=(a,b)=>String(a.x.due||"9").localeCompare(String(b.x.due||"9"));all.sort(by);
+  return{all,od:all.filter(({x})=>x.due&&x.due<today())}}
+function todosSec(pm,g,snap){const all=!!T.tdAll;let list,empty,title;const TL=todoLists(pm,g);
+  if(all){const c=CORE.get(KTALL+pm);const d=c.data;title="All open JobTread to-dos";list=TL.all;
+    empty=d===undefined?(c.status==="error"?"Couldn't load the to-dos from JobTread.":"Loading to-dos from JobTread…"):"No open to-dos on "+first(pm)+"'s jobs."}
+  else{title="Overdue JobTread to-dos";list=TL.od;empty=CORE.get(KTODO).data===undefined?"Loading to-dos from JobTread…":"No overdue to-dos."}
+  const row=({k,x})=>{const late=x.due&&x.due<today();return `<div class="tm-row"><div class="m"><b class="t">${esc(x.name)}</b>${sinceTag(k,snap)}<div class="s">${x.job?"Job "+esc(x.job.number):"No job"}</div></div><div class="r${late?" crit":""}">${x.due?"Due "+esc(fmtD(x.due)):"No due date"}${late?`<small>${ageDays(x.due)} ${plural(ageDays(x.due),"day")} late</small>`:""}</div></div>`};
+  const tg=`<div class="chips tm-chips tm-tdtog" role="group" aria-label="Which to-dos to show"><button type="button" data-tmtd="od" aria-pressed="${!all}">Overdue</button><button type="button" data-tmtd="all" aria-pressed="${all}">All open</button></div>`;
+  const body=list.length?`<div class="tm-list">${list.map(row).join("")}</div>`:`<div class="empty">${esc(empty)}</div>`;
+  return `<section class="tm-sec"><h2>${esc(title)}${list.length?`<span class="cnt">${list.length}</span>`:""}</h2>${tg}${body}${all&&CORE.get(KTALL+pm).status==="error"?CORE.errorBox(CORE.get(KTALL+pm).err,KTALL+pm,JT):""}</section>`}
+function vAdmin(){EQ=[];needRoll();needTodos();needMeta();needCleared();
   const names=pmNames();const m=meta();
   if(!T.apm||!names.includes(T.apm)){const up=m.days.filter(d=>d.date>=today()&&names.includes(d.pm)).sort((a,b)=>a.date.localeCompare(b.date))[0];T.apm=up?up.pm:(names[0]||"")}
   const head=window.DPPageHead("Admin day","Everything to go over with a project manager, in one place: overdue invoices and how they've been followed up, proposals and change orders waiting, margins, invoicing, work orders and what's been paid, jobs paid in full, who is waiting on an answer, selections, orders and overdue to-dos."+(P().updLine?P().updLine(KEY).replace(/JobTread/g,"JobTread and the team roll-up"):""));
@@ -8622,22 +8737,24 @@ function vAdmin(){needRoll();needTodos();needMeta();needCleared();
   const cleared=snap?Object.entries(snap.keys||{}).filter(([k])=>avail(k)&&!g.all.some(x=>x.k===k)).map(([,l])=>l):[];
   const nNew=snap?g.all.filter(x=>!(snap.keys||{})[x.k]).length:0,nStill=snap?g.all.length-nNew:0;
   const invV=g.inv.reduce((s,i)=>s+owed(i.x),0),propV=g.props.reduce((s,i)=>s+(+i.x.amount||0),0);
+  const TLK=todoLists(pm,g);
   const bar=`<div class="tm-bar"><p><b>${esc(pm)}</b><small>${day?`Next admin day: ${esc(fmtDow(day.date))}${day.time?", "+esc(day.time):""} (from your calendar). `:""}${snap?`Last reviewed ${esc(fmtD(snap.date))}: ${nNew} new, ${nStill} still open, ${cleared.length} cleared since then.`:"Not reviewed here yet. Tap Mark reviewed after you meet, and next time this page shows what's new, what's still open and what got done."}</small></p>
     <button type="button" class="opsb pri" data-tmmark="${esc(pm)}">Mark reviewed today</button></div>`;
   const body=`${chips(names,pm,"tmapm")}${bar}${offNote()}
-  ${!g.sharing&&!(roll().off)&&CORE.get(KEY).data!==undefined?`<div class="tm-note" role="status">${esc(first(pm))}'s Workspace isn't sharing to the team roll-up yet, so open asks, selections, orders, job costing and follow-up notes aren't shown. Money and to-dos below are live from JobTread.</div>`:""}
-  <section class="kpis">${kpi(g.inv.length?money(invV):"None","Overdue invoices",g.inv.length?"crit":"")}${kpi(g.props.length?money(propV):"None","Proposals waiting")}${kpi(g.sharing?g.asks.length:"—","Open asks",g.asks.some(a=>ageDays(a.x.date)>=3)?"crit":"")}${kpi(g.todos.length,"Overdue to-dos",g.todos.length?"crit":"")}</section>
-  ${sec("Overdue invoices",g.inv.length,g.inv.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b>${sinceTag(k,snap)}<div class="s">${[x.address,"Invoice "+x.number,x.dueDate?"due "+x.dueDate:"",x.amount!=null&&x.amount!==""&&owed(x)!==num(x.amount)?"invoice total "+money(num(x.amount)):""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${money(owed(x))}<small>${x.daysOverdue||0} ${plural(x.daysOverdue||0,"day")} overdue</small></div>${fuLine(fu,g.sharing)}</div>`).join(""),"No overdue invoices.")}
+  ${!g.sharing&&!(roll().off)&&CORE.get(KEY).data!==undefined?`<div class="tm-note" role="status">${esc(first(pm))}'s Workspace isn't sharing to the team roll-up yet, so open asks, selections, orders, job costing, what's on site and follow-up notes aren't shown. Money and to-dos below are live from JobTread.</div>`:""}
+  <section class="kpis">${kpi(g.inv.length?money(invV):"None","Overdue invoices",g.inv.length?"crit":"")}${kpi(g.props.length?money(propV):"None","Proposals waiting")}${kpi(g.sharing?g.asks.length:"—","Open asks",g.asks.some(a=>ageDays(a.x.date)>=3)?"crit":"")}${kpi(TLK.od.length,"Overdue to-dos",TLK.od.length?"crit":"")}</section>
+  ${asec("Overdue invoices",g.inv.length,g.inv.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b>${sinceTag(k,snap)}<div class="s">${[x.address,"Invoice "+x.number,x.dueDate?"due "+x.dueDate:"",x.amount!=null&&x.amount!==""&&owed(x)!==num(x.amount)?"invoice total "+money(num(x.amount)):""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${money(owed(x))}<small>${x.daysOverdue||0} ${plural(x.daysOverdue||0,"day")} overdue</small></div>${fuLine(fu,g.sharing)}</div>`).join(""),"No overdue invoices.")}
   ${adminNotes(pm)}
-  ${sec("Proposals waiting on the client",g.props.length,g.props.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b><span class="tm-tag kind">${esc(propKind(x,pm))}</span>${sinceTag(k,snap)}<div class="s">${[x.address,x.number,x.sentDate?"sent "+x.sentDate:""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r${(x.days||0)>=30?" crit":""}">${money(x.amount)}<small>${x.days||0} ${plural(x.days||0,"day")} waiting</small></div>${fu.length?fuLine(fu,true):""}</div>`).join(""),"No proposals waiting.")}
+  ${asec("Proposals waiting on the client",g.props.length,g.props.map(({k,x,fu})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"")}</b><span class="tm-tag kind">${esc(propKind(x,pm))}</span>${sinceTag(k,snap)}<div class="s">${[x.address,x.number,x.sentDate?"sent "+x.sentDate:""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r${(x.days||0)>=30?" crit":""}">${money(x.amount)}<small>${x.days||0} ${plural(x.days||0,"day")} waiting</small></div>${fu.length?fuLine(fu,true):""}</div>`).join(""),"No proposals waiting.")}
   ${adminLive(pm)}
   ${adminRocks(pm)}
-  ${g.sharing?sec("Open asks",g.asks.length,g.asks.map(({k,x})=>{const a=ageDays(x.date);return `<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}${/urgent/i.test(x.status)?'<span class="tm-tag hot">Urgent</span>':""}<div class="s">${jobBit(x)}${x.who?" · from "+esc(x.who):""}</div></div><div class="r${a>=3?" crit":""}">${!x.date?"":a?a+" "+plural(a,"day"):"Today"}<small>${esc(srcWord(x.src))}</small></div></div>`}).join(""),"Nothing is waiting on "+first(pm)+"."):""}
-  ${g.sharing?sec("Selections not settled",g.sels.length,g.sels.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}</div></div><div class="r">${esc(cap(x.status)||"Pending")}<small>${esc(fmtD(x.date))}</small></div></div>`).join(""),"Every selection on "+first(pm)+"'s jobs is settled."):""}
-  ${g.sharing?sec("Open orders",g.orders.length,g.orders.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}</div></div><div class="r">${esc(cap(x.status)||"Ordered")}<small>${esc(fmtD(x.date))}</small></div></div>`).join(""),"No open material orders."):""}
-  ${g.sharing&&!liveOk(pm)?sec("Jobs under the margin target",g.cost.length,g.cost.map(({k,x,m,good})=>{const d=x.data||{};return `<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"Job "+x.job)}</b>${sinceTag(k,snap)}<div class="s">${[x.address,x.job?"Job "+x.job:"",d.approved!=null?"approved "+money(d.approved):"",d.spent!=null?"spent "+money(d.spent):"",d.left!=null?money(d.left)+" left in budget":""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${m}%<small>target ${good}%+</small></div></div>`}).join(""),"Every job is at or above the margin target."):""}
-  ${sec("Overdue JobTread to-dos",g.todos.length,g.todos.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.name)}</b>${sinceTag(k,snap)}<div class="s">${x.job?"Job "+esc(x.job.number):"No job"}</div></div><div class="r crit">Due ${esc(fmtD(x.due))}<small>${ageDays(x.due)} ${plural(ageDays(x.due),"day")} late</small></div></div>`).join(""),CORE.get(KTODO).data===undefined?"Loading to-dos from JobTread…":"No overdue to-dos.")}
-  ${g.sharing?sec("On site this week",g.site.length,g.site.map(x=>`<div class="tm-row"><div class="m"><b class="t">${esc([x.who,x.title].filter(Boolean).join(": "))}</b>${/tentative|changed/i.test(x.status)?`<span class="tm-tag">${esc(cap(x.status))}</span>`:""}<div class="s">${jobBit(x)}</div></div><div class="r">${esc(fmtD(x.date))}<small>${esc(x.detail||"")}</small></div></div>`).join(""),"Nothing scheduled on site in the next 7 days."):""}
+  ${g.sharing?asec("Open asks",g.asks.length,g.asks.map(({k,x})=>{const a=ageDays(x.date);return `<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}${/urgent/i.test(x.status)?'<span class="tm-tag hot">Urgent</span>':""}<div class="s">${jobBit(x)}${x.who?" · from "+esc(x.who):""}</div></div><div class="r${a>=3?" crit":""}">${!x.date?"":a?a+" "+plural(a,"day"):"Today"}<small>${esc(srcWord(x.src))}</small></div></div>`}).join(""),"Nothing is waiting on "+first(pm)+"."):""}
+  ${g.sharing?asec("Selections not settled",g.sels.length,g.sels.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}</div></div><div class="r">${esc(cap(x.status)||"Pending")}<small>${esc(fmtD(x.date))}</small></div></div>`).join(""),"Every selection on "+first(pm)+"'s jobs is settled."):""}
+  ${g.sharing?asec("Open orders",g.orders.length,g.orders.map(({k,x})=>`<div class="tm-row"><div class="m"><b class="t">${esc(x.title)}</b>${sinceTag(k,snap)}<div class="s">${jobBit(x)}${x.detail?" · "+esc(x.detail):""}</div></div><div class="r">${esc(cap(x.status)||"Ordered")}<small>${esc(fmtD(x.date))}</small></div></div>`).join(""),"No open material orders."):""}
+  ${g.sharing&&!liveOk(pm)?asec("Jobs under the margin target",g.cost.length,g.cost.map(({k,x,m,good})=>{const d=x.data||{};return `<div class="tm-row"><div class="m"><b class="t">${esc(x.customer||"Job "+x.job)}</b>${sinceTag(k,snap)}<div class="s">${[x.address,x.job?"Job "+x.job:"",d.approved!=null?"approved "+money(d.approved):"",d.spent!=null?"spent "+money(d.spent):"",d.left!=null?money(d.left)+" left in budget":""].filter(Boolean).map(esc).join(" · ")}</div></div><div class="r crit">${m}%<small>target ${good}%+</small></div></div>`}).join(""),"Every job is at or above the margin target."):""}
+  ${todosSec(pm,g,snap)}
+  ${g.sharing?asec("On site this week",g.site.length,g.site.map(x=>`<div class="tm-row"><div class="m"><b class="t">${esc([x.who,x.title].filter(Boolean).join(": "))}</b>${/tentative|changed/i.test(x.status)?`<span class="tm-tag">${esc(cap(x.status))}</span>`:""}<div class="s">${jobBit(x)}</div></div><div class="r">${esc(fmtD(x.date))}<small>${esc(x.detail||"")}</small></div></div>`).join(""),"Nothing scheduled on site in the next 7 days."):""}
+  ${noneGroup()}
   ${cleared.length?`<details class="tm-clr"><summary>Cleared since ${esc(fmtD(snap.date))} (${cleared.length})</summary><ul>${cleared.slice(0,60).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></details>`:""}`;
   return head+body}
 
@@ -8751,17 +8868,17 @@ function adminLive(pm){const L=liveOf(pm);const key=KLIVE+pm;
   const invLine=j=>j.lastInv?`Last invoice ${fmtD(j.lastInv)} (${j.invDays} ${plural(j.invDays,"day")} ago)`:"No invoice yet";
   const coLink=coMod()?`<a class="opsb" href="#closeout">Weekly closeout${(()=>{const d=coData();const n=d&&d.rows?d.rows.filter(r=>!r.sent).length:0;return n?` (${n} waiting)`:""})()}</a>`:"";
   return CORE.staleNote(key,JT)+(L.capped?`<p class="opsmeta" role="status">Showing the first jobs and documents from JobTread. There are more; Admin day stops there to stay quick.</p>`:"")+
-  sec(`Jobs under ${t}% margin`,lowM.length,lowM.map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)} · ${esc(`price ${money(j.price)}, cost ${money(j.cost)}`)}</div></div><div class="r crit">${j.margin}%<small>target ${t}%+</small></div></div>`).join(""),
+  asec(`Jobs under ${t}% margin`,lowM.length,lowM.map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)} · ${esc(`price ${money(j.price)}, cost ${money(j.cost)}`)}</div></div><div class="r crit">${j.margin}%<small>target ${t}%+</small></div></div>`).join(""),
     `Every open job with an approved proposal is at ${t}% or above.`)+
-  sec("When each job was last invoiced",jobs.length,inv.map(j=>{const late=invLate(j);return `<div class="tm-row"><div class="m">${head(j)}${late?`<span class="tm-tag hot">None in 30+ days</span>`:""}<div class="s">${where(j)}</div></div><div class="r${late?" crit":""}">${j.lastInv?esc(fmtD(j.lastInv)):"None yet"}<small>${j.lastInv?`${j.invDays} ${plural(j.invDays,"day")} ago`:"no invoice sent"}</small></div></div>`}).join(""),
+  asec("When each job was last invoiced",jobs.length,inv.map(j=>{const late=invLate(j);return `<div class="tm-row"><div class="m">${head(j)}${late?`<span class="tm-tag hot">None in 30+ days</span>`:""}<div class="s">${where(j)}</div></div><div class="r${late?" crit":""}">${j.lastInv?esc(fmtD(j.lastInv)):"None yet"}<small>${j.lastInv?`${j.invDays} ${plural(j.invDays,"day")} ago`:"no invoice sent"}</small></div></div>`}).join(""),
     `${first(pm)} has no open jobs in JobTread.`).replace("</h2>",nLate?` <span class="tm-tag hot">${nLate} with no invoice in 30+ days</span></h2>`:"</h2>")+
-  sec("Paid in full in the last 7 days",paid.length,paid.map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)}</div></div><div class="r">Paid in full<small>${esc(fmtD(j.paidAt))} · ${money(j.price)}</small></div>
+  asec("Paid in full in the last 7 days",paid.length,paid.map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)}</div></div><div class="r">Paid in full<small>${esc(fmtD(j.paidAt))} · ${money(j.price)}</small></div>
     <div class="tm-acts">${coBtn(j,"paid")}<button type="button" class="opsb ghost" data-tmclr="${esc(j.id)}"${CORE.confirmOpen("tm:clr:"+j.id)?' aria-expanded="true"':""}>Clear</button></div>${CORE.confirmHtml(`co:add:paid:${j.id}`)}${CORE.confirmHtml("tm:clr:"+j.id)}</div>`).join(""),
     "No job was paid in full in the last 7 days.")+
-  sec("Open jobs and close-outs",jobs.length,jobs.slice().sort((a,b)=>String(a.number).localeCompare(String(b.number))).map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)}</div><div class="s">${esc(invLine(j))}${j.openBills.n?" · "+esc(`${j.openBills.n} open vendor ${plural(j.openBills.n,"bill")}`):""}</div></div><div class="r${j.margin!=null&&j.margin<t?" crit":""}">${j.margin==null?"No margin yet":j.margin+"%"}<small>${j.margin==null?"no approved proposal":"margin"}</small></div>
+  asec("Open jobs and close-outs",jobs.length,jobs.slice().sort((a,b)=>String(a.number).localeCompare(String(b.number))).map(j=>`<div class="tm-row"><div class="m">${head(j)}<div class="s">${where(j)}</div><div class="s">${esc(invLine(j))}${j.openBills.n?" · "+esc(`${j.openBills.n} open vendor ${plural(j.openBills.n,"bill")}`):""}</div></div><div class="r${j.margin!=null&&j.margin<t?" crit":""}">${j.margin==null?"No margin yet":j.margin+"%"}<small>${j.margin==null?"no approved proposal":"margin"}</small></div>
     ${coMod()?`<div class="tm-acts">${coBtn(j,"open")}</div>${CORE.confirmHtml(`co:add:open:${j.id}`)}`:""}</div>`).join(""),
     `${first(pm)} has no open jobs in JobTread.`).replace("</h2>",coLink?`</h2><p class="tm-link">${coLink}</p>`:"</h2>")+
-  sec("Work orders vs paid, by vendor",L.vendors.length,L.vendors.map(v=>{const left=Math.max(0,v.committed-v.paid);return `<div class="tm-row"><div class="m"><b class="t">${esc(v.vendor)}</b><div class="s">${esc(v.jobs.map(n=>"Job "+n).join(", "))}</div></div><div class="r">${money(v.paid)||"$0"} paid<small>${v.committed?`of ${money(v.committed)} in work orders${left?" · "+money(left)+" left":""}`:"no work order"}</small></div></div>`}).join(""),
+  asec("Work orders vs paid, by vendor",L.vendors.length,L.vendors.map(v=>{const left=Math.max(0,v.committed-v.paid);return `<div class="tm-row"><div class="m"><b class="t">${esc(v.vendor)}</b><div class="s">${esc(v.jobs.map(n=>"Job "+n).join(", "))}</div></div><div class="r">${money(v.paid)||"$0"} paid<small>${v.committed?`of ${money(v.committed)} in work orders${left?" · "+money(left)+" left":""}`:"no work order"}</small></div></div>`}).join(""),
     "No work orders or vendor bills on these jobs yet.")}
 
 /* ---------- Weekly closeout (team module "closeout"): the team's Sheet, one row per job; columns found by their header ---------- */
@@ -8896,6 +9013,33 @@ function coState(m,r,nOk,nAll){const who=coCloser(m)||"accounting";
   if(r.closed)return `<div class="r ok">Closed ${esc(fmtD(isoD(r.closed))||r.closed)}<small>${r.closedBy?"by "+esc(r.closedBy):"closed out"}</small></div>`;
   if(r.sent){const dd=coDays(r);return `<div class="r${dd!=null&&dd>CO_LATE?" crit":""}">With ${esc(who)}<small>sent ${esc(fmtD(isoD(r.sent))||r.sent)}${dd!=null?` · ${dd===0?"today":dd+" "+plural(dd,"day")}`:""}</small></div>`}
   return `<div class="r${nOk===nAll?" ok":""}">${nOk} of ${nAll}<small>checks ticked</small></div>`}
+/* Add a job: type 2+ characters (job number, street address or customer). Matches come from the job index and from a live JobTread
+   read of open jobs in ANY stage (closedOn empty, no stage filter, 25 rows or fewer, read only). Typing never redraws the page. */
+const coOnList=no=>{const d=coData();return !!(d&&d.rows&&d.rows.some(r=>r.number===String(no)))};
+const coJobX=x=>({id:x.id||"",number:String(x.number||""),address:x.address||"",customer:x.customer||"",name:x.customer||x.name||""});
+function coLocal(q){q=low(q).trim();if(q.length<2)return [];const words=q.split(/\s+/).filter(Boolean);const out=[];
+  (CORE.jobIndex()||[]).forEach(j=>{const no=(j.jobNumbers||[]).length?String(j.jobNumbers[0]):"";if(!no)return;const hay=low(no+" "+(j.street||"")+" "+(j.address||"")+" "+(j.customer||""));
+    if(words.every(w=>hay.includes(w)))out.push(coJobX({id:(j.jobIds||[])[0],number:no,address:j.address||j.street||"",customer:j.customer}))});return out}
+const coClean=q=>String(q||"").replace(/[%_]/g,"").trim();
+async function coLive(q){const jq=P().jq,t=coClean(q),like="%"+t+"%";if(t.length<2)return [];const run=async where=>((await jq({organization:{$:{id:window.__dpORG},jobs:{$:{size:CORE.JT_PAGE,where},nodes:JOB_NODES}}})).organization.jobs||{}).nodes||[];
+  const reads=[run({and:[["closedOn",null],{or:[[["location","address"],"like",like],[["location","account","name"],"like",like]]}]})];
+  if(/^\d+$/.test(t))reads.push(run({and:[["closedOn",null],["number",t]]}));
+  const out=[],seen=new Set();(await Promise.all(reads)).forEach(n=>n.map(jobOf).forEach(j=>{if(j.number&&!seen.has(j.number)){seen.add(j.number);out.push(j)}}));return out.slice(0,CORE.JT_PAGE)}
+function coResList(){const q=T.coQ||"";if(coClean(q).length<2)return [];const seen=new Set(),out=[];
+  (T.coLocal||[]).concat(T.coLiveRes&&T.coLiveFor===q?T.coLiveRes:[]).forEach(j=>{if(!j.number||seen.has(j.number)||coOnList(j.number))return;seen.add(j.number);out.push(j)});return out.slice(0,25)}
+function coResHtml(){const q=(T.coQ||"").trim();if(coClean(q).length<2)return `<p class="opsmeta">Type at least 2 characters.</p>`;const L=coResList();
+  const note=T.coLiveBusy?`<p class="opsmeta" role="status">Searching JobTread…</p>`:T.coLiveErr?`<p class="opsmeta" role="status">${esc(T.coLiveErr)} Showing matches from your job list.</p>`:"";
+  if(!L.length)return T.coLiveBusy?note:`<p class="opsmeta">No open job matches "${esc(q)}".</p>`+note;
+  return L.map(j=>`<button type="button" role="option" class="opsb tm-pick${T.coSel&&T.coSel.number===j.number?" on":""}" data-copick="${esc(j.number)}">${esc("#"+j.number+" "+(street(j.address)||j.name)+(j.customer?" · "+j.customer:""))}</button>`).join("")+note}
+const coSelHtml=()=>T.coSel?`Selected: <b>${esc(jobLabel(T.coSel)+(T.coSel.customer?" · "+T.coSel.customer:""))}</b>`:"Pick a job from the list, then add it.";
+function coDraw(){const r=document.getElementById("co-res");if(r)r.innerHTML=coResHtml();const s=document.getElementById("co-sel");if(s)s.innerHTML=coSelHtml();
+  const b=document.querySelector("[data-coaddpick]");if(b)b.disabled=!T.coSel}
+let coTimer=0,coSeq=0;
+function coSearch(q){T.coQ=q;T.coLocal=coLocal(q);T.coSel=null;if(CORE.confirmOpen("co:add:pick"))CORE.cancelConfirm("co:add:pick",true);
+  clearTimeout(coTimer);T.coLiveErr="";const seq=++coSeq;
+  if(coClean(q).length<2){T.coLiveBusy=false;T.coLiveRes=[];coDraw();return}
+  T.coLiveBusy=true;coDraw();
+  coTimer=setTimeout(async()=>{try{const r=await coLive(q);if(seq!==coSeq)return;T.coLiveRes=r;T.coLiveFor=q}catch(e){if(seq!==coSeq)return;T.coLiveRes=[];T.coLiveFor=q;T.coLiveErr=CORE.errMsg(e,"JobTread")}T.coLiveBusy=false;coDraw()},300)}
 function vCloseout(){const m=coMod();if(!m)return "";needCo();const d=coData();const who=coCloser(m)||"accounting";
   const head=window.DPPageHead("Weekly closeout",`Jobs ready to close: check them off with the PM, send them to ${who}, then close them out here once ${who} is done. The list lives in your team's closeout Sheet (${coTab(m)} tab), so everyone sees the same one. The hints under each check come from JobTread; you tick the boxes.`+(P().updLine?P().updLine(KCO).replace(/JobTread/g,"the closeout Sheet"):""));
   if(d&&d.noSheet)return head+`<div class="tm-note warn" role="status">The closeout module is on, but no Sheet is set for it yet. Ask ${esc((window.DPOrg&&window.DPOrg.support)||"the person who shared this with you")} to add the Sheet's id to your team settings.</div>`;
@@ -8906,9 +9050,7 @@ function vCloseout(){const m=coMod();if(!m)return "";needCo();const d=coData();c
   const open=d.rows.filter(r=>!r.sent&&!r.closed),withC=d.rows.filter(r=>r.sent&&!r.closed).sort((a,b)=>dk(a.sent).localeCompare(dk(b.sent))),
     done=d.rows.filter(r=>r.closed).sort((a,b)=>dk(b.closed).localeCompare(dk(a.closed))).slice(0,30);
   const late=withC.filter(r=>{const x=coDays(r);return x!=null&&x>CO_LATE}).length;
-  /* a job already on the list, sent or not, isn't offered again */
-  const ix=(CORE.jobIndex()||[]).filter(j=>(j.jobNumbers||[]).length&&!d.rows.some(r=>r.number===String(j.jobNumbers[0])));
-  const add=ix.length?`<div class="tm-bar"><label class="tm-radd">Add a job <select id="co-addsel">${ix.map(j=>`<option value="${esc(String(j.jobNumbers[0]))}">${esc("#"+j.jobNumbers[0]+" "+(j.street||street(j.address))+(j.customer?" · "+j.customer:""))}</option>`).join("")}</select></label><button type="button" class="opsb" data-coaddpick${CORE.confirmOpen("co:add:pick")?' aria-expanded="true"':""}>Add to closeout list</button>${CORE.confirmHtml("co:add:pick")}</div>`:"";
+  const add=`<div class="tm-bar tm-coadd"><label class="tm-radd" for="co-addq">Add a job</label><input id="co-addq" type="search" class="tm-q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="Job number, street address or customer" aria-controls="co-res" value="${esc(T.coQ||"")}"><div id="co-res" class="tm-res" role="listbox" aria-label="Jobs that match">${coResHtml()}</div><div id="co-sel" class="opsmeta" role="status">${coSelHtml()}</div><button type="button" class="opsb" data-coaddpick${CORE.confirmOpen("co:add:pick")?' aria-expanded="true"':""}${T.coSel?"":" disabled"}>Add to closeout list</button>${CORE.confirmHtml("co:add:pick")}</div>`;
   return head+CORE.staleNote(KCO,G)+(miss.length?`<div class="tm-note warn" role="status">The Sheet's first row is missing ${miss.length===1?"this column":"these columns"}: ${esc(miss.join(", "))}. Add ${miss.length===1?"it":"them"} so ticks and dates have somewhere to go.</div>`:"")+
     (CORE.get(KCOF).status==="error"?`<p class="opsmeta" role="status">Couldn't load the JobTread hints. ${esc(CORE.errMsg(CORE.get(KCOF).err,"JobTread"))}</p>`:"")+
     sec("Waiting to send",open.length,open.map(r=>coRowHtml(m,r,F)).join(""),"Nothing waiting to send. Add jobs from Admin day or below.")+add+
@@ -8934,6 +9076,7 @@ function adminRocks(pm){const m=rocksMod();if(!m)return "";needRocks();const s=C
   const canSug=m.suggest===true&&!!R()&&/^(owner|ops)$/.test(R().role);
   const body=s.data===undefined?(CORE.box(KROCK,{loading:"Loading Rocks from JobTread…",rows:1,label:"JobTread"})||""):mine.length?`<div class="tm-list">${mine.sort((a,b)=>String(a.due||"9").localeCompare(String(b.due||"9"))).map(t=>`<div class="tm-row"><div class="m"><b class="t">${esc(String(t.name).replace(/^rock:\s*/i,""))}</b><div class="s">${esc(t.job?["Job "+t.job.number,t.people.join(", ")].filter(Boolean).join(" · "):t.people.length===1?t.people[0]+"'s Rock":["Company Rock",t.people.join(", ")].filter(Boolean).join(" · "))}</div></div><div class="r${t.due&&t.due<today()?" crit":""}">${t.due?"Due "+esc(fmtD(t.due)):"No due date"}</div></div>`).join("")}</div>`
     :`<div class="empty">No open Rocks for ${esc(first(pm))}. Rocks are JobTread to-dos with “${esc(m.match||"rock")}” in the name.</div>`;
+  if(s.data!==undefined&&!mine.length&&!canSug){EQ.push(["Rocks",`No open Rocks for ${first(pm)}.`]);return ""}
   return `<section class="tm-sec"><h2>Rocks${mine.length?`<span class="cnt">${mine.length}</span>`:""}</h2>${body}${canSug?sugHtml():""}</section>`}
 function sugHtml(){const q=lastQuarter();
   const out=SG.out?SG.out.map((p,pi)=>`<div class="tm-sug"><h3>${esc(p.pm)}</h3>${p.rocks.map((r,ri)=>{const k=`rock:add:${pi}:${ri}`;return `<div class="tm-row"><div class="m"><b class="t">${esc(r.title)}</b>${r.why?`<div class="s">${esc(r.why)}</div>`:""}</div>
@@ -8983,8 +9126,8 @@ function rockAdd(pi,ri,btn){const p=SG.out&&SG.out[pi];const r=p&&p.rocks[ri];if
       r.added=true;const s=CORE.get(KROCK);if(s.data)s.data.push({id:(ct&&ct.id)||"new-"+Date.now(),name,due,job:null,people:[p.pm]})}})}
 
 /* the Closed list stays open across redraws once someone opens it */
-document.addEventListener("toggle",e=>{const x=e.target;if(x&&x.matches&&x.matches("[data-coclosed]"))T.coOpen=x.open},true);
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmcoadd],[data-tmclr],[data-cochk],[data-cosend],[data-coclose],[data-conote],[data-conotego],[data-conotex],[data-coaddpick],[data-tmrocksug],[data-tmrockadd]");if(!t)return;const d=t.dataset;
+document.addEventListener("toggle",e=>{const x=e.target;if(x&&x.matches&&x.matches("[data-coclosed]"))T.coOpen=x.open;if(x&&x.matches&&x.matches("[data-tmnone]"))T.noneOpen=x.open},true);
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmcoadd],[data-tmclr],[data-cochk],[data-cosend],[data-coclose],[data-conote],[data-conotego],[data-conotex],[data-coaddpick],[data-copick],[data-tmrocksug],[data-tmrockadd]");if(!t)return;const d=t.dataset;
   if(d.tmcoadd!=null){const [w,id]=d.tmcoadd.split(":");const L=liveOf(T.apm);const j=L&&L.jobs.find(x=>x.id===id);if(j)coAdd(j,T.apm,t,`co:add:${w}:${id}`);return}
   if(d.tmclr!=null){clearPaid(d.tmclr,t);return}
   if(d.cochk!=null){const [n,i]=d.cochk.split("|");coTick(+n,+i,t);return}
@@ -8993,14 +9136,15 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   if(d.conote!=null){const r=coFind(d.conote);CN.n=+d.conote;CN.val=r?r.notes:"";CORE.cancelConfirm("co:note:*",true);rr();setTimeout(()=>{const a=document.querySelector(`[data-conotev="${CSS.escape(d.conote)}"]`);if(a)try{a.focus({preventScroll:true})}catch(x){}},40);return}
   if(d.conotego!=null){const a=document.querySelector(`[data-conotev="${CSS.escape(d.conotego)}"]`);if(a)CN.val=a.value;coNote(+d.conotego,t);return}
   if(d.conotex!=null){CN.n=0;CN.val="";CORE.cancelConfirm("co:note:*",true);rr();return}
-  if(d.coaddpick!=null){const s=document.getElementById("co-addsel");const no=s&&s.value;const x=(CORE.jobIndex()||[]).find(j=>(j.jobNumbers||[]).map(String).includes(no));
-    if(x)coAdd({id:(x.jobIds||[])[0]||"",number:no,address:x.address||"",customer:x.customer||"",name:x.customer||""},coPmFor(no,x),t,"co:add:pick");return}
+  if(d.copick!=null){const x=coResList().find(j=>j.number===d.copick);if(x){T.coSel=x;if(CORE.confirmOpen("co:add:pick"))CORE.cancelConfirm("co:add:pick",true);coDraw()}return}
+  if(d.coaddpick!=null){const x=T.coSel;if(x)coAdd({id:x.id,number:x.number,address:x.address,customer:x.customer,name:x.customer||x.name},coPmFor(x.number,(CORE.jobIndex()||[]).find(j=>(j.jobNumbers||[]).map(String).includes(x.number))),t,"co:add:pick");return}
   if(d.tmrocksug!=null){suggestRocks();return}
   if(d.tmrockadd!=null){const [pi,ri]=d.tmrockadd.split("|");rockAdd(+pi,+ri,t);return}});
 /* a changed note resets its confirm: what's being saved changed */
 document.addEventListener("input",e=>{const n=e.target.dataset&&e.target.dataset.conotev;if(n==null)return;CN.val=e.target.value;if(CORE.confirmOpen("co:note:"+n))CORE.cancelConfirm("co:note:"+n,true)});
 /* a different job picked resets the Add confirm */
-document.addEventListener("change",e=>{if(e.target&&e.target.id==="co-addsel"&&CORE.confirmOpen("co:add:pick"))CORE.cancelConfirm("co:add:pick",true)});
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="co-addq")coSearch(e.target.value)});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="co-addq"){e.preventDefault();const f=coResList()[0];if(f){T.coSel=f;coDraw()}}});
 
 /* ---------- Team activity ---------- */
 const TABS=[["site","On site"],["asks","Open asks"],["sels","Selections"],["orders","Orders"],["cost","Job costing"]];
@@ -9109,12 +9253,13 @@ function toggleNotes(to,btn){const on=to==="on";
       const id=await sheetId();await CORE.call(SHEETS,"append_values",{spreadsheetId:id,range:"A:E",values:[["setting","jobtreadNotes",to,CFG.name||"",new Date().toISOString()]]},{write:true,label:"Google Sheets"});
       const d=CORE.get(KEY).data;if(d)d.notes=to}})}
 
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmapm],[data-tmpm],[data-tmtab],[data-tmmark],[data-tmon],[data-tmlink],[data-tmnotes],[data-tmradd],[data-tmrrm],[data-tmrkeep],[data-tmlock]");if(!t)return;const d=t.dataset;
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-tmapm],[data-tmtd],[data-tmpm],[data-tmtab],[data-tmmark],[data-tmon],[data-tmlink],[data-tmnotes],[data-tmradd],[data-tmrrm],[data-tmrkeep],[data-tmlock]");if(!t)return;const d=t.dataset;
   if(d.tmlock!=null){lockIndex(t);return}
   if(d.tmradd!=null){const s=document.getElementById("tm-raddsel");if(s&&s.value)readerAct("add",s.value,t);return}
   if(d.tmrrm!=null){readerAct("rm",d.tmrrm,t);return}
   if(d.tmrkeep!=null){readerAct("keep",d.tmrkeep,t);return}
   if(d.tmapm!=null){T.apm=d.tmapm;rr();return}
+  if(d.tmtd!=null){T.tdAll=d.tmtd==="all";rr();return}
   if(d.tmpm!=null){T.pm=d.tmpm;rr();return}
   if(d.tmtab!=null){T.tab=d.tmtab;rr();return}
   if(d.tmmark!=null){markReviewed(d.tmmark);return}
@@ -9122,7 +9267,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   if(d.tmlink!=null){linkRoll(t);return}
   if(d.tmnotes!=null){toggleNotes(d.tmnotes,t);return}});
 
-const refresh=()=>{needRoll(true);needTodos(true);needLive(T.apm,true);needRocks(true);needCo(true)};
+const refresh=()=>{needRoll(true);needTodos(true);needLive(T.apm,true);needRocks(true);needCo(true);if(T.tdAll)needTodosAll(T.apm,true)};
 (window.DPOPS_EXTRA=window.DPOPS_EXTRA||[]).push(
   {h:"adminday",label:"Admin day",show,view:vAdmin,refresh,busy:()=>!!(CORE.get(KEY).busy||CORE.get(KTODO).busy||(T.apm&&CORE.get(KLIVE+T.apm).busy))},
   {h:"closeout",label:"Weekly closeout",show:()=>!!coMod(),view:vCloseout,refresh:()=>{needCo(true);T.coSig=""},busy:()=>!!CORE.get(KCO).busy},
