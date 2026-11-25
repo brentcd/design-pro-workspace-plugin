@@ -742,6 +742,7 @@ header.site .logo{min-height:44px;min-width:44px;align-items:center}
 .jsh-facts span{white-space:normal;overflow-wrap:normal;word-break:normal}
 .jsh-meta span,.jsh-facts span{white-space:nowrap}
 .jsh-meta span:first-child{white-space:normal}
+.jsh-meta,.jsh-facts{min-width:0;max-width:100%}.jsh-meta span,.jsh-facts span{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .jsh-meta span+span::before,.jsh-facts span+span::before{content:"·";padding:0 7px;color:var(--text-faint)}
 .jsh-facts a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .jsh-row{display:flex;align-items:center;gap:8px;margin:16px 0 0;min-width:0}
@@ -784,6 +785,7 @@ header.site .logo{min-height:44px;min-width:44px;align-items:center}
   header.jsh .jsh-tabs{flex:1 1 auto;gap:4px}
   header.jsh .jsh-tabs a{flex:1 0 auto;justify-content:center;padding:6px 10px}
 }
+@media (max-width:400px){header.jsh .jsh-tabs{gap:2px}header.jsh .jsh-tabs a{padding:6px 5px;gap:3px;font-size:var(--fs-caption)}}
 tr.hl-row,.hl-row{outline:2px solid var(--mint);outline-offset:-2px}tr.hl-row>td{background:color-mix(in srgb,var(--mint) 18%,var(--surface))}
 .todobar{display:flex;justify-content:flex-end;margin:12px 0 0}
 .todosec{margin:14px 0 0}
@@ -798,6 +800,8 @@ body.app-todo #view>.box{margin-top:14px}
   .box.jfold:not(.jfopen)>:not(.box-h){display:none}
   .box.jfold .jfold-t{min-height:44px;margin-left:auto}
 }
+@media (min-width:401px) and (max-width:760px){header.jsh .jsh-tabs{gap:3px}header.jsh .jsh-tabs a{padding:6px 7px}}
+@media (min-width:401px){.jsh-tabs a{min-width:44px;box-sizing:border-box;justify-content:center}}
 </style>
 <style id="dpfind-css">#gs .gsh{font:600 var(--fs-footnote)/1.4 var(--body);letter-spacing:0;text-transform:none}
 #gs .gsr mark{background:color-mix(in srgb,var(--accent) 25%,transparent);color:inherit;padding:0 2px;border-radius:3px;vertical-align:baseline;line-height:inherit}
@@ -1446,6 +1450,7 @@ h2.srch{margin:4px 0 -12px}
 .jjump{margin:0}.jjump .linkb{min-height:44px}
 @media (max-width:599px){#view{gap:16px}.jsum>.sc:last-child:nth-child(odd){grid-column:1/-1}}
 .jhist{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:4px 0 0}
+.jselink{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:4px 0 0}.jselink a{display:inline-flex;align-items:center;min-height:44px;font:600 var(--fs-body)/1.2 var(--body);color:var(--fg)}
 .jhist a{display:inline-flex;align-items:center;min-height:44px;font:600 var(--fs-body)/1.2 var(--body);color:var(--fg)}
 .ph-acts{display:flex;gap:8px;align-items:center;flex:none}
 .ph:has(>.ph-acts){flex-wrap:nowrap;align-items:flex-start}.ph:has(>.ph-acts)>div:first-child{flex:1 1 auto;min-width:0}
@@ -4068,7 +4073,7 @@ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest
   const s=document.querySelector("#view [data-lstrip] summary")||document.querySelector("#view [data-lslink]");if(s)s.focus({preventScroll:true});if(LS.open)requestAnimationFrame(()=>flashNew())});
 (function(){const go=()=>window.DPCore&&DPCore.poll?DPCore.poll(()=>lsFetch(false),{every:5*60e3,first:window.__DP_DEMO?500:4000,when:()=>!!lsSince()}):null;
   if(window.DPCore)go();else addEventListener("load",go)})();
-window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-22j","highlights":["Today keeps up with the day: paid invoices, signed change orders, answered emails and times that have passed move to a quiet \"handled\" line (with Undo) instead of staying red.","One card per conversation: the same email, PO or ask no longer shows up three times.","Money cards show what is still owed and how late, the same amount everywhere, with buttons to open the invoice or Pipeline; ticking an unpaid invoice asks whether it was paid or just handled.","A new urgent client message moves to the top once you stop touching the page, so nothing jumps under your finger; \"· N new\" takes you straight to it.","Project managers see only their own jobs' sub payments, visits and updates; operations get an Office money card.","Reply drafts go to the right person, greet them by first name, answer what they actually wrote, and never promise anything you didn't say.","Start job opens filled in (client email, start date) and has a button right on the Today card; Estimates notices proposals you email yourself and keeps the address after the visit.","No new permissions: installs on its own."]},{"version":"2026-11-22i","highlights":["Always current without waiting: your page checks for new email and JobTread changes on its own when you open it and every few minutes while it's open, using no Claude time.","Refresh is instant now and tells you exactly what it found (or which source it couldn't reach). A full Claude update is under ⋯ › Full update, after a confirm.","Scheduled updates start where the last one stopped and finish early when nothing is new; quick checks rest on weekends. Expect noticeably less Claude time each day.","System status shows how long each update really took.","Jobs › Estimates shows your own estimates by default; owners and operations can switch to any project manager or All. Scheduled estimates look two weeks ahead.","Plans and permits are copied each night into the job site folder made by the Job site pack, and replies your teammates send show as \"Replied by\".","No new permissions: installs on its own."]},{"version":"2026-11-22h","highlights":["Every job shows its stage (1 of 8) with a checklist; steps JobTread or your page can prove are ticked for you, the rest are one tap with Undo.","Start job: emails the client \"What to expect on your job site\" with a branded PDF and gives your office team a to-do to send the start invoice, after one confirm.","Job site pack: printable signs (QR code to the plans and permits folder, crew standards in English and Spanish, contacts, neighbor door hanger).","Draft client update, Daily log and a PO tracker on each job; Today reminds you when a client hasn't had an update in a week, and Office › POs lists trades with no confirmed PO.","Closeout and review loop: thank-you gift, then the review ask, as drafts you send yourself.","Money and office: Job costing margins match Team everywhere, one win rate (90 days), Estimates page (to schedule, to write, scheduled, sent), Office overdue screen with batch to-dos, Sub payments totals and \"I paid it\" for operations.","No new permissions: installs on its own."]},{"version":"2026-11-22g","highlights":["Fix: the Team page's Jobs and margins load again for every project manager (a JobTread field name was wrong).","Fix: the \"· N new\" check on Today and the nightly job sync ask JobTread for the right fields too.","System status no longer says the morning update didn't run when it did, and no longer warns about texts on Sundays (texts rest on Sundays by design).","No new permissions: installs on its own."]},{"version":"2026-11-22f","highlights":["Simpler menus: Today, Inbox, Jobs, Money, Team, Office and More (project managers see five sections). Email now lives in Inbox, and on a computer Find and Ask are one bar.","Close job (owners and operations) from the job page, with a confirm, a block when money is still owed, and Undo for a minute. Project managers get \"Ask the office to close\".","Files from email are copied into each job's Drive folder overnight, so you never need to keep the page open; very large files are listed under Copy on Mac.","Leads can suggest creating a JobTread job; nothing is ever created without your tap and confirm. WhatsApp messages are labeled WhatsApp.","New, off until your team turns it on: Expenses under Money. Your card charges from QuickBooks with a suggested job; approve or skip, then Commit writes the job, category and receipt into QuickBooks after a confirm.","Estimate handoff: on a job, build a one-page handoff from the Granola estimate meeting (scope, what the client cares about, what we promised, decisions, selections, budget notes, risks, site notes). Edit it, email it to the PM as a draft, or invite the team to a kickoff, each after a confirm.","Needs the newest Design Pro Workspace plugin (your company already has it). No new page permissions: installs on its own."]},{"version":"2026-11-22e","highlights":["Every page shows its first rows right away on a phone: the one-line intros moved into Help, and filters sit behind one Filter button.","An opened Today item shows just Mark done, Close, Note and ⋯ instead of 13 buttons; Inbox rows have two buttons (tap the text to open, Add note is under ⋯).","Team › Everyone is one row per project manager; System status, Leads and Team are about a third as long.","Operations open on Office to-dos (3 taps to mark one done); a Pipeline row opens with its comment box ready.","Job costing, Pipeline and Sub payments show fewer tiles and chips; every figure and filter is still there.","No new permissions: installs on its own."]},{"version":"2026-11-22d","highlights":["Your scheduled updates read about 30% less and rewrite about 40% less each weekday: the nightly job sync only rewrites what changed, and the quick checks no longer reread your whole Today page.","Items a quick check finds land on Today straight away, merged into the right job card; the morning and evening updates fold them in.","Refresh now runs one full update instead of two.","One number everywhere: the Operations badge always matches the Overdue chip, Today's money card matches Pipeline, and amounts look the same on every page (overdue-invoice emails keep exact cents).","Request payment, Assign to office and Office to-dos always pick the same office people.","The page is a little lighter and loads less data when it opens.","No new permissions: installs on its own."]},{"version":"2026-11-22c","highlights":["Each job has four tabs: Overview, To do, Money and Files. To do holds the job's open items and its lists together, with one Show checked switch; Money puts job costing, orders and purchases on one page.","Fewer taps on a phone: adding a punch item and sending a punch list each take 3 taps, and a job's money or orders 1.","One Send sheet for punch lists: the whole list or one trade, who gets each trade, email or text, then a confirm. A suggested sub is only filled in when their trade matches, and is marked to check before sending.","Lists, To sort, Open orders and Investment properties now live on All jobs as a button, a filter and chips. To sort shows every job with items to sort, and the Jobs menu shows how many.","On phones the job header keeps the street on its own line, and the job details wrap instead of scrolling sideways.","No new permissions: installs on its own."]}];
+window.DP_CHANGES=window.DP_CHANGES||[{"version":"2026-11-24a","highlights":["Each job page has a Selections tab again (Overview · To do · Selections · Money · Files), with a count.","Coming back to the page after opening a document or another app keeps the same page, tab, scroll and open folds.","Job details under the job name wrap instead of running off a narrow phone screen.","Sub payments add up itemized messages (\"$850 + $160 … = $X\"), show per-job subtotals, flag a stated total that doesn't match, and keep the full message.","No new permissions: installs on its own."]},{"version":"2026-11-22j","highlights":["Today keeps up with the day: paid invoices, signed change orders, answered emails and times that have passed move to a quiet \"handled\" line (with Undo) instead of staying red.","One card per conversation: the same email, PO or ask no longer shows up three times.","Money cards show what is still owed and how late, the same amount everywhere, with buttons to open the invoice or Pipeline; ticking an unpaid invoice asks whether it was paid or just handled.","A new urgent client message moves to the top once you stop touching the page, so nothing jumps under your finger; \"· N new\" takes you straight to it.","Project managers see only their own jobs' sub payments, visits and updates; operations get an Office money card.","Reply drafts go to the right person, greet them by first name, answer what they actually wrote, and never promise anything you didn't say.","Start job opens filled in (client email, start date) and has a button right on the Today card; Estimates notices proposals you email yourself and keeps the address after the visit.","No new permissions: installs on its own."]},{"version":"2026-11-22i","highlights":["Always current without waiting: your page checks for new email and JobTread changes on its own when you open it and every few minutes while it's open, using no Claude time.","Refresh is instant now and tells you exactly what it found (or which source it couldn't reach). A full Claude update is under ⋯ › Full update, after a confirm.","Scheduled updates start where the last one stopped and finish early when nothing is new; quick checks rest on weekends. Expect noticeably less Claude time each day.","System status shows how long each update really took.","Jobs › Estimates shows your own estimates by default; owners and operations can switch to any project manager or All. Scheduled estimates look two weeks ahead.","Plans and permits are copied each night into the job site folder made by the Job site pack, and replies your teammates send show as \"Replied by\".","No new permissions: installs on its own."]},{"version":"2026-11-22h","highlights":["Every job shows its stage (1 of 8) with a checklist; steps JobTread or your page can prove are ticked for you, the rest are one tap with Undo.","Start job: emails the client \"What to expect on your job site\" with a branded PDF and gives your office team a to-do to send the start invoice, after one confirm.","Job site pack: printable signs (QR code to the plans and permits folder, crew standards in English and Spanish, contacts, neighbor door hanger).","Draft client update, Daily log and a PO tracker on each job; Today reminds you when a client hasn't had an update in a week, and Office › POs lists trades with no confirmed PO.","Closeout and review loop: thank-you gift, then the review ask, as drafts you send yourself.","Money and office: Job costing margins match Team everywhere, one win rate (90 days), Estimates page (to schedule, to write, scheduled, sent), Office overdue screen with batch to-dos, Sub payments totals and \"I paid it\" for operations.","No new permissions: installs on its own."]},{"version":"2026-11-22g","highlights":["Fix: the Team page's Jobs and margins load again for every project manager (a JobTread field name was wrong).","Fix: the \"· N new\" check on Today and the nightly job sync ask JobTread for the right fields too.","System status no longer says the morning update didn't run when it did, and no longer warns about texts on Sundays (texts rest on Sundays by design).","No new permissions: installs on its own."]},{"version":"2026-11-22f","highlights":["Simpler menus: Today, Inbox, Jobs, Money, Team, Office and More (project managers see five sections). Email now lives in Inbox, and on a computer Find and Ask are one bar.","Close job (owners and operations) from the job page, with a confirm, a block when money is still owed, and Undo for a minute. Project managers get \"Ask the office to close\".","Files from email are copied into each job's Drive folder overnight, so you never need to keep the page open; very large files are listed under Copy on Mac.","Leads can suggest creating a JobTread job; nothing is ever created without your tap and confirm. WhatsApp messages are labeled WhatsApp.","New, off until your team turns it on: Expenses under Money. Your card charges from QuickBooks with a suggested job; approve or skip, then Commit writes the job, category and receipt into QuickBooks after a confirm.","Estimate handoff: on a job, build a one-page handoff from the Granola estimate meeting (scope, what the client cares about, what we promised, decisions, selections, budget notes, risks, site notes). Edit it, email it to the PM as a draft, or invite the team to a kickoff, each after a confirm.","Needs the newest Design Pro Workspace plugin (your company already has it). No new page permissions: installs on its own."]},{"version":"2026-11-22e","highlights":["Every page shows its first rows right away on a phone: the one-line intros moved into Help, and filters sit behind one Filter button.","An opened Today item shows just Mark done, Close, Note and ⋯ instead of 13 buttons; Inbox rows have two buttons (tap the text to open, Add note is under ⋯).","Team › Everyone is one row per project manager; System status, Leads and Team are about a third as long.","Operations open on Office to-dos (3 taps to mark one done); a Pipeline row opens with its comment box ready.","Job costing, Pipeline and Sub payments show fewer tiles and chips; every figure and filter is still there.","No new permissions: installs on its own."]},{"version":"2026-11-22d","highlights":["Your scheduled updates read about 30% less and rewrite about 40% less each weekday: the nightly job sync only rewrites what changed, and the quick checks no longer reread your whole Today page.","Items a quick check finds land on Today straight away, merged into the right job card; the morning and evening updates fold them in.","Refresh now runs one full update instead of two.","One number everywhere: the Operations badge always matches the Overdue chip, Today's money card matches Pipeline, and amounts look the same on every page (overdue-invoice emails keep exact cents).","Request payment, Assign to office and Office to-dos always pick the same office people.","The page is a little lighter and loads less data when it opens.","No new permissions: installs on its own."]}];
 const updTask=()=>(DPC.tasks&&DPC.tasks.updater)||(window.__DP_DEMO?"demo-updater":"");
 const UPD={open:false,confirm:false,busy:false,msg:""};
 const updTxt=(v,n)=>String(v==null?"":v).replace(/[\u0000-\u001f<>]/g," ").trim().slice(0,n||200);
@@ -4273,6 +4278,71 @@ window.__dpCheckedAt=()=>{const g=Date.parse((state.review||{}).generatedAt||"")
 function flashNew(){const row=document.querySelector("#view [data-newrow]")||document.querySelector("#view [data-lstrip]");if(!row)return;tScrollTo(row);row.classList.add("flash");setTimeout(()=>row.classList.remove("flash"),2600)}
 window.__dpFlashNew=flashNew;
 function evPast(e){const d=calDay();if(!d)return false;const t0=new Date();t0.setHours(12,0,0,0);if(Math.round((d-t0)/864e5)!==0)return false;const m=timeMin(e.time);if(m==null)return false;const now=new Date();return now.getHours()*60+now.getMinutes()>m+60}
+(function(){
+const KEY="dp-view",TTL=6*3600e3;
+const roots=()=>[document,(document.getElementById("hubhost")||{}).shadowRoot,(document.getElementById("listhost")||{}).shadowRoot].filter(Boolean);
+const chrome=()=>parseInt(getComputedStyle(document.documentElement).getPropertyValue("--chrome-top"))||0;
+const hold=()=>{try{if(window.DPHoldHeader)DPHoldHeader()}catch(e){}};
+let inputAt=0;
+["pointerdown","touchstart","touchmove","wheel","keydown","mousedown"].forEach(k=>addEventListener(k,()=>{inputAt=Date.now()},{capture:true,passive:true}));
+const words=el=>(el.textContent||"").replace(/\s+/g," ").trim().slice(0,60);
+function anchor(){if(scrollY<3)return null;const y=chrome()+12;
+  for(const r of roots())for(const dy of [12,30,48,66,84])for(const fx of [.5,.25,.75]){let v,el;try{v=r.querySelector("#view");if(!v)continue;el=r.elementFromPoint(innerWidth*fx,y+dy-12)}catch(e){continue}
+    if(!el||!v.contains(el)||el===v||el.getBoundingClientRect().height>innerHeight)continue;const off=Math.round(el.getBoundingClientRect().top);
+    if(el.id&&el.id.length<80)return {id:el.id,off};
+    const w=words(el);if(!w)continue;let n=0;for(const x of v.querySelectorAll(el.tagName)){if(x===el)break;if(words(x)===w)n++}
+    return {tag:el.tagName,w,n,off}}
+  return null}
+function find(a){for(const r of roots()){let el=null;try{const v=r.querySelector("#view");if(!v)continue;
+    if(a.id)el=v.querySelector("#"+CSS.escape(a.id));else{let n=0;for(const x of v.querySelectorAll(a.tag)){if(words(x)===a.w&&n++===a.n){el=x;break}}}}catch(e){}
+    if(el&&el.getClientRects().length)return el}return null}
+function put(p,snap){if(!p)return false;let y=null,used=false;
+  if(p.a){const el=find(p.a);if(el){y=scrollY+el.getBoundingClientRect().top-p.a.off;used=true; if(snap&&Math.abs(y-p.y)<=40)y=p.y}}
+  if(y==null)y=p.y;y=Math.max(0,Math.min(y,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
+  if(Math.abs(scrollY-y)>1){hold();scrollTo({top:y,behavior:"auto"})}return used}
+const here=()=>({y:Math.round(scrollY),a:anchor()});
+window.DPKeepPlace=function(fn){const bg=Date.now()-inputAt>1500&&scrollY>3;if(!bg)return fn();
+  const h=location.hash,p=here();
+  try{return fn()}finally{if(location.hash===h)put(p)}};
+let left=null,guardT=0;
+function guard(p,h){clearInterval(guardT);const until=Date.now()+3000,since=Date.now();let n=0;
+  guardT=setInterval(()=>{if(Date.now()>until||inputAt>since||location.hash!==h||document.hidden){clearInterval(guardT);return}put(p)},100)}
+function leave(){left={h:location.hash,...here()}}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)leave();else if(left)guard(left,left.h)});
+addEventListener("pageshow",()=>{if(left)guard(left,left.h)});
+addEventListener("pagehide",leave);
+const fkey=d=>String(d.id||d.dataset.dkey||(d.querySelector("summary")||{}).textContent||"").trim().slice(0,60);
+const eachFold=fn=>{const seen={};for(const r of roots()){let ds;try{ds=r.querySelectorAll("details")}catch(e){continue}
+    ds.forEach(d=>{const k=fkey(d);if(!k)return;const n=seen[k]=(seen[k]===undefined?0:seen[k]+1);fn(d,k,n)})}};
+const folds=()=>{const out=[];eachFold((d,k,n)=>{if(d.open)out.push("d:"+n+":"+k)});
+  try{if(window.__hubFolds)window.__hubFolds.get().forEach(k=>out.push("h:"+k))}catch(e){}return out};
+function openFolds(list){for(const k of list||[]){if(k.startsWith("h:")){try{if(window.__hubFolds)window.__hubFolds.open(k.slice(2))}catch(e){}continue}
+    const m=/^d:(\d+):([\s\S]*)$/.exec(k),key=m?m[2]:k.slice(2),want=m?+m[1]:0;
+    eachFold((d,kk,n)=>{if(!d.open&&kk===key&&n===want)d.open=true})}}
+let ready=false;
+let hiddenSaved=false;
+function save(force){if(!ready||(hiddenSaved&&!force))return;try{sessionStorage.setItem(KEY,JSON.stringify({hash:location.hash||"#today",...here(),f:folds(),t:Date.now()}))}catch(e){}}
+let saveT=0;addEventListener("scroll",()=>{if(!ready)return;clearTimeout(saveT);saveT=setTimeout(save,300)},{passive:true});
+addEventListener("hashchange",()=>{if(ready){clearTimeout(saveT);saveT=setTimeout(save,300)}});
+addEventListener("pagehide",()=>save());
+document.addEventListener("visibilitychange",()=>{if(document.hidden){save();hiddenSaved=true}else hiddenSaved=false});
+let saved=null;try{saved=JSON.parse(sessionStorage.getItem(KEY)||"null")}catch(e){}
+const h0=location.hash;
+if(saved&&saved.hash&&Date.now()-saved.t<TTL&&(!h0||h0==="#"||h0===saved.hash)){
+  if(!h0||h0==="#")try{history.replaceState(null,"",saved.hash)}catch(e){}
+  const want=saved.y>3?saved:null;const t0=Date.now();let okAt=0,stop=false;
+  const halt=()=>{stop=true};["pointerdown","touchstart","wheel","keydown"].forEach(k=>addEventListener(k,halt,{once:true,capture:true,passive:true}));
+  const step=()=>{if(stop||location.hash!==saved.hash||Date.now()-t0>9000){ready=true;return}
+    openFolds(saved.f);
+    if(want){const used=put(want,true);const max=document.documentElement.scrollHeight-innerHeight;
+      if(used||max>=want.y-1){if(!okAt)okAt=Date.now()}if(okAt&&Date.now()-okAt>2500){ready=true;return}}
+    else if(!okAt)okAt=Date.now();
+    if(!want&&Date.now()-okAt>1500){ready=true;return}
+    setTimeout(step,120)};
+  setTimeout(step,0)}
+else ready=true;
+})();
+{const render0=render;render=function(){return window.DPKeepPlace?DPKeepPlace(render0):render0()}}
 const SCROLLS={};let curHash=location.hash||"#today";
 addEventListener("scroll",()=>{SCROLLS[curHash]=scrollY},{passive:true});
 function sameJob(a,b){try{const J=window.DPJob;if(!J)return false;const x=J.fromHash(a),y=J.fromHash(b);return !!(x&&y&&x.slug===y.slug)}catch(e){return false}}
@@ -6208,9 +6278,9 @@ function mOf(j){const TARGET=MTG().target,GOOD=MTG().good;const c=costOf(j);cons
 const pct=n=>n==null||isNaN(n)?"—":(Math.round(n*10)/10)+"%";
 function mBadge(m,long){if(m.na)return m.exposure?`<span class="mbadge crit" title="Money has been spent and no price is approved in JobTread yet">Exposure: ${money(m.spend)} spent, no approved price</span>`:`<span class="mbadge na">No approved price</span>`;return `<span class="mbadge ${m.cls}" title="Margin if the job finishes on budget. Target ${window.DPOrg.margin().target}%.">${pct(m.fc)} margin${long?" · "+m.label:""}</span>`}
 
-const JTABS=[["overview","Overview"],["todo","To do"],["money","Money"],["files","Files"]];
+const JTABS=[["overview","Overview"],["todo","To do"],["selections","Selections"],["money","Money"],["files","Files"]];
 const JL={...Object.fromEntries(JTABS),history:"History"};
-const LEGACY_TAB={log:"history",timeline:"history",inbox:"overview",selections:"overview",open:"todo",lists:"todo",done:"todo",docs:"files",documents:"files",permits:"files",orders:"money",costing:"money"};
+const LEGACY_TAB={log:"history",timeline:"history",inbox:"overview",open:"todo",lists:"todo",done:"todo",docs:"files",documents:"files",permits:"files",orders:"money",costing:"money"};
 const tabOf=t=>JL[t]?t:LEGACY_TAB[t]||"overview";
 const jslug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
 const drCards=()=>{try{return (window.__drCards&&window.__drCards())||[]}catch(e){return[]}};
@@ -6265,13 +6335,13 @@ function jfacts(j){if(!j)return [];const out=[];
   if(j.syncedAt)out.push("Synced "+esc(nice(j.syncedAt)));
   return out}
 function jshell(root,c,tab){jcss(root);tab=tabOf(tab);
-  const n=(+c.openN||0)+(+c.listN||0);
+  const n=(+c.openN||0)+(+c.listN||0);let selN=0;try{selN=c.hub?rows(c.hub,"selections").length:0}catch(e){}
   const back=c.inv?"#hub/investment":"#hub/jobs",backL=c.inv?"All investment properties":"All jobs";
   const poChip=()=>{try{return window.__dpPO?window.__dpPO.chip(c):""}catch(e){return ""}};
   const meta=[c.address,c.nums.length?"Job "+c.nums.join(", "):"",c.pm?"PM: "+c.pm:"",c.phase,poChip()].filter(Boolean);
   const facts=tab==="overview"?jfacts(c.hub):[];
   const ts=JTABS.map(([k,l])=>({k,l,href:jhref(c,k)})).filter(x=>x.href);const on=tab==="history"?"overview":tab;
-  const row=ts.length>1?`<div class="jsh-row"><nav class="jsh-tabs" aria-label="Job sections">${ts.map(({k,l,href})=>`<a href="${esc(href)}" data-raw data-jtab="${k}"${k===on?(tab==="history"?' class="on"':' class="on" aria-current="page"'):""}>${esc(l)}${k==="todo"&&n?`<span class="n">${n}</span>`:""}</a>`).join("")}</nav></div>`:"";
+  const row=ts.length>1?`<div class="jsh-row"><nav class="jsh-tabs" aria-label="Job sections">${ts.map(({k,l,href})=>`<a href="${esc(href)}" data-raw data-jtab="${k}"${k===on?(tab==="history"?' class="on"':' class="on" aria-current="page"'):""}>${esc(l)}${k==="todo"&&n?`<span class="n">${n}</span>`:k==="selections"&&selN?`<span class="n">${selN}</span>`:""}</a>`).join("")}</nav></div>`:"";
   const short=[c.nums.length?"#"+c.nums[0]:"",c.name].filter(Boolean).join(" · ");
   return `<header class="jsh" data-job="${esc(c.id)}" data-short="${esc(short)}"><a class="jsh-back" href="${back}" data-raw>${CHEV}<span class="jsh-bl">${backL}</span></a><h1>${esc(c.name)}</h1>${meta.length?`<p class="jsh-meta">${meta.map(x=>`<span${/^POs: /.test(x)?' class="jsh-po"':""}>${esc(x)}</span>`).join("")}${c.hub&&!c.inv&&window.DPStages?DPStages.head(c.hub):""}</p>`:""}${row}${facts.length?`<p class="jsh-facts">${facts.map(x=>`<span>${x}</span>`).join("")}</p>`:""}</header>`}
 function jfades(nav){const m=nav.scrollWidth-nav.clientWidth;nav.classList.toggle("fl",nav.scrollLeft>2);nav.classList.toggle("fr",m>2&&nav.scrollLeft<m-2)}
@@ -6285,6 +6355,7 @@ function jfold(scope){let narrow=false;try{narrow=matchMedia("(max-width:599px)"
     if(sec.getBoundingClientRect().height<300&&!JFOLD_OPEN.has(key))return;
     const open=JFOLD_OPEN.has(key);sec.classList.add("jfold");if(open)sec.classList.add("jfopen");
     const b=document.createElement("button");b.type="button";b.className="act ghost jfold-t";b.setAttribute("aria-expanded",String(open));b.dataset.jfold=key;b.textContent=open?"Hide":"Show";h.appendChild(b)})}
+window.__hubFolds={get:()=>[...JFOLD_OPEN],open:k=>{JFOLD_OPEN.add(k);const b=HROOT.querySelector(`[data-jfold="${CSS.escape(k)}"]`);if(b&&b.getAttribute("aria-expanded")==="false")b.click()}};
 HROOT.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-jfold]");if(!b)return;e.preventDefault();const key=b.dataset.jfold,sec=b.closest("section.box");if(!sec)return;
   const on=!sec.classList.contains("jfopen");sec.classList.toggle("jfopen",on);b.setAttribute("aria-expanded",String(on));b.textContent=on?"Hide":"Show";if(on)JFOLD_OPEN.add(key);else JFOLD_OPEN.delete(key)});
 function jsync(scope){if(!scope||!scope.querySelectorAll)return;jfold(scope);
@@ -6311,7 +6382,7 @@ let pending=false;
 HROOT.addEventListener("focusout",()=>setTimeout(()=>{if(pending&&!editing()){pending=false;keepDrafts(render)}},0));
 let HL=null,CJF=null;
 function reHighlight(){if(!HL)return;if(Date.now()>HL.until){HL=null;return}const tr=HROOT.querySelector(`[data-rid="${CSS.escape(HL.id)}"]`);if(tr)tr.classList.add("hl-row")}
-function render(){ROWS=new Map();try{renderNow()}finally{ROWS=null}reHighlight();cjFocusNow()}
+function render(){const go=()=>{ROWS=new Map();try{renderNow()}finally{ROWS=null}reHighlight();cjFocusNow()}; if(window.DPKeepPlace)DPKeepPlace(go);else go()}
 const OLD_PAGES={investment:()=>{S.inv=true},orders:()=>{S.xorders=true;S.inv=false},inbox:()=>{S.need="sort";S.xorders=false;S.inv=false}};
 function renderNow(){
   {const r0=route();if(OLD_PAGES[r0]){OLD_PAGES[r0]();history.replaceState(null,"","#hub/jobs");if(window.__dpSyncHash)window.__dpSyncHash()}}
@@ -6325,7 +6396,7 @@ function renderNow(){
     const c=jctx(key);
     if(c&&t==="done"&&window.DPTodo)window.DPTodo.set(true);
     if(c&&(tab==="todo"||!c.hub)){const to=jhref(c,"todo")||jhref(c,"overview");if(to&&to!==location.hash){location.replace(to);return}}
-    if(c&&c.hub&&(c.id!==key||tab!==(t||"overview"))){if(t==="selections")S.goSel=true;if(t==="permits")S.goPermits=true;if(t==="orders")S.goOrders=true;history.replaceState(null,"",jhref(c,tab))}
+    if(c&&c.hub&&(c.id!==key||tab!==(t||"overview"))){if(t==="permits")S.goPermits=true;if(t==="orders")S.goOrders=true;history.replaceState(null,"",jhref(c,tab))}
     h=viewJob(c&&c.hub?c.slug:key,tab)}
   else if(r==="costing")h=viewCosting();
   else if(r==="log")h=viewLog();
@@ -6335,7 +6406,7 @@ function renderNow(){
   $("#view").innerHTML=h;
   if(keepQ){const nq=$("#view").querySelector("[data-selq]");if(nq){keepQ.value=nq.value;nq.replaceWith(keepQ)}}
   jsync($("#view"));
-  const go=S.goSel?"#jsel":S.goPermits?"#jpermits":S.goOrders?"#jorders":"";if(go){S.goSel=S.goPermits=S.goOrders=false;const el=$("#view").querySelector(go);if(el)requestAnimationFrame(()=>{if(window.DPScrollTo)DPScrollTo(el);else el.scrollIntoView()})}
+  const go=S.goPermits?"#jpermits":S.goOrders?"#jorders":"";if(go){S.goPermits=S.goOrders=false;const el=$("#view").querySelector(go);if(el)requestAnimationFrame(()=>{if(window.DPScrollTo)DPScrollTo(el);else el.scrollIntoView()})}
 }
 function head(t,sub,crumb){return `<div class="ph"><div>${crumb||""}<h1>${esc(t)}</h1>${sub?`<p>${sub}</p>`:""}</div></div>`}
 function srcTag(r){return `<span class="src">${esc(SRC[r._src||r.source]||r._src||r.source||"")}${r.date?" · "+esc(nice(r.date)):""}</span>`}
@@ -6477,6 +6548,7 @@ function viewJob(slug,tab){
   notFoundRetry=0;
   let body;
   if(tab==="files")body=(window.DPFlow&&DPFlow.filesBar?DPFlow.filesBar(j):"")+jsec("jdocs","Plans &amp; docs",docsView(j))+jsec("jpermits","Permits",jtPermits(j)+`<h3 class="srch">Found in email and meetings by the nightly sync</h3>`+tableView(j,"permits",["Permit","Type","Status","Inspections / notes","Source"],r=>[H(`<b>${esc(r.number||"—")}</b>`),r.type,H(stPill(r.status)),H(`${esc(r.inspections||"")}${r.note?`<div class="small">${esc(r.note)}</div>`:""}`),H(srcTag(r)+linkOf(r))],[1])+addForm(j,"permits"));
+  else if(tab==="selections")body=jsec("jsel","Selections",recordBar(j)+selList(j));
   else if(tab==="money")body=moneyView(j);
   else if(tab==="history")body=jsec("jhistory","History",`<p class="small jsecp">Events, selections, documents, permits and orders on this job, newest first, each with a link to where it came from.</p>`+timeline(j));
   else body=overview(j);
@@ -6692,11 +6764,13 @@ const flowCards=j=>{try{return !isInv(j)&&window.DPFlow&&DPFlow.overview?DPFlow.
 const wkCards=j=>{try{const c=jctx(j.slug)||{};const x={rows:k=>rows(j,k),photos:photosUrl(j),photosReal:!!(j.photosUrl||j.companycamUrl||(j.companycam&&j.companycam.url)),pm:pmsOf(j),me:S.myName,can:S.canWrite&&!!S.db,jtId:jtIdOf(j),num:((j.jobs||[]).find(y=>y&&y.id)||{}).number||"",cards:c.cards||[]};
   return (window.__dpClientUpdate?window.__dpClientUpdate.card(j,x):"")+(window.__dpDailyLog?window.__dpDailyLog.card(j,x):"")+(window.__dpPO?window.__dpPO.card(j,x):"")}catch(e){return ""}};
 const hoCard=j=>{try{return window.__dpHandoff?window.__dpHandoff.card(j,{rows:k=>rows(j,k),total:costOf(j).p,budget:costOf(j).b,client:clientOf(j),photos:photosUrl(j),pm:pmsOf(j),me:S.myName,can:S.canWrite&&!!S.db}):""}catch(e){return ""}};
+function selLine(j){const all=rows(j,"selections"),ap=all.filter(s=>["approved","ordered","installed"].includes(String(s.status||"").toLowerCase())).length;
+  return `<p class="jselink"><a href="${esc(hubHref(j,"selections"))}" data-raw>Selections ›</a><span class="small">${all.length?`${ap} of ${all.length} approved`:"None logged yet"}</span></p>`}
 function overview(j){
   const n=(S.notes[j.slug]||{}).text||"";const sortN=inboxOf(j).length;
   return quickActions(j)+sumStrip(j)+logCard(j)+openBox(j)+hoCard(j)+flowCards(j)+wkCards(j)+(sortN?`<section class="box"><div class="box-h"><b class="bt" role="heading" aria-level="2">To sort</b><span class="small">${sortN} item${sortN===1?"":"s"} the sync wasn't sure about. Confirm, move or dismiss.</span></div>${inboxUl([j])}</section>`:"")+`<div class="grid2"><div class="jcol">
    ${j.summary?`<div class="note">${esc(j.summary)}</div>`:""}
-   ${jsec("jsel","Selections",recordBar(j)+selList(j))}
+   ${selLine(j)}
   </div><div class="jcol">
    ${sitePanel(j)}
    ${jsec("jord","Orders",ordersOne(j))}
@@ -9426,6 +9500,19 @@ document.addEventListener("change",e=>{const el=e.target;if(!el||!el.dataset)ret
 @media (max-width:560px){.sp-kpis{grid-template-columns:1fr}}
 .sp-rowacts{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 12px}
 .sp-paidit{display:grid;gap:10px}
+.sp-from{font-size:var(--fs-caption);font-weight:600;color:var(--c-warning);text-align:right}
+.sp-calc{display:grid;gap:6px;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px}
+.sp-eq{margin:0;font-size:var(--fs-footnote);overflow-wrap:anywhere}
+.sp-tag{display:inline-block;font:600 var(--fs-caption) var(--body);color:var(--c-warning);margin-left:4px}
+.sp-lines,.sp-jobs{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:var(--fs-footnote)}
+.sp-lines li,.sp-jobs li{display:flex;gap:10px;justify-content:space-between;align-items:baseline;min-width:0}
+.sp-lines li span,.sp-jn{min-width:0;overflow-wrap:anywhere}
+.sp-lines b,.sp-jobs b{flex:0 0 auto;font-variant-numeric:tabular-nums}
+.sp-jobs{border-top:1px solid var(--line);padding-top:6px}
+.sp-jobs li{font-weight:600}
+.sp-flag{margin:0;font-size:var(--fs-footnote);font-weight:600;color:var(--c-warning);overflow-wrap:anywhere}
+.sp-full summary{cursor:pointer;min-height:var(--hit);display:flex;align-items:center;color:var(--navy);font:600 var(--fs-footnote) var(--body)}
+.sp-full .sp-said{white-space:pre-wrap}
 </style>
 <script>(function(){
 "use strict";
@@ -9471,6 +9558,51 @@ const find=id=>rows().find(r=>r.id===id);
 const nowIso=()=>new Date().toISOString();
 const short=v=>{const t=Date.parse(v);return isNaN(t)?"":new Date(t).toLocaleDateString("en-US",{month:"short",day:"numeric"})};
 const money=n=>CORE.money(n,{cents:true});
+const FIG=/\$\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?(?![\d,])/g;
+const TOTW=/\b(?:grand\s+total|invoice\s+total|total\s+due|balance\s+due|amount\s+due|total|balance)\b/i;
+const STREET=/\b(\d{1,6})\s+((?:[A-Za-z][A-Za-z.'-]*\s+){0,3}?[A-Za-z][A-Za-z.'-]*?)\s+(dr|drive|st|street|ave|avenue|rd|road|ln|lane|ct|court|blvd|boulevard|way|pl|place|cir|circle|ter|terrace|trl|trail|pkwy|hwy)\b\.?/i;
+const SUFX={drive:"dr",street:"st",avenue:"ave",road:"rd",lane:"ln",court:"ct",boulevard:"blvd",place:"pl",circle:"cir",terrace:"ter",trail:"trl"};
+const toC=(i,f)=>parseInt(String(i).replace(/,/g,""),10)*100+(f?parseInt((f+"0").slice(0,2),10):0);
+const addrIn=t=>{const m=STREET.exec(String(t).replace(FIG," "));if(!m)return null;
+  const nm=m[2].replace(/^(?:invoice|inv|for|at|on|job)\s+/i,"").trim(),sx=m[3].toLowerCase();
+  if(!nm)return null;const pre=String(t).slice(0,m.index).trim();const asInv=/(?:invoice|inv\.?|#)$/i.test(pre);
+  return {key:(nm+" "+(SUFX[sx]||sx)).toLowerCase().replace(/[.']/g,""),label:(asInv?"":m[1]+" ")+nm+" "+m[3],name:nm.toLowerCase()}};
+const tidy=t=>String(t).replace(/[\s.:;,\-–—•*]+$/,"").replace(/^[\s.:;,\-–—•*+]+(?:and\s+|plus\s+)?/i,"").replace(/\s+/g," ").trim();
+const PCACHE=new Map();
+function parseMsg(text){const t=String(text||"");if(PCACHE.has(t))return PCACHE.get(t);
+  const lines=[];let stated=null,cur=null;
+  t.split(/\r?\n/).forEach(ln=>{const figs=[];let m;FIG.lastIndex=0;while((m=FIG.exec(ln)))figs.push({i:m.index,e:m.index+m[0].length,c:toC(m[1],m[2])});
+    if(!figs.length){const a=addrIn(ln);if(a)cur=a;return}
+    figs.forEach((f,k)=>{const from=k?figs[k-1].e:0;let d=ln.slice(from,f.i);
+      if(!tidy(d)&&figs.length===1)d=ln.slice(f.e);
+      const a=addrIn(d);if(a)cur=a;
+      if(TOTW.test(d)&&!a){stated=f.c;return}
+      lines.push({desc:tidy(d).slice(0,160),c:f.c,addr:cur})})});
+  const groups=[];lines.forEach(l=>{const key=l.addr?l.addr.key:"";let g=groups.find(x=>x.key===key);
+    if(!g){g={key,label:l.addr?l.addr.label:"",name:l.addr?l.addr.name:"",lines:[],c:0};groups.push(g)}g.lines.push(l);g.c+=l.c});
+  const bare=groups.findIndex(g=>!g.key);if(bare>=0&&groups.length>1){const b=groups.splice(bare,1)[0];groups[0].lines.unshift(...b.lines);groups[0].c+=b.c}
+  const sum=lines.reduce((a,l)=>a+l.c,0);const res={lines,groups,sum:sum/100,stated:stated==null?null:stated/100};PCACHE.set(t,res);return res}
+const norm=t=>String(t||"").toLowerCase().replace(/[…]|\.{3}/g," ").replace(/\s+/g," ").trim();
+function textBody(r){if(r.body||!/^(text|whatsapp)$/.test(r.src)||!r.said)return"";
+  const live=window.__dpLive?window.__dpLive().texts:null;const th=live&&Array.isArray(live.threads)?live.threads:[];if(!th.length)return"";
+  const pre=norm(r.said).slice(0,40);if(pre.length<8)return"";const dig=(String(r.id).match(/^text-(\d{10})-/)||[])[1]||"";
+  const who=low(r.sub);
+  for(const t of th){const hd=String((t&&t.handle)||"").replace(/\D/g,"").slice(-10);
+    const ok=(dig&&hd===dig)||(!dig&&who&&low(t&&t.name)&&(low(t.name).includes(who)||who.includes(low(t.name))));if(!ok)continue;
+    const ms=Array.isArray(t.messages)?t.messages:[];
+    const i=ms.findIndex(m=>m&&!m.me&&norm(m.text).includes(pre));if(i<0)continue;
+    let j=i;while(j+1<ms.length&&ms[j+1]&&!ms[j+1].me)j++;
+    return ms.slice(i,j+1).map(m=>String(m.text||"").trim()).filter(Boolean).join("\n")}
+  return""}
+const fullText=r=>String(r.body||textBody(r)||r.said||"");
+function calc(r){const has=+r.amount>0;
+  if(Array.isArray(r.lines)&&r.lines.some(l=>l&&+l.amount>0)){const ls=r.lines.filter(l=>l&&+l.amount>0).map(l=>({desc:String(l.desc||""),c:Math.round(l.amount*100),addr:null}));
+    const sum=ls.reduce((a,l)=>a+l.c,0)/100;return {lines:ls,groups:[],sum,stated:r.statedTotal!=null&&r.statedTotal!==""?+r.statedTotal:null,computed:false,total:has?+r.amount:sum}}
+  if(has)return null;
+  const p=parseMsg(fullText(r));return p.lines.length?Object.assign({},p,{computed:true,total:p.sum}):null}
+const effAmt=r=>{if(+r.amount>0)return +r.amount;const c=calc(r);return c&&c.total>0?c.total:null};
+const fromMsg=r=>!(+r.amount>0)&&!!effAmt(r);
+const mismatch=c=>c&&c.stated!=null&&Math.abs(c.stated-c.sum)>=0.005?`Total says ${money(c.stated)}; lines add to ${money(c.sum)}`:"";
 const st=r=>LAB[r.status]?r.status:"requested";
 function waited(r){const a=Date.parse(r.requestedAt||"");if(isNaN(a))return null;const b=st(r)==="paid"&&Date.parse(r.paidAt||"")?Date.parse(r.paidAt):Date.now();return Math.max(0,Math.floor((b-a)/864e5))}
 const daysTxt=n=>n+" day"+(n===1?"":"s");
@@ -9479,7 +9611,7 @@ const jobOf=r=>{const n=String(r.job||"").replace(/^#/,"");return jobs().find(j=
 const jobIdOf=r=>r.jobId||((jobOf(r)||{}).jobIds||[])[0]||"";
 const jobLabel=r=>{const j=jobOf(r);const s=CORE.street(r.address||(j&&(j.street||j.address))||"");const n=String(r.job||"").replace(/^#/,"")||((j&&j.jobNumbers)||[])[0]||"";
   return [r.customer||(j&&j.customer)||"",s,n?"Job "+n:""].filter(Boolean).join(" · ")||"No job"};
-const rowName=r=>`${r.sub}${r.amount!=null&&money(r.amount)?", "+money(r.amount):""}`;
+const rowName=r=>`${r.sub}${effAmt(r)&&money(effAmt(r))?", "+money(effAmt(r)):""}`;
 function change(r,to,why,extra){const ch={from:st(r),to,auto:false,by:me()||"You",at:nowIso(),why};
   const doc=Object.assign({},r,extra||{},{status:to,last:ch,history:(Array.isArray(r.history)?r.history:[]).concat([ch]).slice(-20)});
   if(to==="approved"||(to==="sent"&&st(r)==="requested")){doc.approvedAt=doc.approvedAt||ch.at;doc.approvedBy=doc.approvedBy||ch.by}
@@ -9493,7 +9625,7 @@ function undoneDoc(r){const L=r.last;const by=me()||"You";const at=nowIso();
   if(L.to==="sent")delete doc.todo;
   return doc}
 async function setStatus(r,to,why,msg){try{await save(r.id,change(r,to,why));CORE.toast(msg)}catch(e){CORE.toast("Couldn't save that. "+CORE.errMsg(e,"the page's database"))}}
-function approve(r){if(!canApprove(r)||st(r)!=="requested")return;setStatus(r,"approved",`${meShort()} approved it on ${short(nowIso())}`,`Approved ${r.sub}'s request. Undo is on the row.`)}
+function approve(r){if(!canApprove(r)||st(r)!=="requested")return;setStatus(r,"approved",`${meShort()} approved it on ${short(nowIso())}`,`Approved ${r.sub}'s request${fromMsg(r)?" ("+money(effAmt(r))+", added from the message; check it)":""}. Undo is on the row.`)}
 function markPaid(r){if(st(r)==="paid")return;setStatus(r,"paid",`${meShort()} marked it paid on ${short(nowIso())}`,`Marked ${r.sub}'s request paid. Undo is on the row.`)}
 function paidOpen(r){P.paid[r.id]={ref:"",date:CORE.day(0),msg:""};P.open[r.id]=true;rr();keepFocus(`[data-sppref="${CSS.escape(r.id)}"]`)}
 async function paidSave(r){const q=P.paid[r.id];if(!q||q.busy)return;const f=document.getElementById("spp-"+r.id);
@@ -9519,15 +9651,15 @@ async function reqOpen(r,btn){const q=P.req[r.id]={to:"",msg:"",wait:true};rr();
   if(!of.length){q.msg="No office team is chosen yet, so there's no one to send this to. Choose your office team in Setup › Office team (or ask whoever set up your Workspace).";q.setup=true;rr();return}
   if(!jobIdOf(r)){q.msg="This request isn't linked to a JobTread job, so there's nowhere to put the to-do. Add it again with its job picked.";rr();return}
   askReq(r,btn)}
-function todoText(r){const lines=[`Payment request from ${r.sub}${r.amount!=null&&money(r.amount)?" for "+money(r.amount):""}.`,`Job: ${jobLabel(r)}`,
+function todoText(r){const lines=[`Payment request from ${r.sub}${effAmt(r)&&money(effAmt(r))?" for "+money(effAmt(r)):""}.`,fromMsg(r)?"The amount was added up from the sub's message; check it against their invoice.":"",`Job: ${jobLabel(r)}`,
     r.invoice?`Invoice: ${r.invoice}`:"",r.requestedAt?`Requested ${short(r.requestedAt)}${SRC[r.src]?" by "+SRC[r.src].toLowerCase():""}.`:"",
     r.approvedBy?`Approved by ${r.approvedBy}.`:canApprove(r)?`Approved by ${me()}.`:"",CORE.safeUrl(r.link)&&/^https:/.test(r.link)?`Source: ${r.link}`:"",
     `Sent from the Sub payments page by ${me()||"the Workspace"}. Mark this to-do done once it's paid.`];
   return lines.filter(Boolean).join("\n")}
 function askReq(r,btn){const q=P.req[r.id];if(!q)return;const who=(OFFICE().find(x=>x[1]===q.to)||[])[0]||"the office";const jid=jobIdOf(r);
-  const name=`Pay ${r.sub}${r.amount!=null&&money(r.amount)?" "+money(r.amount):""}${r.invoice?" (invoice "+r.invoice+")":""}`.slice(0,200);
+  const name=`Pay ${r.sub}${effAmt(r)&&money(effAmt(r))?" "+money(effAmt(r)):""}${r.invoice?" (invoice "+r.invoice+")":""}`.slice(0,200);
   CORE.confirm({key:"subpay:req:"+r.id,from:btn,what:`Create a JobTread to-do for ${who} to pay ${rowName(r)}`,to:who,target:`JobTread · ${jobLabel(r)}`,
-    note:st(r)==="requested"?"This also marks the request approved. They get JobTread's usual notification.":"They get JobTread's usual notification.",
+    note:(fromMsg(r)?`The ${money(effAmt(r))} was added up from the sub's message (not entered by them): check it first. `:"")+(st(r)==="requested"?"This also marks the request approved. They get JobTread's usual notification.":"They get JobTread's usual notification."),
     label:`Create to-do for ${who.split(/\s+/)[0]}`,busy:"Creating…",errLabel:"JobTread",sig:()=>q.to+"|"+(find(r.id)||{}).status,
     onConfirm:async()=>{const res=await window.DPR.jq({createTask:{$:{targetType:"job",targetId:jid,name,description:todoText(r),isToDo:true,assignedMembershipIds:[q.to]},createdTask:{id:{},name:{}}}},{write:true});
       const ct=(res&&res.createTask&&res.createTask.createdTask)||(res&&res.createdTask);if(!ct||!ct.id)throw CORE.error("bad_reply","JobTread","no createdTask id in the reply");
@@ -9578,6 +9710,17 @@ function filtered(){const f=P.f;const rs=rows().filter(r=>inF(r,f));
 function whyLine(r){const L=r.last;if(!L||!L.why)return"";const can=!L.undone&&LAB[L.from]&&LAB[L.to];
   const lbl=L.undone?`Undone by ${String(L.undoneBy||"").split(/\s+/)[0]||"you"}: `:L.auto?"Updated automatically: ":"";
   return `<p class="sp-why${L.auto&&!L.undone?" auto":""}"><span>${lbl?`<b>${esc(lbl)}</b>`:""}${esc(L.why)}</span>${can?`<button type="button" class="act ghost sp-undo" data-spundo="${esc(r.id)}" aria-label="Undo: move ${esc(r.sub)}'s request back to ${esc(LAB[L.from])}">Undo</button>`:""}</p>${CORE.confirmHtml("subpay:undo:"+r.id)}`}
+function jobFor(g){if(!g||!g.name)return null;return jobs().find(j=>{const s=String(CORE.street(j.street||j.address)||"").toLowerCase().replace(/[.']/g,"");return s&&s.includes(g.name)})||null}
+function calcHtml(r){const c=calc(r);if(!c)return"";const tag=c.computed?`<span class="sp-tag">added from the message, check it</span>`:"";
+  const eq=c.lines.map(l=>money(l.c/100)).join(" + ");const flag=mismatch(c)||(r.flag?String(r.flag):"");
+  const grp=c.groups.length>1?`<ul class="sp-jobs" aria-label="Each job in this request">${c.groups.map(g=>{const j=jobFor(g);
+    return `<li><span class="sp-jn">${j?`<a href="#job-${esc(j.slug)}">${esc(g.label)} ›</a>`:esc(g.label||"No address")}</span><b>${esc(money(g.c/100))}</b></li>`}).join("")}</ul>`:"";
+  return `<div class="sp-calc" data-spcalc="${esc(r.id)}"><p class="sp-eq"><b>Lines:</b> ${esc(eq)}${c.lines.length>1?" = ":""}<b>${esc(money(c.total))}</b> ${tag}</p>
+    <ul class="sp-lines" aria-label="Lines in this request">${c.lines.map(l=>`<li><span>${esc(l.desc||"(no description)")}</span><b>${esc(money(l.c/100))}</b></li>`).join("")}</ul>${grp}
+    ${flag?`<p class="sp-flag" role="note">${esc(flag)}</p>`:""}</div>`}
+function msgHtml(r){const t=fullText(r).trim();if(!t)return"";const said=String(r.said||"").trim();const more=t.length>Math.max(said.length,160)+3||(!!(r.body||textBody(r))&&t!==said);
+  if(!more)return `<blockquote class="sp-said">${esc(t)}</blockquote>`;
+  return `<details class="sp-full" data-spfull="${esc(r.id)}"${P.full&&P.full[r.id]?" open":""}><summary>Full message</summary><blockquote class="sp-said">${esc(t)}</blockquote></details>`}
 function body(r){const s=st(r);const id=r.id;const lk=CORE.safeUrl(r.link)&&!/^#/.test(r.link)?CORE.link(r.link,esc(SRCLINK[r.src]||"Open the source")):"";
   const dl=[["Came in by",esc(SRC[r.src]||"Other")+(lk?" · "+lk:"")],["Asked on",esc(short(r.requestedAt))],r.invoice?["Invoice",esc(r.invoice)]:null,
     r.approvedBy?["Approved by",esc(r.approvedBy)+(r.approvedAt?", "+esc(short(r.approvedAt)):"")]:null,
@@ -9595,7 +9738,7 @@ function body(r){const s=st(r);const id=r.id;const lk=CORE.safeUrl(r.link)&&!/^#
     ${CORE.confirmHtml("subpay:req:"+id)}${q.msg||!CORE.confirmOpen("subpay:req:"+id)?`<button type="button" class="act ghost" data-spreqx="${esc(id)}" aria-label="Close the payment request for ${esc(r.sub)}">Close</button>`:""}</div>`:"";
   const roleNote=s==="requested"&&!canApprove(r)?`<p class="sp-note">Waiting for the owner or the job's project manager to approve it.</p>`:"";
   return `<div class="sp-body" id="spb-${esc(id)}"><dl class="sp-dl">${dl.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${d}</dd></div>`).join("")}</dl>
-    ${r.said?`<blockquote class="sp-said">${esc(r.said)}</blockquote>`:""}${roleNote}
+    ${calcHtml(r)}${msgHtml(r)}${roleNote}
     ${acts?`<div class="sp-acts">${acts}</div>`:""}${paidPanel}${reqPanel}
     ${hist.length?`<details class="sp-hist" data-sphist="${esc(r.id)}"${P.hist&&P.hist[r.id]?" open":""}><summary>What happened</summary><ol>${hist.map(h=>`<li><span>${esc(short(h.at))}</span> ${esc(h.why||((LAB[h.from]||"")+" → "+(LAB[h.to]||"")))}${h.auto?" <i>(automatic)</i>":""}</li>`).join("")}</ol></details>`:""}</div>`}
 function row(r){const s=st(r);
@@ -9604,7 +9747,7 @@ function row(r){const s=st(r);
   const meta=[r.invoice?"Invoice "+r.invoice:"",SRC[r.src]||"",w==null?"":s==="paid"?"paid after "+daysTxt(w):"waiting "+daysTxt(w)].filter(Boolean).join(" · ");
   return `<li class="sp-row st-${s}${late?" late":""}" data-sprow="${esc(r.id)}"><button type="button" class="sp-sum" data-sptog="${esc(r.id)}" aria-expanded="${open}"${open?` aria-controls="spb-${esc(r.id)}"`:""}>
     <span class="sp-main"><b class="sp-sub">${esc(r.sub)}</b><span class="sp-job">${esc(jobLabel(r))}</span><span class="sp-meta${late?" late":""}">${esc(meta)}</span></span>
-    <span class="sp-side"><b class="sp-amt">${esc(money(r.amount)||"No amount")}</b><span class="pill${PILL[s]?" "+PILL[s]:""}">${esc(LAB[s])}</span></span></button>
+    <span class="sp-side"><b class="sp-amt">${esc(effAmt(r)?money(effAmt(r)):"Amount not stated")}</b>${fromMsg(r)?`<span class="sp-from">from the message</span>`:""}<span class="pill${PILL[s]?" "+PILL[s]:""}">${esc(LAB[s])}</span></span></button>
     ${open?"":rowActs(r)}${whyLine(r)}${open?body(r):""}</li>`}
 function rowActs(r){const s=st(r);const nm=esc(rowName(r));const b=[];
   if(s==="requested"&&canApprove(r)){b.push(`<button type="button" class="act" data-spapprove="${esc(r.id)}" aria-label="Approve: ${nm}">Approve</button>`);
@@ -9622,7 +9765,7 @@ function nextStep(r){const s=st(r);if(s==="paid")return"";let t="";
 const mkey=v=>{const t=Date.parse(v||"");return isNaN(t)?"":CORE.ymd(new Date(t)).slice(0,7)};
 const monthName=k=>new Date(k+"-15T12:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function monthTotals(all,mk){const o={requested:{n:0,$:0},approved:{n:0,$:0},paid:{n:0,$:0}};
-  all.forEach(r=>{const a=+r.amount||0;if(mkey(r.requestedAt)===mk){o.requested.n++;o.requested.$+=a}if(r.approvedAt&&mkey(r.approvedAt)===mk){o.approved.n++;o.approved.$+=a}if(st(r)==="paid"&&mkey(r.paidAt)===mk){o.paid.n++;o.paid.$+=a}});return o}
+  all.forEach(r=>{const a=effAmt(r)||0;if(mkey(r.requestedAt)===mk){o.requested.n++;o.requested.$+=a}if(r.approvedAt&&mkey(r.approvedAt)===mk){o.approved.n++;o.approved.$+=a}if(st(r)==="paid"&&mkey(r.paidAt)===mk){o.paid.n++;o.paid.$+=a}});return o}
 function monthBar(all){const cur=mkey(nowIso());const ms=new Set([cur]);all.forEach(r=>[r.requestedAt,r.approvedAt,r.paidAt].forEach(v=>{const k=mkey(v);if(k)ms.add(k)}));
   const mk=P.month&&ms.has(P.month)?P.month:cur;const t=monthTotals(all,mk);const list=[...ms].sort().reverse();
   const tile=(k,l)=>`<div class="kpi"><b>${esc(CORE.money(t[k].$,{cents:true})||"$0")}</b><span>${l} · ${t[k].n}</span></div>`;
@@ -9643,9 +9786,10 @@ function view(){watch();
   kids:()=>{watch();const n=rows().filter(r=>st(r)==="requested"&&canApprove(r)).length;return [["subpay","Sub payments",n]]},view});
 window.__dpSubpay={state:P,rows,visible,canApprove,office:OFFICE,watch,ready:()=>P.rows!==null,
   late:n=>rows().filter(r=>OPEN.includes(st(r))&&(waited(r)||0)>=n).map(r=>Object.assign({},r,{waited:waited(r)})).sort((a,b)=>b.waited-a.waited),
-  approve:id=>{const r=find(id);if(r)approve(r)},amount:r=>money(r.amount),jobLabel,label:r=>LAB[st(r)],monthTotals};
+  approve:id=>{const r=find(id);if(r)approve(r)},amount:r=>money(effAmt(r)),parse:parseMsg,calc,jobLabel,label:r=>LAB[st(r)],monthTotals};
 function keepFocus(sel){setTimeout(()=>{const n=document.querySelector(sel);if(n&&document.activeElement!==n)try{n.focus({preventScroll:true})}catch(e){}},40)}
-document.addEventListener("toggle",e=>{const d=e.target;if(d&&d.dataset&&d.dataset.sphist){P.hist=P.hist||{};P.hist[d.dataset.sphist]=d.open}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(d&&d.dataset&&d.dataset.sphist){P.hist=P.hist||{};P.hist[d.dataset.sphist]=d.open}
+  if(d&&d.dataset&&d.dataset.spfull){P.full=P.full||{};P.full[d.dataset.spfull]=d.open}},true);
 document.addEventListener("keydown",e=>{if(e.key!=="Escape"||e.defaultPrevented)return;const f=e.target.closest&&e.target.closest(".sp-paidit");if(!f)return;const id=f.id.replace(/^spp-/,"");if(!P.paid[id])return;e.preventDefault();delete P.paid[id];rr();keepFocus(`[data-sppaidit="${CSS.escape(id)}"]`)});
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-sptog],[data-spf],[data-spadd],[data-spcancel],[data-spsave],[data-spapprove],[data-spappsend],[data-sppaidit],[data-sppsave],[data-sppx],[data-sppaid],[data-spreq],[data-spreqx],[data-spundo]");if(!t)return;const d=t.dataset;
   if(d.sptog!=null){const id=d.sptog;if(P.open[id]){delete P.open[id];delete P.req[id];CORE.cancelConfirm("subpay:req:"+id,true)}else P.open[id]=true;rr();keepFocus(`[data-sptog="${CSS.escape(id)}"]`);return}
