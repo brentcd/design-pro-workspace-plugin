@@ -5,7 +5,7 @@ description: Sets up, checks, updates or removes a personal Design Pro Workspace
 
 # Design Pro Workspace
 
-Skill version: 2026-11-25a
+Skill version: 2026-11-26a
 
 One private page per person (title exactly "Design Pro Workspace") plus the scheduled tasks that keep it current. The core runs in the cloud; texts are an optional Mac extra that never holds up anything else.
 
